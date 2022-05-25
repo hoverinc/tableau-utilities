@@ -1,0 +1,5 @@
+#!/bin/sh
+
+cd tableau_utilities
+pytest
+cd ..

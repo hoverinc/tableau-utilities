@@ -1,0 +1,118 @@
+
+column:
+  attributes:
+    - "@caption": caption
+      "@datatype": datatype
+      "@name": column_name
+      "@role": role
+      "@type": role_type
+      calculation: calculation
+      desc: desc
+      folder: folder_name
+      remote_name: remote_name
+  identifiers:
+    - '@name': column_name
+  locations:
+    - element: column
+      after: aliases
+  sections:
+    -
+      - datasource
+      - column
+
+folder:
+  attributes:
+    - "@name": folder_name
+      "@role": role
+    - "@name": folder_name
+  identifiers:
+    - '@name': folder_name
+      '@role': role
+    - '@name': folder_name
+  locations:
+    - element: folder
+      before: extract
+    - element: "_.fcp.SchemaViewerObjectModel.true...folders-common"
+      before: extract
+  sections:
+    -
+      - datasource
+      - folder
+    -
+      - datasource
+      - "_.fcp.SchemaViewerObjectModel.true...folders-common"
+      - folder
+    -
+      - datasource
+      - folders-common
+      - folder
+
+connection:
+  attributes:
+    - "@class": conn_type
+      "@dbname": conn_db
+      "@schema": conn_schema
+      "@server": conn_host
+      "@service": conn_role
+      "@username": conn_user
+      "@warehouse": conn_warehouse
+  identifiers:
+    - connection:
+      '@class': conn_type
+  locations:
+    - element: connection
+      after: repository-location
+  sections:
+    -
+      - datasource
+      - connection
+      - named-connections
+      - named-connection
+
+datasource-metadata:
+  identifiers:
+    - remote-name: remote_name
+  sections:
+    -
+      - datasource
+      - connection
+      - metadata-records
+      - metadata-record
+
+extract-metadata:
+  identifiers:
+    - remote-name: remote_name
+  sections:
+    -
+      - datasource
+      - extract
+      - connection
+      - metadata-records
+      - metadata-record
+
+datasource-metadata-cols:
+  identifiers:
+    - remote-name: remote_name
+  locations:
+    - element: cols
+      before: metadata-records
+  sections:
+    -
+      - datasource
+      - connection
+      - cols
+      - map
+
+extract-metadata-cols:
+  identifiers:
+    - remote-name: remote_name
+  locations:
+    - element: cols
+      before: metadata-records
+  sections:
+    -
+      - datasource
+      - extract
+      - connection
+      - cols
+      - map
