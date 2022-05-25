@@ -4,13 +4,13 @@ with open('README.md') as f:
     readme = f.read()
 
 setup(
-    url="https://github.com/hoverinc/tableau-utilities",
     author="Justin Grilli",
     author_email="jgrilli@hover.to",
     license='MIT',
     url='http://pypi.python.org/pypi/tableau-utilities/',
     description='Utility for maintaining Tableau objects',
     long_description=readme,
+    long_description_content_type='text/markdown',
     name="tableau_utilities",
     version="1.0.0",
     packages=['tableau_utilities'],
