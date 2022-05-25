@@ -7,6 +7,7 @@ setup(
     url="https://github.com/hoverinc/tableau-utilities",
     author="Justin Grilli",
     author_email="jgrilli@hover.to",
+    license='MIT',
     description='Utility for maintaining Tableau objects',
     long_description=readme,
     name="tableau_utilities",
