@@ -1,0 +1,68 @@
+"""
+The mapping of permission sets for a particular group and project
+"""
+
+permission_mappings = [
+    # Monitors
+    {"group_name": "Office Monitors", "project_name": "Office Monitors", "permission_set_name": "monitor"},
+    {"group_name": "Office Monitors", "project_name": "General", "permission_set_name": "read_data_source_only"},
+    # Special Groups
+    {"group_name": "BOD", "project_name": "BOD", "permission_set_name": "monitor"},
+    {"group_name": "BOD", "project_name": "General", "permission_set_name": "read_data_source_only"},
+    # Internal Publisher
+    {"group_name": "Internal Publisher", "project_name": "Admin Reports", "permission_set_name": "internal_publisher"},
+    {"group_name": "Internal Publisher", "project_name": "Admin Insights", "permission_set_name": "internal_publisher"},
+    {"group_name": "Internal Publisher", "project_name": "Automation", "permission_set_name": "internal_publisher"},
+    {"group_name": "Internal Publisher", "project_name": "Finance", "permission_set_name": "internal_publisher"},
+    {"group_name": "Internal Publisher", "project_name": "General", "permission_set_name": "internal_publisher"},
+    {"group_name": "Internal Publisher", "project_name": "Marketing", "permission_set_name": "internal_publisher"},
+    {"group_name": "Internal Publisher", "project_name": "Mobile", "permission_set_name": "internal_publisher"},
+    {"group_name": "Internal Publisher", "project_name": "Sandbox - BETA Dashboards", "permission_set_name": "internal_publisher"},
+    {"group_name": "Internal Publisher", "project_name": "Office Monitors", "permission_set_name": "internal_publisher"},
+    {"group_name": "Internal Publisher", "project_name": "Sales & Support", "permission_set_name": "internal_publisher"},
+    {"group_name": "Internal Publisher", "project_name": "Operations", "permission_set_name": "internal_publisher"},
+    {"group_name": "Internal Publisher", "project_name": "Product", "permission_set_name": "internal_publisher"},
+    {"group_name": "Internal Publisher", "project_name": "BOD", "permission_set_name": "business_user"},
+    # Business User
+    {"group_name": "Business User", "project_name": "Admin Reports", "permission_set_name": "business_user"},
+    {"group_name": "Business User", "project_name": "Admin Insights", "permission_set_name": "business_user"},
+    {"group_name": "Business User", "project_name": "Automation", "permission_set_name": "business_user"},
+    {"group_name": "Business User", "project_name": "Finance", "permission_set_name": "business_user"},
+    {"group_name": "Business User", "project_name": "General", "permission_set_name": "business_user"},
+    {"group_name": "Business User", "project_name": "Marketing", "permission_set_name": "business_user"},
+    {"group_name": "Business User", "project_name": "Mobile", "permission_set_name": "business_user"},
+    {"group_name": "Business User", "project_name": "Sandbox - BETA Dashboards", "permission_set_name": "business_user"},
+    {"group_name": "Business User", "project_name": "Office Monitors", "permission_set_name": "business_user"},
+    {"group_name": "Business User", "project_name": "Sales & Support", "permission_set_name": "business_user"},
+    {"group_name": "Business User", "project_name": "Operations", "permission_set_name": "business_user"},
+    {"group_name": "Business User", "project_name": "Product", "permission_set_name": "business_user"},
+    {"group_name": "Business User", "project_name": "BOD", "permission_set_name": "business_user"},
+    # Finance
+    {"group_name": "Finance", "project_name": "Admin Reports", "permission_set_name": "business_user"},
+    {"group_name": "Finance", "project_name": "Admin Insights", "permission_set_name": "business_user"},
+    {"group_name": "Finance", "project_name": "Automation", "permission_set_name": "business_user"},
+    {"group_name": "Finance", "project_name": "Finance", "permission_set_name": "business_user"},
+    {"group_name": "Finance", "project_name": "General", "permission_set_name": "business_user"},
+    {"group_name": "Finance", "project_name": "Marketing", "permission_set_name": "business_user"},
+    {"group_name": "Finance", "project_name": "Mobile", "permission_set_name": "business_user"},
+    {"group_name": "Finance", "project_name": "Sandbox - BETA Dashboards", "permission_set_name": "business_user"},
+    {"group_name": "Finance", "project_name": "Office Monitors", "permission_set_name": "business_user"},
+    {"group_name": "Finance", "project_name": "Sales & Support", "permission_set_name": "business_user"},
+    {"group_name": "Finance", "project_name": "Operations", "permission_set_name": "business_user"},
+    {"group_name": "Finance", "project_name": "Product", "permission_set_name": "business_user"},
+    {"group_name": "Finance", "project_name": "BOD", "permission_set_name": "business_user"},
+    # Sales and Support
+    {"group_name": "Sales and Support", "project_name": "Admin Reports", "permission_set_name": "business_user"},
+    {"group_name": "Sales and Support", "project_name": "Admin Insights", "permission_set_name": "business_user"},
+    {"group_name": "Sales and Support", "project_name": "Automation", "permission_set_name": "business_user"},
+    {"group_name": "Sales and Support", "project_name": "Finance", "permission_set_name": "business_user"},
+    {"group_name": "Sales and Support", "project_name": "General", "permission_set_name": "business_user"},
+    {"group_name": "Sales and Support", "project_name": "Marketing", "permission_set_name": "business_user"},
+    {"group_name": "Sales and Support", "project_name": "Mobile", "permission_set_name": "business_user"},
+    {"group_name": "Sales and Support", "project_name": "Sandbox - BETA Dashboards", "permission_set_name": "business_user"},
+    {"group_name": "Sales and Support", "project_name": "Office Monitors", "permission_set_name": "business_user"},
+    {"group_name": "Sales and Support", "project_name": "Sales & Support", "permission_set_name": "business_user"},
+    {"group_name": "Sales and Support", "project_name": "Operations", "permission_set_name": "business_user"},
+    {"group_name": "Sales and Support", "project_name": "Product", "permission_set_name": "business_user"},
+    {"group_name": "Sales and Support", "project_name": "BOD", "permission_set_name": "business_user"},
+]
