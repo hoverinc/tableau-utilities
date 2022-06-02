@@ -42,8 +42,8 @@ def all_columns_all_datasources(server):
         os.mkdir('tmp_tdsx')
         shutil.move(tdsx, 'tmp_tdsx')
         os.chdir('tmp_tdsx')
-        tds_path = extract_tds(os.path.basename(tdsx))
-        columns = TDS(tds_path).list('column')
+        tds_dict = extract_tds(os.path.basename(tdsx))
+        columns = TDS(tds_dict).list('column')
         rows.extend(columns)
     return rows
 

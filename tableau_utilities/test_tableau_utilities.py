@@ -48,9 +48,9 @@ def test_extract_tds():
 
     for folder in ['latest_xml_structure', 'legacy_xml_structure']:
         shutil.copyfile(f'resources/{folder}/test_data_source.tdsx', 'test_data_source.tdsx')
-        tds = tableau_utilities.extract_tds('test_data_source.tdsx')
+        tds_dict = tableau_utilities.extract_tds('test_data_source.tdsx')
         os.remove('test_data_source.tdsx')
-        assert isinstance(tds, type(collections.OrderedDict()))
+        assert isinstance(type(tds_dict), type(collections.OrderedDict))
 
 
 # TEST 3: update_tds()

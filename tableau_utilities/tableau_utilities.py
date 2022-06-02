@@ -68,9 +68,9 @@ def update_tdsx(tdsx_path, tds):
                 path = z.extract(member=f, path=tdsx_dir)
                 extracted_files.append(path)
                 if f.filename.endswith('.tds'):
-                    tds_path = path
+                    tds_dict = path
         # Update tds file
-        with open(tds_path, 'w') as tds_file:
+        with open(tds_dict, 'w') as tds_file:
             tds_file.write(xmltodict.unparse(tds, pretty=True))
         # Repack the tdsx
         with ZipFile(temp_tdsx_path, 'w') as z:
@@ -1048,8 +1048,8 @@ def main():
     if args.download_ds:
         tdsx = ts.download_datasource(args.id, name=args.name, project=args.project, include_extract=False)
         print(f'Downloaded to {tdsx}')
-    tds_path = extract_tds(tdsx)
-    tds = TDS(tds_path)
+    tds_dict = extract_tds(tdsx)
+    tds = TDS(tds_dict)
     if args.download_wb:
         ts.download_workbook(wbid=args.id, name=args.name, project=args.project,
                              include_extract=False)
@@ -1077,7 +1077,7 @@ def main():
             conn_role=args.conn_role, conn_db=args.conn_db, conn_schema=args.conn_schema,
             conn_host=args.conn_host, conn_warehouse=args.conn_warehouse
         )
-    update_tdsx(tdsx, tds_path)
+    update_tdsx(tdsx, tds_dict)
     if args.publish:
         ts.publish_datasource(tdsx, dsid=args.id, name=args.name, project=args.project)
     if args.embed_creds:
