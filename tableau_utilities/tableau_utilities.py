@@ -703,22 +703,11 @@ class TDS:
                 {name: self.__getattribute__(attr) for name, attr in identifier.items()}
                 for identifier in identifiers
             ]
-        # identifiers = []
-        # if item_type == 'folder':
-        #     identifiers = [
-        #         {"@name": self.folder_name, "@role": self.role},
-        #         {"@name": self.folder_name}
-        #     ]
-        # if item_type == 'column':
-        #     identifiers = [{"@name": self.column_name}]
-        # if item_type in ['datasource-metadata', 'datasource-metadata-cols', 'extract-metadata', 'extract-metadata-cols']:
-        #     identifiers = [{"remote-name": self.remote_name}]
+
         if item_type == 'connection':
             for item in section:
                 if item['connection']['@class'] == self.conn_type:
                     return item
-            # Only used for error message
-            # identifiers = [{"connection": {'@class': self.conn_type}}]
 
         for identifier in identifiers:
             try:
