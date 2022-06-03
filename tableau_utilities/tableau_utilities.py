@@ -68,9 +68,9 @@ def update_tdsx(tdsx_path, tds):
                 path = z.extract(member=f, path=tdsx_dir)
                 extracted_files.append(path)
                 if f.filename.endswith('.tds'):
-                    tds_dict = path
+                    tds_path = path
         # Update tds file
-        with open(tds_dict, 'w') as tds_file:
+        with open(tds_path, 'w') as tds_file:
             tds_file.write(xmltodict.unparse(tds, pretty=True))
         # Repack the tdsx
         with ZipFile(temp_tdsx_path, 'w') as z:

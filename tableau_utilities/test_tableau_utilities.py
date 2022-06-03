@@ -78,7 +78,7 @@ def test_add_column():
         caption = 'Cool Name'
         role = 'dimension'
         folder = 'tidy'
-        tds_path = tableau_utilities.extract_tds('test_data_source.tdsx')
+        tds_dict = tableau_utilities.extract_tds('test_data_source.tdsx')
         os.remove('test_data_source.tdsx')
         attribs = {
             'item_type': 'column',
@@ -87,7 +87,7 @@ def test_add_column():
             'folder_name': folder,
             'role': role
         }
-        tds = tableau_utilities.TDS(tds_path)
+        tds = tableau_utilities.TDS(tds_dict)
         tds.add(**attribs)
         col = tds.get(**attribs)
         folder = tds.get('folder', folder_name=folder, role=role)
@@ -110,7 +110,7 @@ def test_add_existing_column_fails():
         shutil.copyfile(f'resources/{folder}/test_data_source.tdsx', 'test_data_source.tdsx')
         args = add_column_args()
         add_existing_column_fails = False
-        tds_path = tableau_utilities.extract_tds('test_data_source.tdsx')
+        tds_dict = tableau_utilities.extract_tds('test_data_source.tdsx')
         os.remove('test_data_source.tdsx')
         attribs = {
             'item_type': 'column',
@@ -122,7 +122,7 @@ def test_add_existing_column_fails():
             'datatype': args.datatype,
             'desc': args.desc
         }
-        tds = tableau_utilities.TDS(tds_path)
+        tds = tableau_utilities.TDS(tds_dict)
         tds.add(**attribs)
         try:
             tds.add(**attribs)
@@ -137,11 +137,11 @@ def test_add_column_fails_with_wrong_folder():
     for folder in ['latest_xml_structure', 'legacy_xml_structure']:
         shutil.copyfile(f'resources/{folder}/test_data_source.tdsx', 'test_data_source.tdsx')
         args = add_column_args()
-        tds_path = tableau_utilities.extract_tds('test_data_source.tdsx')
+        tds_dict = tableau_utilities.extract_tds('test_data_source.tdsx')
         os.remove('test_data_source.tdsx')
         got_a_TableauUtilitiesError = False
         try:
-            tableau_utilities.TDS(tds_path).add(
+            tableau_utilities.TDS(tds_dict).add(
                 item_type='column',
                 column_name=args.column_name,
                 caption=args.caption,
@@ -163,14 +163,14 @@ def test_add_folder_tdsx_has_folder():
     for folder in ['latest_xml_structure', 'legacy_xml_structure']:
         shutil.copyfile(f'resources/{folder}/test_data_source.tdsx', 'test_data_source.tdsx')
         args = add_folder_args()
-        tds_path = tableau_utilities.extract_tds('test_data_source.tdsx')
+        tds_dict = tableau_utilities.extract_tds('test_data_source.tdsx')
         os.remove('test_data_source.tdsx')
         attribs = {
             'item_type': 'folder',
             'folder_name': args.folder_name,
             'role': args.role
         }
-        tds = tableau_utilities.TDS(tds_path)
+        tds = tableau_utilities.TDS(tds_dict)
         tds.add(**attribs)
         found_folder = tds.get(**attribs)
         assert found_folder is not None
@@ -182,14 +182,14 @@ def test_add_folder_tdsx_does_not_have_folder():
     for folder in ['latest_xml_structure', 'legacy_xml_structure']:
         shutil.copyfile(f'resources/{folder}/no_folder.tdsx', 'no_folder.tdsx')
         args = add_folder_args()
-        tds_path = tableau_utilities.extract_tds('no_folder.tdsx')
+        tds_dict = tableau_utilities.extract_tds('no_folder.tdsx')
         os.remove('no_folder.tdsx')
         attribs = {
             'item_type': 'folder',
             'folder_name': args.folder_name,
             'role': args.role
         }
-        tds = tableau_utilities.TDS(tds_path)
+        tds = tableau_utilities.TDS(tds_dict)
         tds.add(**attribs)
         found_folder = tds.get(**attribs)
         assert found_folder is not None
@@ -201,14 +201,14 @@ def test_add_folder_tdsx_has_one_folder():
     for folder in ['latest_xml_structure', 'legacy_xml_structure']:
         shutil.copyfile(f'resources/{folder}/one_folder.tdsx', 'one_folder.tdsx')
         args = add_folder_args()
-        tds_path = tableau_utilities.extract_tds('one_folder.tdsx')
+        tds_dict = tableau_utilities.extract_tds('one_folder.tdsx')
         os.remove('one_folder.tdsx')
         attribs = {
             'item_type': 'folder',
             'folder_name': args.folder_name,
             'role': args.role
         }
-        tds = tableau_utilities.TDS(tds_path)
+        tds = tableau_utilities.TDS(tds_dict)
         tds.add(**attribs)
         found_folder = tds.get(**attribs)
         assert found_folder is not None
@@ -220,7 +220,7 @@ def test_add_existing_folder_fails():
     for folder in ['latest_xml_structure', 'legacy_xml_structure']:
         shutil.copyfile(f'resources/{folder}/test_data_source.tdsx', 'test_data_source.tdsx')
         args = add_folder_args()
-        tds_path = tableau_utilities.extract_tds('test_data_source.tdsx')
+        tds_dict = tableau_utilities.extract_tds('test_data_source.tdsx')
         os.remove('test_data_source.tdsx')
         add_existing_folder_fails = False
         attribs = {
@@ -228,7 +228,7 @@ def test_add_existing_folder_fails():
             'folder_name': args.folder_name,
             'role': args.role
         }
-        tds = tableau_utilities.TDS(tds_path)
+        tds = tableau_utilities.TDS(tds_dict)
         tds.add(**attribs)
         try:
             tds.add(**attribs)
@@ -243,14 +243,14 @@ def test_delete_folder():
     for folder in ['latest_xml_structure', 'legacy_xml_structure']:
         shutil.copyfile(f'resources/{folder}/test_data_source.tdsx', 'test_data_source.tdsx')
         args = add_folder_args()
-        tds_path = tableau_utilities.extract_tds('test_data_source.tdsx')
+        tds_dict = tableau_utilities.extract_tds('test_data_source.tdsx')
         os.remove('test_data_source.tdsx')
         attribs = {
             'item_type': 'folder',
             'folder_name': args.folder_name,
             'role': args.role
         }
-        tds = tableau_utilities.TDS(tds_path)
+        tds = tableau_utilities.TDS(tds_dict)
         tds.add(**attribs)
         tds.delete(**attribs)
         found_folder = tds.get(**attribs)
@@ -262,14 +262,14 @@ def test_modify_column():
 
     for folder in ['latest_xml_structure', 'legacy_xml_structure']:
         shutil.copyfile(f'resources/{folder}/test_data_source.tdsx', 'test_data_source.tdsx')
-        tds_path = tableau_utilities.extract_tds('test_data_source.tdsx')
+        tds_dict = tableau_utilities.extract_tds('test_data_source.tdsx')
         os.remove('test_data_source.tdsx')
         attribs = {
             'item_type': 'column',
             'column_name': 'QUANTITY',
             'caption': 'Quantity'
         }
-        tds = tableau_utilities.TDS(tds_path)
+        tds = tableau_utilities.TDS(tds_dict)
         tds.update(**attribs)
         col = tds.get(**attribs)
         assert col['@caption'] == 'Quantity'
