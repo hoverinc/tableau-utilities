@@ -4,7 +4,6 @@ import collections
 import shutil
 import os
 from pathlib import Path
-from pprint import pprint
 
 
 def make_argv(user='fred', password='toast'):
