@@ -12,7 +12,7 @@ setup(
     long_description=readme,
     long_description_content_type='text/markdown',
     name="tableau_utilities",
-    version="1.0.1",
+    version="1.0.2",
     packages=['tableau_utilities'],
     package_data={"tableau_utilities": ["item_types.yml"]},
     include_package_data=True,

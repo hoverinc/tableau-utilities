@@ -57,8 +57,7 @@ connection:
       "@username": conn_user
       "@warehouse": conn_warehouse
   identifiers:
-    - connection:
-      '@class': conn_type
+    - '@class': conn_type
   locations:
     - element: connection
       after: repository-location
