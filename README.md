@@ -42,8 +42,8 @@ def main():
     # Download a datasource
     tdsx_path = ts.download_datasource(dsid=datasource_id, name=datasource_name, project=project_name)
     # Extract the TDS file from the TDSX for making updates
-    tds_path = tu.extract_tds(tdsx_path)
-    tds = tu.TDS(tds_path)
+    tds_dict = tu.extract_tds(tdsx_path)
+    tds = tu.TDS(tds_dict)
     # Add a column to the datasource
     tds.add(
         item_type='column',
@@ -58,7 +58,7 @@ def main():
         calculation='MAX([Created Datetime])'
     )
     # Update the datasource from alterations made to the TDS
-    tu.update_tdsx(tdsx_path, tds_path)
+    tu.update_tdsx(tdsx_path, tds_dict)
     # Publish the datasource
     ts.publish_datasource(tdsx_path, dsid=datasource_id, name=datasource_name, project=project_name)
 

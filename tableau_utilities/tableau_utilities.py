@@ -703,22 +703,11 @@ class TDS:
                 {name: self.__getattribute__(attr) for name, attr in identifier.items()}
                 for identifier in identifiers
             ]
-        # identifiers = []
-        # if item_type == 'folder':
-        #     identifiers = [
-        #         {"@name": self.folder_name, "@role": self.role},
-        #         {"@name": self.folder_name}
-        #     ]
-        # if item_type == 'column':
-        #     identifiers = [{"@name": self.column_name}]
-        # if item_type in ['datasource-metadata', 'datasource-metadata-cols', 'extract-metadata', 'extract-metadata-cols']:
-        #     identifiers = [{"remote-name": self.remote_name}]
+
         if item_type == 'connection':
             for item in section:
                 if item['connection']['@class'] == self.conn_type:
                     return item
-            # Only used for error message
-            # identifiers = [{"connection": {'@class': self.conn_type}}]
 
         for identifier in identifiers:
             try:
@@ -1048,8 +1037,8 @@ def main():
     if args.download_ds:
         tdsx = ts.download_datasource(args.id, name=args.name, project=args.project, include_extract=False)
         print(f'Downloaded to {tdsx}')
-    tds_path = extract_tds(tdsx)
-    tds = TDS(tds_path)
+    tds_dict = extract_tds(tdsx)
+    tds = TDS(tds_dict)
     if args.download_wb:
         ts.download_workbook(wbid=args.id, name=args.name, project=args.project,
                              include_extract=False)
@@ -1077,7 +1066,7 @@ def main():
             conn_role=args.conn_role, conn_db=args.conn_db, conn_schema=args.conn_schema,
             conn_host=args.conn_host, conn_warehouse=args.conn_warehouse
         )
-    update_tdsx(tdsx, tds_path)
+    update_tdsx(tdsx, tds_dict)
     if args.publish:
         ts.publish_datasource(tdsx, dsid=args.id, name=args.name, project=args.project)
     if args.embed_creds:
