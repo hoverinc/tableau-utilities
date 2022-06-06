@@ -364,3 +364,58 @@ def test_find_column():
         attribs = {'item_type': 'column', 'column_name': 'Number of Records'}
         assert tableau_utilities.TDS(tds_extract).get(**attribs) is not None
         assert tableau_utilities.TDS(tds_live).get(**attribs) is not None
+
+
+# TEST 16: list_connections()
+def test_list_connections():
+
+    for folder in ['latest_xml_structure', 'legacy_xml_structure']:
+        shutil.copyfile(f'resources/{folder}/test_data_source.tdsx', 'test_data_source.tdsx')
+        shutil.copyfile(f'resources/{folder}/test_live_data_source.tdsx', 'test_live_data_source.tdsx')
+        tds_extract = tableau_utilities.extract_tds('test_data_source.tdsx')
+        tds_live = tableau_utilities.extract_tds('test_live_data_source.tdsx')
+        os.remove('test_data_source.tdsx')
+        os.remove('test_live_data_source.tdsx')
+        assert tableau_utilities.TDS(tds_extract).list('connection') is not None
+        assert tableau_utilities.TDS(tds_live).list('connection') is not None
+
+
+# TEST 17: get_connections()
+def test_get_connection():
+
+    for folder in ['latest_xml_structure', 'legacy_xml_structure']:
+        shutil.copyfile(f'resources/{folder}/test_data_source.tdsx', 'test_data_source.tdsx')
+        shutil.copyfile(f'resources/{folder}/test_live_data_source.tdsx', 'test_live_data_source.tdsx')
+        tds_extract = tableau_utilities.extract_tds('test_data_source.tdsx')
+        tds_live = tableau_utilities.extract_tds('test_live_data_source.tdsx')
+        os.remove('test_data_source.tdsx')
+        os.remove('test_live_data_source.tdsx')
+        assert tableau_utilities.TDS(tds_extract).get('connection', conn_type='snowflake') is not None
+        assert tableau_utilities.TDS(tds_live).get('connection', conn_type='snowflake') is not None
+
+
+# TEST 18: update_connections()
+def test_update_connection():
+
+    for folder in ['latest_xml_structure', 'legacy_xml_structure']:
+        shutil.copyfile(f'resources/{folder}/test_data_source.tdsx', 'test_data_source.tdsx')
+        shutil.copyfile(f'resources/{folder}/test_live_data_source.tdsx', 'test_live_data_source.tdsx')
+        tds_extract = tableau_utilities.TDS(tableau_utilities.extract_tds('test_data_source.tdsx'))
+        tds_live = tableau_utilities.TDS(tableau_utilities.extract_tds('test_live_data_source.tdsx'))
+        os.remove('test_data_source.tdsx')
+        os.remove('test_live_data_source.tdsx')
+        attributes = {
+            'conn_type': 'snowflake',
+            'conn_db': 'FAKE_DB',
+            'conn_schema': 'FAKE_SCHEMA',
+            'conn_host': 'my_account_name.snowflakecomputing.com',
+            'conn_role': 'FAKE_ROLE',
+            'conn_user': 'FAKE_USER',
+            'conn_warehouse': 'FAKE_WAREHOUSE'
+        }
+        tds_extract.update('connection', **attributes)
+        tds_live.update('connection', **attributes)
+        tds_extract_conn = tds_extract.get('connection', conn_type='snowflake')
+        tds_live_conn = tds_live.get('connection', conn_type='snowflake')
+        assert tds_extract_conn['connection']['@dbname'] == 'FAKE_DB'
+        assert tds_live_conn['connection']['@dbname'] == 'FAKE_DB'
