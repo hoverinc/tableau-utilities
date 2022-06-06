@@ -527,7 +527,7 @@ class TDS:
             raise TableauUtilitiesError('Missing local or remote name')
         for item_type in ['datasource-metadata', 'extract-metadata']:
             section = self.__get_section(item_type)
-            if not section:
+            if not section and item_type == 'datasource-metadata':
                 raise TableauUtilitiesError('Metadata does not exist')
             metadata = self.__get_item(item_type, section)
             if metadata:
@@ -552,7 +552,7 @@ class TDS:
                 # Set the mapping for the metadata and column
                 self.__set_cols_mapping(item_type, old_local_name, new_local_name, table=metadata["parent-name"])
 
-            else:
+            elif item_type == 'datasource-metadata':
                 raise TableauUtilitiesError('Metadata does not exist')
 
     def __set_cols_mapping(self, item_type, old_local_name, new_local_name, table):
