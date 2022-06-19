@@ -11,7 +11,7 @@ import shutil
 import re
 import ast
 from copy import deepcopy
-from tdscc import TDS, TableauServer, extract_tds, update_tdsx, TDSCCError
+from tableau_utilities import TDS, TableauServer, extract_tds, update_tdsx, TableauUtilitiesError
 
 from airflow import DAG, models
 from airflow.operators.python_operator import PythonOperator
@@ -103,7 +103,7 @@ def refresh_datasource(tasks, tableau_conn_id='tableau_default', snowflake_conn_
         ts.refresh_datasource(tasks["dsid"])
         logging.info('Refreshed %s %s', tasks["dsid"], tasks['datasource_name'])
     except Exception as error:
-        if isinstance(error, TDSCCError) or 'Not queuing a duplicate.' in str(error):
+        if isinstance(error, TableauUtilitiesError) or 'Not queuing a duplicate.' in str(error):
             logging.info(error)
             logging.info('Skipping Refresh %s %s ... Already running',
                          tasks["dsid"], tasks['datasource_name'])
@@ -489,7 +489,7 @@ class TableauDatasourceUpdate(models.BaseOperator):
             try:
                 logging.info('Going to %s %s: %s -- %s', item_type, tdsx, item)
                 TDS(tds=self.tds).__getattribute__(action)(item_type, **item)
-            except TDSCCError as err:
+            except TableauUtilitiesError as err:
                 # If a source is updated again before it has refreshed in tableau,
                 # it will not detect the folders in the source, and try to add them all again
                 if item_type == 'folder' and action == 'add':
