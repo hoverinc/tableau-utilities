@@ -185,7 +185,7 @@ class TableauDatasourceTasks(models.BaseOperator):
         Returns: True, False, or None if the folder doesn't exist.
         """
 
-        folder = TDS(tds=self.td).get('folder', **col_attributes)
+        folder = TDS(tds=self.tds).get('folder', **col_attributes)
         if not folder:
             return None
         if folder.get('folder-item') is None:
