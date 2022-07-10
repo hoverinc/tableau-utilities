@@ -16,9 +16,19 @@ from tableau_utilities import TDS, TableauServer, extract_tds, update_tdsx, Tabl
 from airflow import DAG, models
 from airflow.operators.python_operator import PythonOperator
 from airflow.hooks.base_hook import BaseHook
+from airflow.models import Variable
 
 
-CFG_PATH = 'dags/tableau_datasource_update/configs'
+SNOWFLAKE_WAREHOUSE = Variable.get('snowflake_warehouse')
+SNOWFLAKE_DATABASE = Variable.get('snowflake_database')
+SNOWFLAKE_SCHEMA = Variable.get('snowflake_schema')
+SNOWFLAKE_ROLE = Variable.get('snowflake_role')
+SNOWFLAKE_USER = Variable.get('snowflake_user')
+SNOWFLAKE_PASSWORD = Variable.get('snowflake_password')
+SNOWFLAKE_URL = Variable.get('snowflake_url')
+
+
+CFG_PATH = 'dags/tableau/configs'
 with open(os.path.join(CFG_PATH, 'column_persona_config.json')) as read_config:
     PERSONA_CFG = json.load(read_config)
 with open(os.path.join(CFG_PATH, 'datasource_project_config.json')) as read_config:
@@ -77,8 +87,8 @@ def refresh_datasource(tasks, tableau_conn_id='tableau_default', snowflake_conn_
     while embeded_credentials_attempts < embed_tries:
         try:
             ts.embed_credentials(tasks["dsid"], connection_type='snowflake',
-                                 credentials={'username': snowflake_conn.login,
-                                              'password': snowflake_conn.password})
+                                 credentials={'username': SNOWFLAKE_USER,
+                                              'password': SNOWFLAKE_PASSWORD})
             logging.info('Successfully embedded credentials')
             embeded_credentials_attempts = embed_tries
         except AttributeError as err:
@@ -93,7 +103,8 @@ def refresh_datasource(tasks, tableau_conn_id='tableau_default', snowflake_conn_
 
     # All listed datasources in this variable won't be refreshed
     # Common use-case for not refreshing a datasource, is because it has a live connection
-    no_refresh = ast.literal_eval(models.Variable.get('NO_REFRESH_DATASOURCES'))
+    # no_refresh = ast.literal_eval(models.Variable.get('NO_REFRESH_DATASOURCES'))
+    no_refresh = ['nothing']
     if tasks['datasource_name'] in no_refresh:
         logging.info('No refresh required - skipping refresh of %s %s',
                      tasks["dsid"], tasks['datasource_name'])
@@ -125,16 +136,17 @@ class TableauDatasourceTasks(models.BaseOperator):
     Returns: A dict of tasks to be updated for the datasource.
     """
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.snowflake_conn_id = kwargs.get('snowflake_conn_id', 'snowflake_default')
-        self.tableau_conn_id = kwargs.get('tableau_conn_id', 'tableau_default')
+        # super().__init__(*args, **kwargs)
+        self.snowflake_conn_id = kwargs.pop('snowflake_conn_id', 'snowflake_default')
+        self.tableau_conn_id = kwargs.pop('tableau_conn_id', 'tableau_default')
         self.actions = ['add_column', 'modify_column', 'add_folder', 'delete_folder', 'update_connection']
         self.tasks = {a: [] for a in self.actions}
-        self.tasks['datasource_name'] = kwargs.get('datasource_name')
-        self.tasks['project'] = kwargs.get('project')
-        self.column_cfg = kwargs.get('column_cfg', {}).get(self.tasks['datasource_name'])
-        self.persona_cfg = kwargs.get('persona_cfg')
+        self.tasks['datasource_name'] = kwargs.pop('datasource_name')
+        self.tasks['project'] = kwargs.pop('project')
+        self.column_cfg = kwargs.pop('column_cfg', {}).get(self.tasks['datasource_name'])
+        self.persona_cfg = kwargs.pop('persona_cfg')
         self.tds = None
+        super().__init__(*args, **kwargs)
 
     def __set_connection_attributes(self):
         """ Sets attributes of the datasource connection. """
@@ -147,12 +159,12 @@ class TableauDatasourceTasks(models.BaseOperator):
 
         return {
             'conn_type': 'snowflake',
-            'conn_db': snowflake_conn.extra_dejson['database'],
-            'conn_schema': snowflake_conn.extra_dejson['schema'],
-            'conn_host': f'{snowflake_conn.host}.snowflakecomputing.com',
-            'conn_role': snowflake_conn.extra_dejson['role'],
-            'conn_user': snowflake_conn.login,
-            'conn_warehouse': snowflake_conn.extra_dejson['warehouse']
+            'conn_db': SNOWFLAKE_DATABASE,
+            'conn_schema': SNOWFLAKE_SCHEMA,
+            'conn_host': SNOWFLAKE_URL,
+            'conn_role': SNOWFLAKE_ROLE,
+            'conn_user': SNOWFLAKE_USER,
+            'conn_warehouse': SNOWFLAKE_WAREHOUSE
         }
 
     @staticmethod
@@ -461,13 +473,15 @@ class TableauDatasourceUpdate(models.BaseOperator):
         tableau_conn_id (str): The Tableau connection ID
     """
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.tasks_task_id = kwargs.get('tasks_task_id')
-        self.tableau_conn_id = kwargs.get('tableau_conn_id', 'tableau_default')
-        self.snowflake_conn_id = kwargs.get('snowflake_conn_id', 'snowflake_default')
+        # super().__init__(*args, **kwargs)
+        self.tasks_task_id = kwargs.pop('tasks_task_id')
+        self.tableau_conn_id = kwargs.pop('tableau_conn_id', 'tableau_default')
+        self.snowflake_conn_id = kwargs.pop('snowflake_conn_id', 'snowflake_default')
         # Set on execute
         self.tasks = None
         self.tds = None
+        # self.tasks_task_id = None
+        super().__init__(*args, **kwargs)
 
     def __has_any_task(self):
         """ Check if there are any tasks to be done """
@@ -514,7 +528,8 @@ class TableauDatasourceUpdate(models.BaseOperator):
         try:
             # Skip updating these datasources until we optimize them well enough
             # to downloaded & published without timing out
-            excluded = ast.literal_eval(models.Variable.get('EXCLUDED_DATASOURCES'))
+            # excluded = ast.literal_eval(models.Variable.get('EXCLUDED_DATASOURCES'))
+            excluded = ['nothing']
             if self.tasks['datasource_name'] in excluded:
                 logging.info('Marked as excluded - Skipping Updating Datasource: %s',
                              self.tasks['datasource_name'])
