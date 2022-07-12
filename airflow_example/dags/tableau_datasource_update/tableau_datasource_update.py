@@ -480,7 +480,6 @@ class TableauDatasourceUpdate(models.BaseOperator):
         # Set on execute
         self.tasks = None
         self.tds = None
-        # self.tasks_task_id = None
         super().__init__(*args, **kwargs)
 
     def __has_any_task(self):
