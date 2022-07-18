@@ -855,8 +855,7 @@ def main():
     tds_dict = extract_tds(tdsx)
     tds = TDS(tds_dict)
     if args.download_wb:
-        ts.download_workbook(wbid=args.id, name=args.name, project=args.project,
-                             include_extract=False)
+        ts.download_workbook(args.id, name=args.name, project=args.project, include_extract=False)
     if args.add_column:
         tds.add(
             item_type='column', column_name=args.column_name,
@@ -886,9 +885,9 @@ def main():
         ts.publish_datasource(tdsx, dsid=args.id, name=args.name, project=args.project)
     if args.embed_creds:
         creds = {'username': args.conn_user, 'password': args.conn_pw}
-        ts.embed_credentials(dsid=args.id, credentials=creds, connection_type=args.conn_type)
+        ts.embed_datasource_credentials(args.id, credentials=creds, connection_type=args.conn_type)
     if args.refresh:
-        ts.refresh_datasource(dsid=args.id, name=args.name, project=args.project)
+        ts.refresh_datasource(args.id, name=args.name, project=args.project)
         print(f'Refreshed {args.id}')
 
 

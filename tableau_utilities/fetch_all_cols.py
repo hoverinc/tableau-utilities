@@ -31,18 +31,18 @@ def all_columns_all_datasources(server):
     """ Gets a list of all columns in all datasources
 
     Args:
-        server (obj): A Tableau server object
+        server (TableauServer): A Tableau server object
     """
     shutil.rmtree('tmp_tdsx', ignore_errors=True)
-    datasource_list = server.list_datasources(server, print_it=False)
+    datasource_list = server.get_datasources()
     rows = []
-    for project_and_dsname in datasource_list:
-        print(project_and_dsname, datasource_list[project_and_dsname])
-        tdsx = server.download_datasource(datasource_list[project_and_dsname], include_extract=False)
+    for datasource in server.get_datasources():
+        print(datasource.project_name, (datasource.id, datasource.name))
+        tdsx_path = server.download_datasource(datasource.id, include_extract=False)
         os.mkdir('tmp_tdsx')
-        shutil.move(tdsx, 'tmp_tdsx')
+        shutil.move(tdsx_path, 'tmp_tdsx')
         os.chdir('tmp_tdsx')
-        tds_dict = extract_tds(os.path.basename(tdsx))
+        tds_dict = extract_tds(os.path.basename(tdsx_path))
         columns = TDS(tds_dict).list('column')
         rows.extend(columns)
     return rows
@@ -53,7 +53,7 @@ ts = TableauServer(
     user=args.user,
     password=args.password,
     site=args.site,
-    url=f'https://{args.server}.online.tableau.com',
+    host=f'https://{args.server}.online.tableau.com',
     api_version=args.api_version
 )
 config = all_columns_all_datasources(ts)
