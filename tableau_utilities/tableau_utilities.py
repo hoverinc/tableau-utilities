@@ -7,7 +7,7 @@ import shutil
 import tableauserverclient as tsc
 from zipfile import ZipFile
 from collections import OrderedDict
-
+from tableau_utilities.tableau_server import TableauServer
 
 ITEM_TYPES_YML = os.path.join(os.path.dirname(__file__), 'item_types.yml')
 
@@ -82,193 +82,6 @@ def update_tdsx(tdsx_path, tds):
         shutil.rmtree(temp_tdsx_folder)
     else:
         return None
-
-
-class TableauServer:
-    """ Connects to Tableau Online.
-        Allows functionality to download, publish, refresh,
-        and list information for sources and workbooks.
-
-    Args:
-        user (str): Tableau user name
-        password (str): Tableau password
-        site (str): The Tableau site name
-            i.e. <site> in https://<server_address>.online.tableau.com/#/site/<site>
-        url (str): The URL to Tableau Online
-            i.e. https://<server_address>.online.tableau.com
-        api_version (float): The Tableau API version
-    """
-    def __init__(self, **kwargs):
-        user = kwargs.pop('user', None)
-        password = kwargs.pop('password', None)
-        site = kwargs.pop('site', None)
-        url = kwargs.pop('url', None)
-        api_version = kwargs.pop('api_version', 3.9)
-        # Connect to Tableau Online when class is initialized
-        self.server = self.__set_server(user, password, site, url, api_version)
-
-    @staticmethod
-    def __set_server(user, password, site, url, api_version):
-        """ Logs in to Tableau Online and sets the server object """
-        tableau_auth = tsc.TableauAuth(user, password, site)
-        server = tsc.Server(url, api_version)
-        server.auth.sign_in(tableau_auth)
-        return server
-
-    def list_objects(self, object_type, project=None, print_info=True):
-        """ Fetch the name, project, and ID of the objects.
-
-        Args:
-            object_type: The type of objects to list, i.e. workbooks or datasources
-            project: The name of the project to list objects for
-            print_info: True to print the objects info; name, project, and ID
-
-        Return: A table of information about all published objects
-        """
-        id_by_project_and_name = dict()
-        objs = [o for o in tsc.Pager(self.server.__getattribute__(object_type))
-                if o.project_name == project or not project]
-
-        for o in objs:
-            obj_id = o.id
-            obj_name = o.name
-            project_name = o.project_name
-            if print_info:
-                try:
-                    print(f'{obj_id} : {obj_name} : {project_name}')
-                except UnicodeEncodeError as err:
-                    print(err)
-            id_by_project_and_name[(project_name, obj_name)] = obj_id
-        return id_by_project_and_name
-
-    def list_datasources(self, project=None, print_info=True):
-        """ Fetch the name, project, and ID of the datasources.
-
-        :param project: The name of the project to list datasources for
-        :param print_info: True to print the datasource info; name, project, and ID
-        :return: A table of information about all published datasources
-        """
-        return self.list_objects('datasources', project, print_info)
-
-    def list_workbooks(self, project=None, print_info=True):
-        """ Fetch the name, project, and ID of the workbooks.
-
-        :param project: The name of the project to list workbooks for
-        :param print_info: True to print the workbooks info; name, project, and ID
-        :return: A table of information about all published datasources
-        """
-        return self.list_objects('workbooks', project, print_info)
-
-    def get_datasource_id(self, name, project):
-        """ Get the id of the datasource by name and project
-
-        :param name: The name of the datasource
-        :param project: The name of the project the datasource is in
-        :return: The datasource ID
-        """
-        tbl = self.list_datasources(project=project, print_info=False)
-        return tbl.get((project, name))
-
-    def get_workbook_id(self, name, project):
-        """ Get the id of the workbook by name and project
-
-        :param name: The name of the workbook
-        :param project: The name of the project the workbook is in
-        :return: The workbook ID
-        """
-        tbl = self.list_workbooks(project=project, print_info=False)
-        return tbl.get((project, name))
-
-    def download_datasource(self, dsid=None, name=None, project=None, filepath=None, include_extract=False):
-        """ Download a datasource from Tableau Online.
-            Provide either the datasource id, or the name and project of the source.
-
-        :param dsid: The id of the datasource
-        :param name: The name of the datasource
-        :param project: The project the datasource is published to
-        :param filepath: The path to output the download to
-        :param include_extract: True to include the extract for the datasource
-        :return: The path to the downloaded source
-        """
-        if not dsid:
-            dsid = self.get_datasource_id(name, project)
-        return self.server.datasources.download(dsid, filepath=filepath, include_extract=include_extract)
-
-    def download_workbook(self, wbid=None, name=None, project=None, filepath=None, include_extract=False):
-        """ Download a workbook from Tableau Online.
-            Provide either the workbook id, or the name and project of the workbook.
-
-        :param wbid: The id of the workbook
-        :param name: The name of the workbook
-        :param project: The project the workbook is published to
-        :param filepath: The path to output the download to
-        :param include_extract: True to include the extract for the workbook
-        :return: The path to the downloaded workbook
-        """
-        if not wbid:
-            wbid = self.get_workbook_id(name, project)
-        return self.server.workbooks.download(wbid, filepath=filepath, include_extract=include_extract)
-
-    def publish_datasource(self, tdsx_path, dsid=None, name=None, project=None, keep_tdsx=True):
-        """ Publish a datasource from the local tdsx file.
-            Provide either the datasource id, or the name and project of the source.
-
-        :param tdsx_path: The path to the tdsx file
-        :param dsid: The id of the datasource
-        :param name: The name of the datasource
-        :param project: The project the datasource is published to
-        :param keep_tdsx: False to delete the tdsx file after publishing
-        :return: None
-        """
-        if not dsid:
-            dsid = self.get_datasource_id(name, project)
-
-        datasource_item = self.server.datasources.get_by_id(dsid)
-        self.server.datasources.publish(datasource_item, tdsx_path, 'Overwrite')
-        if not keep_tdsx:
-            os.remove(tdsx_path)
-
-    def refresh_datasource(self, dsid=None, name=None, project=None):
-        """ Refresh a datasource extract in Tableau Online.
-            Provide either the datasource id, or the name and project of the source.
-
-        :param dsid: The id of the datasource
-        :param name: The name of the datasource
-        :param project: The project the datasource is published to
-        :return: None
-        """
-        if not dsid:
-            dsid = self.get_datasource_id(name, project)
-
-        datasource_item = self.server.datasources.get_by_id(dsid)
-        try:
-            self.server.datasources.refresh(datasource_item)
-        except tsc.server.endpoint.exceptions.InternalServerError as e:
-            raise TableauUtilitiesError(f'{e}\nDatasource extract already refreshing')
-
-    def embed_credentials(self, dsid, credentials, connection_type):
-        """ Embed the given credentials for all connections of a datasource of the given connection type.
-            Only embeds Username and Password credentials.
-
-        :param dsid: The ID of the datasource
-        :param connection_type: Type of conncetion you want to embed creds for, i.e. snowflake
-        :param credentials: The credentials dict to embed, i.e. {'username': 'user', 'password': 'password'}
-        return: None
-        """
-        required_creds = ['username', 'password']
-        missing_required_creds = [i for i in required_creds if i not in credentials or not credentials[i]]
-        if missing_required_creds:
-            raise TableauUtilitiesError(f'Missing required credentials: {", ".join(missing_required_creds)}')
-
-        datasource_item = self.server.datasources.get_by_id(dsid)
-        self.server.datasources.populate_connections(datasource_item)
-
-        for c in datasource_item.connections:
-            if c.connection_type.lower() == connection_type.lower():
-                c.username = credentials['username']
-                c.password = credentials['password']
-                c.embed_password = True
-                self.server.datasources.update_connection(datasource_item, c)
 
 
 class TDS:
@@ -1028,12 +841,14 @@ def main():
             user=args.user,
             password=args.password,
             site=args.site,
-            url=f'https://{args.server}.online.tableau.com'
+            host=f'https://{args.server}.online.tableau.com'
         )
     if args.list_datasources:
-        ts.list_datasources(project=args.project, print_info=True)
+        for d in ts.get_datasources():
+            print(d.id, '::', d.name, '::', d.project_name)
     if args.list_workbooks:
-        ts.list_workbooks(project=args.project, print_info=True)
+        for w in ts.get_workbooks():
+            print(w.id, '::', w.name, w.project_name)
     if args.download_ds:
         tdsx = ts.download_datasource(args.id, name=args.name, project=args.project, include_extract=False)
         print(f'Downloaded to {tdsx}')

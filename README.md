@@ -60,7 +60,7 @@ def main():
     # Update the datasource from alterations made to the TDS
     tu.update_tdsx(tdsx_path, tds_dict)
     # Publish the datasource
-    ts.publish_datasource(tdsx_path, dsid=datasource_id, name=datasource_name, project=project_name)
+    ts.publish_datasource(tdsx_path, dsid=datasource_id, datasource_name=datasource_name, project=project_name)
 
 
 if __name__ == '__main__':
