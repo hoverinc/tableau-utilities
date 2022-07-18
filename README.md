@@ -7,16 +7,13 @@ A module and CLI Utility for managing Tableau objects, locally, and in Tableau O
 ### Installation
 
 #### From pypi
-
 - `pip install tableau-utilities`
 
 #### Locally using pip
-
 - `cd tableau-utilities`
 - `pip install ./`
 
-### Confirm installation
-
+#### Confirm installation
 - `which tableau_utilities`
   - _Describes where tableau-utilities has been installed_
 - `tableau_utilities --help`
@@ -27,40 +24,45 @@ A module and CLI Utility for managing Tableau objects, locally, and in Tableau O
 #### Sample
 
 ```python
-import tableau_utilities as tu
+from tableau_utilities import Datasource, TableauServer
+from tableau_utilities import tableau_file_objects as tfo
 from my_secrets import tableau_creds
 
 
 def main():
-    # The datasource can be defined either by the ID, or name and project
+    # The datasource identified by the ID
     datasource_id = 'abc123'
-    datasource_name = None
-    project_name = None
 
     # Create a Tableau Connection
-    ts = tu.TableauServer(**tableau_creds)
-    # Download a datasource
-    tdsx_path = ts.download_datasource(dsid=datasource_id, name=datasource_name, project=project_name)
-    # Extract the TDS file from the TDSX for making updates
-    tds_dict = tu.extract_tds(tdsx_path)
-    tds = tu.TDS(tds_dict)
-    # Add a column to the datasource
-    tds.add(
-        item_type='column',
-        column_name='Calculation_1',
-        remote_name='Calculation_1',
+    ts = TableauServer(**tableau_creds)
+    # Download a Datasource
+    datasource_path = ts.download_datasource(datasource_id=datasource_id)
+    # Define a Datasource object from the datasource_path
+    datasource = Datasource(datasource_path)
+    # Define a new folder
+    folder = tfo.Folder(name='Time Dimensions')
+    # Define a new Column
+    column = tfo.Column(
+        name='Calculation_1',
         caption='Max Created Datetime',
-        folder_name='Time Dimensions',
         role='dimension',
-        role_type='ordinal',
+        type='ordinal',
         datatype='datetime',
         desc='The maximum Created Datetime.',
         calculation='MAX([Created Datetime])'
     )
-    # Update the datasource from alterations made to the TDS
-    tu.update_tdsx(tdsx_path, tds_dict)
-    # Publish the datasource
-    ts.publish_datasource(tdsx_path, dsid=datasource_id, name=datasource_name, project=project_name)
+    # Add the new column to the new folder, as a folder-item
+    folder_item = tfo.FolderItem(name=column.name)
+    folder.folder_item.add(folder_item)
+    # Add the column and folder to the datasource
+    datasource.columns.add(column)
+    datasource.folders_common.add(folder)
+    # Enforce the Column, to update the Metadata
+    datasource.enforce_column(column, remote_name='max_created_at')
+    # Save changes to the Datasource
+    datasource.save()
+    # Publish & Overwrite the Datasource
+    ts.publish_datasource(datasource_path, datasource_id=datasource_id)
 
 
 if __name__ == '__main__':
@@ -70,12 +72,22 @@ if __name__ == '__main__':
 
 ### CLI Usage
 
-- `tableau_utilities --user <login> --password <password> --site <site name> --server <server address> --list_datasources`
-  - Lists all datasources in your site
-- `tableau_utilities --user <login> --password <password> --site <site name> --server <server address> --download_ds --name "Datasource Name" --project "Project Name"`
-  - Download a datasource
-- `tableau_utilities --tdsx path/to/file.tdsx --add_column --name "column_name" --folder "Folder Name" --caption "Column Alias" --desc "column description"`
-  - Add column to datasource
+- Lists all datasources in your site
+  - `tableau_utilities --user <login> --password <password> --site <site name> --server <server address> --list_datasources`
+  - OR `tableau_utilities --settings_path ./settings.yaml --list_datasources`
+- Download a datasource
+  - `tableau_utilities --user <login> --password <password> --site <site name> --server <server address> --download_ds --name "Datasource Name" --project "Project Name"`
+  - OR `tableau_utilities --settings_path ./settings.yaml --download_ds --name "Datasource Name" --project "Project Name"`
+- Add column to datasource
+  - `tableau_utilities --tdsx path/to/file.tdsx --add_column --name "column_name" --folder "Folder Name" --caption "Column Alias" --desc "column description"`
+
+### Development
+- `pip install -r requirements/dev.txt`
+- Create `settings.yaml` file in the `tableau_utilities` directory
+  - See `sample_settings.yaml` for an example
+- `test_tableau_utilities`
+  - Add tests as needed
+  - Run when making changes
 
 ## Maintenance
 
