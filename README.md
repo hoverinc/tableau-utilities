@@ -7,16 +7,13 @@ A module and CLI Utility for managing Tableau objects, locally, and in Tableau O
 ### Installation
 
 #### From pypi
-
 - `pip install tableau-utilities`
 
 #### Locally using pip
-
 - `cd tableau-utilities`
 - `pip install ./`
 
-### Confirm installation
-
+#### Confirm installation
 - `which tableau_utilities`
   - _Describes where tableau-utilities has been installed_
 - `tableau_utilities --help`
@@ -27,40 +24,45 @@ A module and CLI Utility for managing Tableau objects, locally, and in Tableau O
 #### Sample
 
 ```python
-import tableau_utilities as tu
+from tableau_utilities import Datasource, TableauServer
+from tableau_utilities import tableau_file_objects as tfo
 from my_secrets import tableau_creds
 
 
 def main():
-    # The datasource can be defined either by the ID, or name and project
+    # The datasource identified by the ID
     datasource_id = 'abc123'
-    datasource_name = None
-    project_name = None
 
     # Create a Tableau Connection
-    ts = tu.TableauServer(**tableau_creds)
-    # Download a datasource
-    tdsx_path = ts.download_datasource(dsid=datasource_id, name=datasource_name, project=project_name)
-    # Extract the TDS file from the TDSX for making updates
-    tds_dict = tu.extract_tds(tdsx_path)
-    tds = tu.TDS(tds_dict)
-    # Add a column to the datasource
-    tds.add(
-        item_type='column',
-        column_name='Calculation_1',
-        remote_name='Calculation_1',
+    ts = TableauServer(**tableau_creds)
+    # Download a Datasource
+    datasource_path = ts.download_datasource(datasource_id=datasource_id)
+    # Define a Datasource object from the datasource_path
+    datasource = Datasource(datasource_path)
+    # Define a new folder
+    folder = tfo.Folder(name='Time Dimensions')
+    # Define a new Column
+    column = tfo.Column(
+        name='Calculation_1',
         caption='Max Created Datetime',
-        folder_name='Time Dimensions',
         role='dimension',
-        role_type='ordinal',
+        type='ordinal',
         datatype='datetime',
         desc='The maximum Created Datetime.',
         calculation='MAX([Created Datetime])'
     )
-    # Update the datasource from alterations made to the TDS
-    tu.update_tdsx(tdsx_path, tds_dict)
-    # Publish the datasource
-    ts.publish_datasource(tdsx_path, dsid=datasource_id, name=datasource_name, project=project_name)
+    # Add the new column to the new folder, as a folder-item
+    folder_item = tfo.FolderItem(name=column.name)
+    folder.folder_item.add(folder_item)
+    # Add the column and folder to the datasource
+    datasource.columns.add(column)
+    datasource.folders_common.add(folder)
+    # Enforce the Column, to update the Metadata
+    datasource.enforce_column(column, remote_name='max_created_at')
+    # Save changes to the Datasource
+    datasource.save()
+    # Publish & Overwrite the Datasource
+    ts.publish_datasource(datasource_path, datasource_id=datasource_id)
 
 
 if __name__ == '__main__':
@@ -68,14 +70,129 @@ if __name__ == '__main__':
 
 ```
 
-### CLI Usage
+## CLI Usage
 
-- `tableau_utilities --user <login> --password <password> --site <site name> --server <server address> --list_datasources`
-  - Lists all datasources in your site
-- `tableau_utilities --user <login> --password <password> --site <site name> --server <server address> --download_ds --name "Datasource Name" --project "Project Name"`
-  - Download a datasource
-- `tableau_utilities --tdsx path/to/file.tdsx --add_column --name "column_name" --folder "Folder Name" --caption "Column Alias" --desc "column description"`
-  - Add column to datasource
+### Help
+See the top level CLI arguments including the commands.
+```commandline
+tableau_utilities --help
+```
+
+See the help for a `command`.
+Each command has arguments for a different grouping of actions.
+```commandline
+tableau_utilities server_operate --help
+```
+
+### Authentication Options
+Pass your credentials into the command
+```commandline
+tableau_utilities --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az server_info --list_object datasource --list_format names
+```
+
+Use a settings YAML file
+```commandline
+tableau_utilities  --settings_path my_settings.yaml --list_object datasource --list_format names
+```
+
+Use environment variables
+```commandline
+tableau_utilities server_info --list_object datasource --list_format names
+```
+
+Using the 1password CLI with op run
+```commandline
+op run --env-file=.env -- tableau_utilities server_info list_--list_object datasource --list_format names
+```
+
+### Examples for each command
+
+#### server_info
+Lists all datasources in your site ordered by ID
+```commandline
+tableau_utilities --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az server_info --list_object datasource --list_format ids_names --list_sort_field id
+```
+
+#### server_operate
+Download a datasource by name
+```commandline
+tableau_utilities --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az --name 'My Awesome Datasource' --project_name 'My Fabulous Project' server_operate --download datasource
+```
+
+#### connection
+Embed a username and password in a datasource in Tableau Online/Server
+```commandline
+tableau_utilities --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az --location online --name 'My Awesome Datasource' --project_name 'My Fabulous Project' --save_tds connection --connection_operation embed_user_pass --conn_type snowflake --conn_user MY_SNOWFLAKE_USER --conn_pw '1234567abc!'
+```
+
+#### datasource
+Save the TDS for a datasource from a local datasource to view the raw XML
+```commandline
+tableau_utilities --location local --file_path '/Downloads/My Awesome Datasource.tdsx' --save_tds  datasource
+```
+
+Save the TDS for a datasource from an online datasource to view the raw XML
+```commandline
+tableau_utilities --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az --location online --name 'My Awesome Datasource' --project_name 'My Cool Project' --save_tds datasource
+```
+
+Change the folder for a column
+```commandline
+tableau_utilities  --location local --file_path '/Downloads/Metadata Alter.tdsx' datasource --column_name COLUMN_NAME --folder_name 'Folder Name'
+```
+
+Update/Add attributes for a column
+```commandline
+tableau_utilities  --location local --file_path '/Downloads/Metadata Alter.tdsx' datasource --column_name COLUMN_NAME --remote_name COLUMN_NAME_FROM_CONNECTION --caption 'My Pretty Column Name' --persona string_dimension --desc 'A help description for Tableau users to understand the data' 
+```
+
+Delete folder
+```commandline
+tableau_utilities  --location local --file_path '/Downloads/Metadata Alter.tdsx' datasource --folder_name 'Folder Name' --delete folder
+```
+
+#### generate_config
+
+Generate a config from a datasource in online/server
+```commandline
+tableau_utilities --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az --location online --name 'My Awseome Datasource' --project_name 'My Team Project' generate_config
+```
+
+Generate a config from a datasource in online/server and add definitions from a csv
+```commandline
+tableau_utilities --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az --location online --name 'My Awseome Datasource' --project_name 'My Team Project' generate_config --definitions_csv /Desktop/new_descriptions.csv
+```
+
+Generate a config from a local file. Add a file prefix and print the debugging logs to the console
+```commandline
+tableau_utilities --debugging_logs generate_config --location local --file_path '/code/tableau-utilities/tmp_tdsx_and_config/My Awesome Datasource.tdsx' --file_prefix
+```
+
+#### csv_config
+Write the config to a csv with 1 row per field per datasource
+```commandline
+ tableau_utilities csv_config --config_list /code/airflow/dags/tableau/configs/column_config.json /code/airflow/dags/tableau/configs/tableau_calc_config.json
+```
+
+#### merge_config
+Merge a new config into your main config
+```commandline
+tableau_utilities merge_config --merge_with config --existing_config /code/tableau-utilities/tmp_tdsx_and_config/main__column_config.json --additional_config /code/tableau-utilities/tmp_tdsx_and_config/new__column_config.json --merged_config code/dbt-repo/tableau_datasource_configs/column_config
+```
+
+Merge data defintions from a csv into your main config
+```commandline
+tableau_utilities --definitions_csv /Desktop/new_definitions.csv merge_config --merge_with csv  merge_config --existing_config code/dbt-repo/tableau_datasource_configs/column_config.json --merged_config code/dbt-repo/tableau_datasource_configs/column_config
+```
+
+
+### Development
+- `pip install -r requirements/dev.txt`
+- Create `settings.yaml` file in the `tableau_utilities` directory
+  - See `sample_settings.yaml` for an example
+- `test_tableau_utilities`
+  - Add tests as needed
+  - Run when making changes
 
 ## Maintenance
 

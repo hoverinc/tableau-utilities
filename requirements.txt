@@ -1,4 +1,7 @@
-pytest
-tableauserverclient==0.18.0
 xmltodict
 pyyaml
+requests
+pandas
+tabulate
+pytest
+
