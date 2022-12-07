@@ -572,6 +572,8 @@ dag = DAG(
 
 for ds, project in DS_PROJECT_CFG.items():
     task_name = re.sub(r'[^a-zA-Z0-9]+', '_', ds).lower()
+    # Compares everything to the config and makes the list of things to change
+    # This downloads all the data sources without the extracts
     add_tasks = TableauDatasourceTasks(
         dag=dag,
         task_id=f'add_tasks_{task_name}',
@@ -583,6 +585,9 @@ for ds, project in DS_PROJECT_CFG.items():
         persona_cfg=PERSONA_CFG
     )
 
+    # Makes the updates
+    # Republishes the stuff
+    # this downloads the datasources with the extract if it needs to
     update = TableauDatasourceUpdate(
         dag=dag,
         task_id=f'update_{task_name}',
@@ -591,6 +596,7 @@ for ds, project in DS_PROJECT_CFG.items():
         tasks_task_id=f'add_tasks_{task_name}'
     )
 
+    # Kicks off a tableau servcer refresh
     refresh = PythonOperator(
         dag=dag,
         task_id=f'refresh_{task_name}',
@@ -602,3 +608,8 @@ for ds, project in DS_PROJECT_CFG.items():
     )
 
     add_tasks >> update >> refresh
+
+# Figure out the updates
+# Make the updates
+# Republish
+# refresh

@@ -1,9 +1,8 @@
 import json
 import argparse
 import os
-import yaml
 import shutil
-from tableau_utilities import Datasource, TableauServer
+from tableau_utilities import TDS, TableauServer, extract_tds
 
 
 def do_args():
@@ -32,40 +31,32 @@ def all_columns_all_datasources(server):
     """ Gets a list of all columns in all datasources
 
     Args:
-        server (TableauServer): A Tableau server object
+        server (obj): A Tableau server object
     """
     shutil.rmtree('tmp_tdsx', ignore_errors=True)
-    tmp_folder = 'tmp_tdsx'
-    os.makedirs(tmp_folder, exist_ok=True)
-    os.chdir(tmp_folder)
-    datasource_list = [d for d in server.get_datasources()]
-    rows = dict()
-    for datasource in datasource_list:
-        print(datasource.project_name, (datasource.id, datasource.name))
-        datasource_path = server.download_datasource(datasource.id, include_extract=False)
-        columns = [c.dict() for c in Datasource(datasource_path).columns]
-        rows.setdefault(datasource.name, [])
-        rows[datasource.name].extend(columns)
-    os.chdir('..')
-    shutil.rmtree(tmp_folder)
+    datasource_list = server.list_datasources(server, print_info=False)
+    rows = []
+    for project_and_dsname in datasource_list:
+        print(project_and_dsname, datasource_list[project_and_dsname])
+        tdsx = server.download_datasource(datasource_list[project_and_dsname], include_extract=False)
+        os.mkdir('tmp_tdsx')
+        shutil.move(tdsx, 'tmp_tdsx')
+        os.chdir('tmp_tdsx')
+        tds_dict = extract_tds(os.path.basename(tdsx))
+        columns = TDS(tds_dict).list('column')
+        rows.extend(columns)
     return rows
 
 
-if __name__ == '__main__':
-    args = do_args()
-    with open('settings.yaml') as f:
-        settings = yaml.safe_load(f)
-    if args.server:
-        host = f'https://{args.server}.online.tableau.com'
-    else:
-        host = settings['tableau_login']['host']
-    ts = TableauServer(
-        user=args.user or settings['tableau_login']['user'],
-        password=args.password or settings['tableau_login']['password'],
-        site=args.site or settings['tableau_login']['site'],
-        host=host,
-        api_version=args.api_version or settings['tableau_login']['api_version']
-    )
-    config = all_columns_all_datasources(ts)
-    with open('generated_config.json', 'w') as fd:
-        json.dump(config, fd, indent=3)
+args = do_args()
+ts = TableauServer(
+    user=args.user,
+    password=args.password,
+    site=args.site,
+    url=f'https://{args.server}.online.tableau.com',
+    api_version=args.api_version
+)
+
+config = all_columns_all_datasources(ts)
+with open('generated_config.json', 'w') as fd:
+    json.dump(config, fd, indent=2)
