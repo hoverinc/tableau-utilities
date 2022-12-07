@@ -34,7 +34,7 @@ def all_columns_all_datasources(server):
         server (obj): A Tableau server object
     """
     shutil.rmtree('tmp_tdsx', ignore_errors=True)
-    datasource_list = server.list_datasources(server, print_it=False)
+    datasource_list = server.list_datasources(server, print_info=False)
     rows = []
     for project_and_dsname in datasource_list:
         print(project_and_dsname, datasource_list[project_and_dsname])
@@ -56,6 +56,7 @@ ts = TableauServer(
     url=f'https://{args.server}.online.tableau.com',
     api_version=args.api_version
 )
+
 config = all_columns_all_datasources(ts)
 with open('generated_config.json', 'w') as fd:
     json.dump(config, fd, indent=2)
