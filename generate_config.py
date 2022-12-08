@@ -55,10 +55,17 @@ def generate_config(server, datasource_name):
             columns = [c.dict() for c in Datasource(datasource_path).columns]
             rows.setdefault(datasource.name, [])
             rows[datasource.name].extend(columns)
-        os.chdir('')
-        shutil.rmtree(tmp_folder)
+
+            for c in columns:
+                print(c)
+
         else:
             print("SKIPPING:", datasource.project_name, (datasource.id, datasource.name))
+
+
+
+        # os.chdir('')
+        # shutil.rmtree(tmp_folder)
 
     return rows
 
