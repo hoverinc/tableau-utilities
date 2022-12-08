@@ -197,7 +197,7 @@ def create_column_config(columns, datasource_name, folder_mapping):
 
     """
 
-    column_configs = []
+    column_configs = {}
 
     for c in columns:
 
@@ -282,7 +282,10 @@ def build_config(datasource, datasource_path):
     for config in column_configs:
         pprint(config, sort_dicts=False, width=200)
 
-    return config
+    with open("generated_config.json", "w") as outfile:
+        json.dump(column_configs, outfile)
+
+    return column_configs
 
 
 
@@ -291,9 +294,6 @@ def generate_config(server, datasource_name):
     datasource, datasource_path = download_datasource(server, datasource_name)
     print(datasource_path)
     config = build_config(datasource, datasource_path)
-
-    with open('generated_config.json', 'w') as fd:
-        json.dumps(config, config, indent=3)
 
 
 
@@ -344,5 +344,7 @@ if __name__ == '__main__':
         download_datasource(ts, list_datasources=True)
     else:
         config = generate_config(ts, datasource_name=args.datasource)
+        # with open("generated_config.json", "w") as outfile:
+        #     json.dump(config, outfile)
     # with open('generated_config.json', 'w') as fd:
     #     json.dump(config, fd, indent=3)
