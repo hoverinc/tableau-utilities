@@ -36,12 +36,11 @@ def do_args():
     parser.add_argument('--token_secret', help='Personal Access Token Secret')
     parser.add_argument('--token_name', help='Personal Access Token Name')
     parser.add_argument('--datasource', help='The name of the datasources to generate a config for')
-    parser.add_argument('--list_datasources', help='Print the data sources and metadata about them to the console')
+    parser.add_argument('--list_datasources', action='store_true', help='Print the data sources and metadata about them to the console')
     return parser.parse_args()
 
 
-
-def download_datasource(server, datasource_name, list_datasources=False):
+def download_datasource(server, datasource_name=None, list_datasources=False):
     """ Gets a list of all columns in all datasources
 
     Args:
@@ -53,23 +52,28 @@ def download_datasource(server, datasource_name, list_datasources=False):
     os.chdir(tmp_folder)
     datasource_list = [d for d in server.get_datasources()]
 
+    sources = []
     for datasource in datasource_list:
         if list_datasources:
-            print(type(datasource))
-            print(datasource)
+            info = {'name': datasource.name,
+                    'project': datasource.project_name,
+                    'connected_workbooks': datasource.connected_workbooks_count}
+            sources.append(info)
 
         if datasource.name == datasource_name:
             datasource_path = server.download_datasource(datasource.id, include_extract=False)
             return datasource, datasource_path
+
+    if list_datasources:
+        sorted_sources = sorted(sources, key=lambda d: d['name'])
+        for source in sorted_sources:
+            print(source)
 
 
 def create_column_config(columns):
     print('-'*100)
     for c in columns:
         print(c)
-
-
-
 
 def build_config(datasource, datasource_path):
     # tree = ET.parse(datasource_path)
@@ -144,7 +148,9 @@ if __name__ == '__main__':
             api_version=args.api_version
         )
 
-
-    config = generate_config(ts, datasource_name=args.datasource)
+    if args.list_datasources:
+        download_datasource(ts, list_datasources=True)
+    else:
+        config = generate_config(ts, datasource_name=args.datasource)
     # with open('generated_config.json', 'w') as fd:
     #     json.dump(config, fd, indent=3)
