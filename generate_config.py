@@ -6,13 +6,8 @@ import xml.etree.ElementTree as ET
 import yaml
 from pprint import pprint
 
-
 from tableau_utilities.tableau_file.tableau_file import Datasource
 from tableau_utilities.tableau_server.tableau_server import TableauServer
-
-
-# from tableau_utilities.general import convert_underscore_to_spaces_and_capitalize, get_datasource_files_dict
-
 
 def do_args():
     """ Parse arguments.
@@ -45,7 +40,6 @@ def do_args():
 
 def download_datasource(server, datasource_name=None, list_datasources=False):
     """ Downloads the specified datasources
-
 
     Args:
         server (TableauServer): A Tableau server object
@@ -81,7 +75,6 @@ def download_datasource(server, datasource_name=None, list_datasources=False):
 
 
 def choose_persona(role, role_type, datatype):
-    # def choose_persona():
     """  The config relies on a persona which is a combination of role, role_type and datatype.
     This returns the persona name or raises an exception if the combination is not found
 
@@ -285,44 +278,9 @@ def build_config(datasource, datasource_path):
     print(type(column_configs))
 
     for config in column_configs:
-        pprint(config, sort_dicts=False, width=400, compact=False)
-        # print(config)
-
-    folder_mapping = build_folder_mapping(datasource_path)
-
-    # for f in folder_mapping:
-    #     print(f)
-
-    for config in column_configs:
-        pprint(config, sort_dicts=False)
-        # print(config)
-
-    # print(type(folder_mapping))
-
-    # for f in folder_mapping:
-    #     print(f)
+        pprint(config, sort_dicts=False, width=200)
 
 
-    # for c in columns:
-    #     print(c)
-    # if '@fiscal_year_start' in c:
-    # # if c['@fiscal_uear_start'] == 'Salesforce Account Current Contract End Date':
-    #     print(c)
-
-    # create_column_config(columns)
-
-    # folders = [c.dict() for c in Datasource(datasource_path).folders_common]
-    # for f in folders:
-    #     # print(type(f))
-    #     print('-'*50)
-    #     # print(f)
-    #
-    #     for item in f['folder-item']:
-    #         if item['@type'] == 'field':
-    #             print('OH NO', item)
-    #         # print(item)
-    #
-    # print(type(folders))
 
 
 def generate_config(server, datasource_name):
