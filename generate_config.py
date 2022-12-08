@@ -278,9 +278,6 @@ def build_config(datasource, datasource_path):
     for config in column_configs:
         pprint(config, sort_dicts=False, width=200)
 
-    with open("generated_config.json", "w") as outfile:
-        json.dump(column_configs, outfile)
-
     return column_configs
 
 
@@ -289,25 +286,9 @@ def generate_config(server, datasource_name):
     print(datasource_path)
     config = build_config(datasource, datasource_path)
 
-    #     print("BUILDING CONFIG FOR:", datasource.project_name, (datasource.id, datasource.name))
-    #     # datasource_path = server.download_datasource(datasource.id, include_extract=False)
-    #
-    #
-    #     for c in columns:
-    #         print(c)
-    #
-    #     folders = [c.dict() for c in Datasource(datasource_path).folders_common]
-    #     for f in folders:
-    #         print(f)
-    #
-    # else:
-    #     print("SKIPPING:", datasource.project_name, (datasource.id, datasource.name))
-    #
+    with open("generated_config.json", "w") as outfile:
+        json.dump(config, outfile)
 
-    # os.chdir('')
-    # shutil.rmtree(tmp_folder)
-
-    # return rows
 
 
 if __name__ == '__main__':
