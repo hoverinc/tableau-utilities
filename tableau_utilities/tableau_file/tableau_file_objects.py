@@ -236,6 +236,7 @@ class Column(TableauFileObject):
     members: dict = None
     range: dict = None
     fiscal_year_start: int = None
+    visual_totals: str = None
 
     def __post_init__(self):
         if not re.match(r'^\[.+]$', self.name):
@@ -321,6 +322,9 @@ class Column(TableauFileObject):
             output['aliases']['alias'] = self.aliases
         if self.fiscal_year_start is not None:
             output['@fiscal_year_start'] = self.fiscal_year_start
+        if self.visual_totals is not None:
+            output['@visual_totals'] = self.visual_totals
+
         return output
 
 

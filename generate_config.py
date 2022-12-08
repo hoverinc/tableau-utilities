@@ -10,8 +10,6 @@ from tableau_utilities.tableau_server.tableau_server import TableauServer
 # from tableau_utilities.general import convert_underscore_to_spaces_and_capitalize, get_datasource_files_dict
 
 
-
-
 def do_args():
     """ Parse arguments.
 
@@ -76,19 +74,17 @@ def create_column_config(columns):
         print(c)
 
 def build_config(datasource, datasource_path):
-    # tree = ET.parse(datasource_path)
-    # root = tree.getroot()
-    # for column in root.iter('column'):
-    #     print(column)
+
     rows = dict()
     columns = [c.dict() for c in Datasource(datasource_path).columns]
     rows.setdefault(datasource.name, [])
     rows[datasource.name].extend(columns)
 
     for c in columns:
-        if '@fiscal_year_start' in c:
-        # if c['@fiscal_uear_start'] == 'Salesforce Account Current Contract End Date':
-            print(c)
+        print(c)
+        # if '@fiscal_year_start' in c:
+        # # if c['@fiscal_uear_start'] == 'Salesforce Account Current Contract End Date':
+        #     print(c)
 
     # create_column_config(columns)
 
