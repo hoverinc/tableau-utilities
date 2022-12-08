@@ -18,7 +18,7 @@ class TableauConnectionError(Exception):
 class TableauServer:
     """ Connects and interacts with Tableau Online/Server, via the REST API. """
 
-    def __init__(self, user, password, host, site, api_version=3.16):
+    def __init__(self, host, site, user=None, password=None, token_secret=None, token_name=None, api_version=3.16):
         """
         Args:
             host (str): Tableau server address
@@ -29,6 +29,8 @@ class TableauServer:
         """
         self.user = user
         self.__pw = password
+        self.token_secret = token_secret
+        self.token_name = token_name
         self.host = host
         self.site = site
         self.api = api_version
@@ -51,12 +53,20 @@ class TableauServer:
 
     def __sign_in(self):
         """
+            To sign in to Tableau a user needs either a username & password or token secret & token name
             Signs in to the server with credentials from the specified connection.
             Sets the auth_token, site_id, and url common prefix
+
         """
 
         url = f"{self.host}/api/{self.api}/auth/signin"
-        body = {"credentials": {"name": self.user, "password": self.__pw, "site": {"contentUrl": self.site}}}
+
+        if self.token_secret and self.token_name:
+            body = {"credentials": {"personalAccessTokenSecret": self.token_secret,
+                                    "personalAccessTokenName": self.token_name,
+                                    "site": {"contentUrl": self.site}}}
+        else:
+            body = {"credentials": {"name": self.user, "password": self.__pw, "site": {"contentUrl": self.site}}}
         res = self.post(url, json=body).get('credentials', {})
         # Set auth token and site ID attributes on sign in
         self.session.headers.update({'x-tableau-auth': res.get('token')})

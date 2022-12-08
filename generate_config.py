@@ -16,16 +16,20 @@ def do_args():
     parser = argparse.ArgumentParser(description='List columns in Tableau datasources')
     parser.add_argument(
         '--server',
+        required=True,
         help='Tableau Server URL. i.e. <server_address> in https://<server_address>.online.tableau.com',
         default=None
     )
     parser.add_argument(
         '--site',
+        required=True,
         help='Site name. i.e. <site> in https://<server_address>.online.tableau.com/#/site/<site>',
         default=None)
     parser.add_argument('--api_version', help='Tableau API version', default='2.8')
-    parser.add_argument('--user', required=True, help='user name')
-    parser.add_argument('--password', required=True, help='password')
+    parser.add_argument('--user', help='user name')
+    parser.add_argument('--password', help='password')
+    parser.add_argument('--token_secret', help='Personal Access Token Secret')
+    parser.add_argument('--token_name', help='Personal Access Token Name')
     return parser.parse_args()
 
 
@@ -58,28 +62,27 @@ def all_columns_all_datasources(server):
 if __name__ == '__main__':
     args = do_args()
 
-    if args.server:
-        host = f'https://{args.server}.online.tableau.com'
-    print(host)
-    print(args.user, args.user, args.password)
+    host = f'https://{args.server}.online.tableau.com'
+    # print(host)
+    # print(args.user, args.user, args.password)
 
-    # if args.user and args.password:
-    ts = TableauServer(
-        user=args.user,
-        password=args.password,
-        site=args.site,
-        host=host,
-        api_version=args.api_version
-    )
-    # elif args.token:
-    #     ts = TableauServer(
-    #         user=args.user or settings['tableau_login']['user'],
-    #         password=args.password or settings['tableau_login']['password'],
-    #         site=args.site or settings['tableau_login']['site'],
-    #         host=host,
-    #         api_version=args.api_version or settings['tableau_login']['api_version']
-    #     )
-    #
+    if args.user and args.password:
+        ts = TableauServer(
+            user=args.user,
+            password=args.password,
+            site=args.site,
+            host=host,
+            api_version=args.api_version
+        )
+    elif args.token_secret and args.token_name:
+        ts = TableauServer(
+            token_name=args.token_name,
+            token_secret=args.token_secret,
+            site=args.site,
+            host=host,
+            api_version=args.api_version
+        )
+
 
     config = all_columns_all_datasources(ts)
     # with open('generated_config.json', 'w') as fd:
