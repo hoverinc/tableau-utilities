@@ -193,14 +193,7 @@ class TableauServer:
             URI GET /api/api-version/sites/site-id/datasources
         Returns: All datasources in the site
         """
-        url = f"{self.url}/datasources?fields=_default_" \
-              f",favoritesTotal" \
-              f",databaseName" \
-              f",connectedWorkbooksCount" \
-              f",hasAlert" \
-              f",hasExtracts" \
-              f",isPublished" \
-              f",serverName"
+        url = f"{self.url}/datasources"
         for d in self.__get_objects_pager(url, 'datasource'):
             yield tso.Datasource(**d)
 

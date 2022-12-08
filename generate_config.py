@@ -41,32 +41,46 @@ def all_columns_all_datasources(server):
     os.chdir(tmp_folder)
     datasource_list = [d for d in server.get_datasources()]
     rows = dict()
-    for datasource in datasource_list:
-        print(datasource.project_name, (datasource.id, datasource.name))
-        datasource_path = server.download_datasource(datasource.id, include_extract=False)
-        columns = [c.dict() for c in Datasource(datasource_path).columns]
-        rows.setdefault(datasource.name, [])
-        rows[datasource.name].extend(columns)
-    os.chdir('')
-    shutil.rmtree(tmp_folder)
+
+    print(datasource_list)
+
+    # for datasource in datasource_list:
+    #     print(datasource.project_name, (datasource.id, datasource.name))
+    #     datasource_path = server.download_datasource(datasource.id, include_extract=False)
+    #     columns = [c.dict() for c in Datasource(datasource_path).columns]
+    #     rows.setdefault(datasource.name, [])
+    #     rows[datasource.name].extend(columns)
+    # os.chdir('')
+    # shutil.rmtree(tmp_folder)
     return rows
 
 
 if __name__ == '__main__':
     args = do_args()
-    # with open('settings.yaml') as f:
-    #     settings = yaml.safe_load(f)
+
     if args.server:
         host = f'https://{args.server}.online.tableau.com'
-    else:
-        host = settings['tableau_login']['host']
+    print(host)
+    print(args.user, args.user, args.password)
+
+    # if args.user and args.password:
     ts = TableauServer(
-        user=args.user or settings['tableau_login']['user'],
-        password=args.password or settings['tableau_login']['password'],
-        site=args.site or settings['tableau_login']['site'],
+        user=args.user,
+        password=args.password,
+        site=args.site,
         host=host,
-        api_version=args.api_version or settings['tableau_login']['api_version']
+        api_version=args.api_version
     )
+    # elif args.token:
+    #     ts = TableauServer(
+    #         user=args.user or settings['tableau_login']['user'],
+    #         password=args.password or settings['tableau_login']['password'],
+    #         site=args.site or settings['tableau_login']['site'],
+    #         host=host,
+    #         api_version=args.api_version or settings['tableau_login']['api_version']
+    #     )
+    #
+
     config = all_columns_all_datasources(ts)
-    with open('generated_config.json', 'w') as fd:
-        json.dump(config, fd, indent=3)
+    # with open('generated_config.json', 'w') as fd:
+    #     json.dump(config, fd, indent=3)
