@@ -9,6 +9,7 @@ from pprint import pprint
 from tableau_utilities.tableau_file.tableau_file import Datasource
 from tableau_utilities.tableau_server.tableau_server import TableauServer
 
+
 def do_args():
     """ Parse arguments.
 
@@ -40,6 +41,7 @@ def do_args():
 
 def download_datasource(server, datasource_name=None, list_datasources=False):
     """ Downloads the specified datasources
+
 
     Args:
         server (TableauServer): A Tableau server object
@@ -280,13 +282,20 @@ def build_config(datasource, datasource_path):
     for config in column_configs:
         pprint(config, sort_dicts=False, width=200)
 
+    return config
+
 
 
 
 def generate_config(server, datasource_name):
     datasource, datasource_path = download_datasource(server, datasource_name)
     print(datasource_path)
-    build_config(datasource, datasource_path)
+    config = build_config(datasource, datasource_path)
+
+    with open('generated_config.json', 'w') as fd:
+        json.dumps(config, config, indent=3)
+
+
 
     #     print("BUILDING CONFIG FOR:", datasource.project_name, (datasource.id, datasource.name))
     #     # datasource_path = server.download_datasource(datasource.id, include_extract=False)
