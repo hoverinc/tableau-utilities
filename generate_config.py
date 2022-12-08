@@ -6,6 +6,7 @@ import xml.etree.ElementTree as ET
 import yaml
 from pprint import pprint
 
+
 from tableau_utilities.tableau_file.tableau_file import Datasource
 from tableau_utilities.tableau_server.tableau_server import TableauServer
 
@@ -81,7 +82,8 @@ def download_datasource(server, datasource_name=None, list_datasources=False):
 
 def choose_persona(role, role_type, datatype):
     # def choose_persona():
-    """  The config relies on a persona which is a
+    """  The config relies on a persona which is a combination of role, role_type and datatype.
+    This returns the persona name or raises an exception if the combination is not found
 
     """
 
@@ -174,20 +176,19 @@ def choose_persona(role, role_type, datatype):
         raise ValueError(
             f"There is no persona for the combination of ROLE {role}, ROLE_TYPE {role_type}, and DATATYPE {datatype}'")
 
-    # for persona_title, persona_details in personas.items():
-    #
-    #
-    #     if persona_details['role'] == role and persona_details['role_type'] == role_type and persona_details['datatype'] == 'datatype':
-    #         return persona(persona_title)
 
-
-def create_column_config(columns, datasource_name):
+def create_column_config(columns, datasource_name, folder_mapping):
     """ Generates a list of column configs with None for a folder
+
+    Args:
+        columns
+        datasource_name
+        folder_mapping: A list of dictionaries mapping column name to folder name
 
     ```{
       "Salesforce Opportunity Id": {
         "description": "The 18 digit account Id for a Salesforce opportunity",
-        "folder": None,
+        "folder": Name,
         "persona": "string_dimension",
         "datasources": [
           {
@@ -205,6 +206,8 @@ def create_column_config(columns, datasource_name):
 
     for c in columns:
 
+        column_name = c['@name'][1:-1]
+
         # Skip the table datatype for now
         if c['@datatype'] == 'table':
             pass
@@ -216,16 +219,25 @@ def create_column_config(columns, datasource_name):
             if 'desc' in c:
                 description = c['desc']['formatted-text']['run']
 
+            folder_name = None
+
+            # for mapping in folder_mapping:
+            #
+            # # folder_name = [folder_mapping[column_name] for m in folder_mapping if column_name ==  ]
+            #
+            if column_name in folder_mapping.keys():
+                folder_name = folder_mapping[column_name]
+
             column_config = {
                 c['@caption']: {
                     "description": description,
-                    "folder": None,
+                    "folder": folder_name,
                     "persona": persona,
                     "datasources": [
                         {
                             "name": datasource_name,
-                            "local-name": c['@name'],
-                            "sql_alias": c['@name']
+                            "local-name": column_name,
+                            "sql_alias": column_name
                         },
                     ]
                 },
@@ -239,7 +251,7 @@ def create_column_config(columns, datasource_name):
 def build_folder_mapping(datasource_path):
     folders = [c.dict() for c in Datasource(datasource_path).folders_common]
 
-    mapping_list = []
+    mappings = {}
     for f in folders:
         folder_name = f['@name']
         print(type(f))
@@ -251,11 +263,12 @@ def build_folder_mapping(datasource_path):
         for item in f['folder-item']:
             # print(item)
             # print(folder_name, item)
-            field_name = item['@name']
-            field_and_folder = {field_name: folder_name}
-            mapping_list.append(field_and_folder)
+            field_name = item['@name'][1:-1]
+            mappings[field_name] = folder_name
+            # field_and_folder = {field_name: folder_name}
+            # mapping_list.append(field_and_folder)
 
-    return mapping_list
+    return mappings
 
 
 def build_config(datasource, datasource_path):
@@ -264,7 +277,10 @@ def build_config(datasource, datasource_path):
     rows.setdefault(datasource.name, [])
     rows[datasource.name].extend(columns)
 
-    column_configs = create_column_config(columns=columns, datasource_name=datasource.name)
+    # Build the folder mapping
+    folder_mapping = build_folder_mapping(datasource_path)
+
+    column_configs = create_column_config(columns=columns, datasource_name=datasource.name, folder_mapping=folder_mapping)
     print(column_configs)
     print(type(column_configs))
 
@@ -274,8 +290,17 @@ def build_config(datasource, datasource_path):
 
     folder_mapping = build_folder_mapping(datasource_path)
 
-    for f in folder_mapping:
-        print(f)
+    # for f in folder_mapping:
+    #     print(f)
+
+    for config in column_configs:
+        pprint(config, sort_dicts=False)
+        # print(config)
+
+    # print(type(folder_mapping))
+
+    # for f in folder_mapping:
+    #     print(f)
 
 
     # for c in columns:
