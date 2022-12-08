@@ -1,12 +1,15 @@
-import json
 import argparse
+import json
 import os
-import yaml
 import shutil
 import xml.etree.ElementTree as ET
 
+import yaml
+
 from tableau_utilities.tableau_file.tableau_file import Datasource
 from tableau_utilities.tableau_server.tableau_server import TableauServer
+
+
 # from tableau_utilities.general import convert_underscore_to_spaces_and_capitalize, get_datasource_files_dict
 
 
@@ -34,16 +37,24 @@ def do_args():
     parser.add_argument('--token_secret', help='Personal Access Token Secret')
     parser.add_argument('--token_name', help='Personal Access Token Name')
     parser.add_argument('--datasource', help='The name of the datasources to generate a config for')
-    parser.add_argument('--list_datasources', action='store_true', help='Print the data sources and metadata about them to the console')
+    parser.add_argument('--list_datasources', action='store_true',
+                        help='Print the data sources and metadata about them to the console')
     return parser.parse_args()
 
 
 def download_datasource(server, datasource_name=None, list_datasources=False):
-    """ Gets a list of all columns in all datasources
+    """ Downloads the specified datasources
+
 
     Args:
         server (TableauServer): A Tableau server object
+        datasource_name: The name of the datasource to download
+        list_datasources: Prints a sorted list of all the datasources from a site
+
+    Returns:
+        The path of the datasource to download
     """
+
     shutil.rmtree('tmp_tdsx', ignore_errors=True)
     tmp_folder = 'tmp_tdsx'
     os.makedirs(tmp_folder, exist_ok=True)
@@ -68,56 +79,208 @@ def download_datasource(server, datasource_name=None, list_datasources=False):
             print(source)
 
 
-def create_column_config(columns):
-    print('-'*100)
+def choose_persona(role, role_type, datatype):
+    # def choose_persona():
+    """  The config relies on a persona which is a
+
+    """
+
+    personas = [
+        {"string_dimension": {
+            "role": "dimension",
+            "role_type": "nominal",
+            "datatype": "string"
+        }},
+        {"date_dimension": {
+            "role": "dimension",
+            "role_type": "ordinal",
+            "datatype": "date"
+        }},
+        {"datetime_dimension": {
+            "role": "dimension",
+            "role_type": "ordinal",
+            "datatype": "datetime"
+        }},
+        {"date_measure": {
+            "role": "measure",
+            "role_type": "ordinal",
+            "datatype": "date"
+        }},
+        {"datetime_measure": {
+            "role": "measure",
+            "role_type": "ordinal",
+            "datatype": "datetime"
+        }},
+        {"discrete_number_dimension": {
+            "role": "dimension",
+            "role_type": "ordinal",
+            "datatype": "integer"
+        }},
+        {"continuous_number_dimension": {
+            "role": "dimension",
+            "role_type": "quantitative",
+            "datatype": "integer"
+        }},
+        {"discrete_number_measure": {
+            "role": "measure",
+            "role_type": "ordinal",
+            "datatype": "integer"
+        }},
+        {"continuous_number_measure": {
+            "role": "measure",
+            "role_type": "quantitative",
+            "datatype": "integer"
+        }},
+        {"discrete_decimal_dimension": {
+            "role": "dimension",
+            "role_type": "ordinal",
+            "datatype": "real"
+        }},
+        {"continuous_decimal_dimension": {
+            "role": "dimension",
+            "role_type": "quantitative",
+            "datatype": "real"
+        }},
+        {"discrete_decimal_measure": {
+            "role": "measure",
+            "role_type": "ordinal",
+            "datatype": "real"
+        }},
+        {"continuous_decimal_measure": {
+            "role": "measure",
+            "role_type": "quantitative",
+            "datatype": "real"
+        }},
+        {"boolean_dimension": {
+            "role": "dimension",
+            "role_type": "nominal",
+            "datatype": "boolean"
+        }}
+    ]
+
+    persona_name = None
+    for persona in personas:
+        for k, v in persona.items():
+            # print(v['role'], v['role_type'], v['datatype'])
+            # print(role, role_type, datatype)
+            # print('-'*20)
+            if role == v['role'] and role_type == v['role_type'] == role_type and datatype == v['datatype']:
+                persona_name = k
+                break
+
+    if persona_name is not None:
+        return persona_name
+    else:
+        raise ValueError(f"There is no persona for the combination of ROLE {role}, ROLE_TYPE {role_type}, and DATATYPE {datatype}'")
+
+    # for persona_title, persona_details in personas.items():
+    #
+    #
+    #     if persona_details['role'] == role and persona_details['role_type'] == role_type and persona_details['datatype'] == 'datatype':
+    #         return persona(persona_title)
+
+
+def create_column_config(columns, datasource_name):
+    """ Generates a list of column configs with None for a folder
+
+    ```{
+      "Salesforce Opportunity Id": {
+        "description": "The 18 digit account Id for a Salesforce opportunity",
+        "folder": None,
+        "persona": "string_dimension",
+        "datasources": [
+          {
+            "name": "Opportunity",
+            "local-name": "SALESFORCE_OPPORTUNITY_ID",
+            "sql_alias": "SALESFORCE_OPPORTUNITY_ID"
+          }
+        ]
+      }
+      ````
+
+    """
+
+    column_configs = []
+
+    print('-' * 100)
+    print(datasource_name)
+    # persona = choose_persona()
     for c in columns:
-        print(c)
+
+        # Skip the table datatype for now
+        if c['@datatype'] == 'table':
+            pass
+        else:
+            print(c)
+            persona = choose_persona(role=c['@role'], role_type=c['@type'], datatype=c['@datatype'])
+            print(persona)
+
+    #     # print(c)
+    #     print(persona)
+    #
+    #   column_config = {c['@caption': {
+    #   "description": "The 18 digit account Id for a Salesforce opportunity",
+    #   "folder": None,
+    #   "persona": "string_dimension",
+    #   "datasources": [
+    #     {
+    #       "name": datasource_name,
+    #       "local-name": c['@name'],
+    #       "sql_alias": c['@name']
+    #     }
+    #   ]
+    # }
+    #   column_configs.append(column_config)
+    #
+    #
+    #
+    #   }
+    #   print(c)
+
 
 def build_config(datasource, datasource_path):
-
     rows = dict()
     columns = [c.dict() for c in Datasource(datasource_path).columns]
     rows.setdefault(datasource.name, [])
     rows[datasource.name].extend(columns)
 
-    for c in columns:
-        print(c)
-        # if '@fiscal_year_start' in c:
-        # # if c['@fiscal_uear_start'] == 'Salesforce Account Current Contract End Date':
-        #     print(c)
+    create_column_config(columns=columns, datasource_name=datasource.name)
+
+    # for c in columns:
+    #     print(c)
+    # if '@fiscal_year_start' in c:
+    # # if c['@fiscal_uear_start'] == 'Salesforce Account Current Contract End Date':
+    #     print(c)
 
     # create_column_config(columns)
-
-
 
     # folders = [c.dict() for c in Datasource(datasource_path).folders_common]
     # for f in folders:
     #     print(f)
+
 
 def generate_config(server, datasource_name):
     datasource, datasource_path = download_datasource(server, datasource_name)
     print(datasource_path)
     build_config(datasource, datasource_path)
 
+    #     print("BUILDING CONFIG FOR:", datasource.project_name, (datasource.id, datasource.name))
+    #     # datasource_path = server.download_datasource(datasource.id, include_extract=False)
+    #
+    #
+    #     for c in columns:
+    #         print(c)
+    #
+    #     folders = [c.dict() for c in Datasource(datasource_path).folders_common]
+    #     for f in folders:
+    #         print(f)
+    #
+    # else:
+    #     print("SKIPPING:", datasource.project_name, (datasource.id, datasource.name))
+    #
 
-        #     print("BUILDING CONFIG FOR:", datasource.project_name, (datasource.id, datasource.name))
-        #     # datasource_path = server.download_datasource(datasource.id, include_extract=False)
-        #
-        #
-        #     for c in columns:
-        #         print(c)
-        #
-        #     folders = [c.dict() for c in Datasource(datasource_path).folders_common]
-        #     for f in folders:
-        #         print(f)
-        #
-        # else:
-        #     print("SKIPPING:", datasource.project_name, (datasource.id, datasource.name))
-        #
-
-
-        # os.chdir('')
-        # shutil.rmtree(tmp_folder)
+    # os.chdir('')
+    # shutil.rmtree(tmp_folder)
 
     # return rows
 
