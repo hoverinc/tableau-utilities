@@ -51,18 +51,15 @@ def generate_config(server, datasource_name):
 
         if datasource.name == datasource_name:
             print("BUILDING CONFIG FOR:", datasource.project_name, (datasource.id, datasource.name))
+            datasource_path = server.download_datasource(datasource.id, include_extract=False)
+            columns = [c.dict() for c in Datasource(datasource_path).columns]
+            rows.setdefault(datasource.name, [])
+            rows[datasource.name].extend(columns)
+        os.chdir('')
+        shutil.rmtree(tmp_folder)
         else:
             print("SKIPPING:", datasource.project_name, (datasource.id, datasource.name))
 
-
-
-
-    #     datasource_path = server.download_datasource(datasource.id, include_extract=False)
-    #     columns = [c.dict() for c in Datasource(datasource_path).columns]
-    #     rows.setdefault(datasource.name, [])
-    #     rows[datasource.name].extend(columns)
-    # os.chdir('')
-    # shutil.rmtree(tmp_folder)
     return rows
 
 
