@@ -34,7 +34,8 @@ def do_args():
     return parser.parse_args()
 
 
-def generate_config(server, datasource_name):
+
+def download_datasource(server, datasource_name):
     """ Gets a list of all columns in all datasources
 
     Args:
@@ -48,30 +49,48 @@ def generate_config(server, datasource_name):
     rows = dict()
 
     for datasource in datasource_list:
-
         if datasource.name == datasource_name:
-            print("BUILDING CONFIG FOR:", datasource.project_name, (datasource.id, datasource.name))
             datasource_path = server.download_datasource(datasource.id, include_extract=False)
-            columns = [c.dict() for c in Datasource(datasource_path).columns]
-            rows.setdefault(datasource.name, [])
-            rows[datasource.name].extend(columns)
 
-            for c in columns:
-                print(c)
+    return datasource_path
 
-            folders = [c.dict() for c in Datasource(datasource_path).folders_common]
-            for f in folders:
-                print(f)
+def build_config(datasource_path):
+    columns = [c.dict() for c in Datasource(datasource_path).columns]
+    rows.setdefault(datasource.name, [])
+    rows[datasource.name].extend(columns)
 
-        else:
-            print("SKIPPING:", datasource.project_name, (datasource.id, datasource.name))
+    for c in columns:
+        print(c)
 
+    folders = [c.dict() for c in Datasource(datasource_path).folders_common]
+    for f in folders:
+        print(f)
+
+def generate_config(server, datasource_name):
+    datasource_path = download_datasource(server, datasource_name)
+    build_config(datasource_path)
+
+
+        #     print("BUILDING CONFIG FOR:", datasource.project_name, (datasource.id, datasource.name))
+        #     # datasource_path = server.download_datasource(datasource.id, include_extract=False)
+        #
+        #
+        #     for c in columns:
+        #         print(c)
+        #
+        #     folders = [c.dict() for c in Datasource(datasource_path).folders_common]
+        #     for f in folders:
+        #         print(f)
+        #
+        # else:
+        #     print("SKIPPING:", datasource.project_name, (datasource.id, datasource.name))
+        #
 
 
         # os.chdir('')
         # shutil.rmtree(tmp_folder)
 
-    return rows
+    # return rows
 
 
 if __name__ == '__main__':
