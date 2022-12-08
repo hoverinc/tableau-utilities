@@ -46,15 +46,15 @@ def download_datasource(server, datasource_name):
     os.makedirs(tmp_folder, exist_ok=True)
     os.chdir(tmp_folder)
     datasource_list = [d for d in server.get_datasources()]
-    rows = dict()
 
     for datasource in datasource_list:
         if datasource.name == datasource_name:
             datasource_path = server.download_datasource(datasource.id, include_extract=False)
+            return datasource, datasource_path
 
-    return datasource_path
 
-def build_config(datasource_path):
+def build_config(datasource, datasource_path):
+    rows = dict()
     columns = [c.dict() for c in Datasource(datasource_path).columns]
     rows.setdefault(datasource.name, [])
     rows[datasource.name].extend(columns)
@@ -67,8 +67,9 @@ def build_config(datasource_path):
         print(f)
 
 def generate_config(server, datasource_name):
-    datasource_path = download_datasource(server, datasource_name)
-    build_config(datasource_path)
+    datasource, datasource_path = download_datasource(server, datasource_name)
+    print(datasource_path)
+    build_config(datasource, datasource_path)
 
 
         #     print("BUILDING CONFIG FOR:", datasource.project_name, (datasource.id, datasource.name))
