@@ -3,8 +3,8 @@ import json
 import os
 import shutil
 import xml.etree.ElementTree as ET
-
 import yaml
+from pprint import pprint
 
 from tableau_utilities.tableau_file.tableau_file import Datasource
 from tableau_utilities.tableau_server.tableau_server import TableauServer
@@ -235,7 +235,6 @@ def create_column_config(columns, datasource_name):
     return column_configs
 
 
-
 def build_config(datasource, datasource_path):
     rows = dict()
     columns = [c.dict() for c in Datasource(datasource_path).columns]
@@ -245,6 +244,9 @@ def build_config(datasource, datasource_path):
     column_configs = create_column_config(columns=columns, datasource_name=datasource.name)
     print(column_configs)
     print(type(column_configs))
+
+    for config in column_configs:
+        pprint(config)
 
     # for c in columns:
     #     print(c)
