@@ -3,8 +3,13 @@ import argparse
 import os
 import yaml
 import shutil
+import xml.etree.ElementTree as ET
+
 from tableau_utilities.tableau_file.tableau_file import Datasource
 from tableau_utilities.tableau_server.tableau_server import TableauServer
+# from tableau_utilities.general import convert_underscore_to_spaces_and_capitalize, get_datasource_files_dict
+
+
 
 
 def do_args():
@@ -31,11 +36,12 @@ def do_args():
     parser.add_argument('--token_secret', help='Personal Access Token Secret')
     parser.add_argument('--token_name', help='Personal Access Token Name')
     parser.add_argument('--datasource', help='The name of the datasources to generate a config for')
+    parser.add_argument('--list_datasources', help='Print the data sources and metadata about them to the console')
     return parser.parse_args()
 
 
 
-def download_datasource(server, datasource_name):
+def download_datasource(server, datasource_name, list_datasources=False):
     """ Gets a list of all columns in all datasources
 
     Args:
@@ -48,23 +54,45 @@ def download_datasource(server, datasource_name):
     datasource_list = [d for d in server.get_datasources()]
 
     for datasource in datasource_list:
+        if list_datasources:
+            print(type(datasource))
+            print(datasource)
+
         if datasource.name == datasource_name:
             datasource_path = server.download_datasource(datasource.id, include_extract=False)
             return datasource, datasource_path
 
 
+def create_column_config(columns):
+    print('-'*100)
+    for c in columns:
+        print(c)
+
+
+
+
 def build_config(datasource, datasource_path):
+    # tree = ET.parse(datasource_path)
+    # root = tree.getroot()
+    # for column in root.iter('column'):
+    #     print(column)
     rows = dict()
     columns = [c.dict() for c in Datasource(datasource_path).columns]
     rows.setdefault(datasource.name, [])
     rows[datasource.name].extend(columns)
 
     for c in columns:
-        print(c)
+        if '@fiscal_year_start' in c:
+        # if c['@fiscal_uear_start'] == 'Salesforce Account Current Contract End Date':
+            print(c)
 
-    folders = [c.dict() for c in Datasource(datasource_path).folders_common]
-    for f in folders:
-        print(f)
+    # create_column_config(columns)
+
+
+
+    # folders = [c.dict() for c in Datasource(datasource_path).folders_common]
+    # for f in folders:
+    #     print(f)
 
 def generate_config(server, datasource_name):
     datasource, datasource_path = download_datasource(server, datasource_name)

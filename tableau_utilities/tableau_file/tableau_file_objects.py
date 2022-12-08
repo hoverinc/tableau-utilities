@@ -235,6 +235,7 @@ class Column(TableauFileObject):
     aliases: list = None
     members: dict = None
     range: dict = None
+    fiscal_year_start: int = None
 
     def __post_init__(self):
         if not re.match(r'^\[.+]$', self.name):
@@ -275,6 +276,7 @@ class Column(TableauFileObject):
             '@datatype': self.datatype,
             '@role': self.role,
             '@type': self.type
+
         }
         if self.semantic_role is not None:
             output['@semantic-role'] = self.semantic_role
@@ -317,6 +319,8 @@ class Column(TableauFileObject):
         if self.aliases is not None:
             output['aliases'] = dict()
             output['aliases']['alias'] = self.aliases
+        if self.fiscal_year_start is not None:
+            output['@fiscal_year_start'] = self.fiscal_year_start
         return output
 
 
