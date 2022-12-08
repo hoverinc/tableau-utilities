@@ -3,8 +3,9 @@ import json
 import os
 import shutil
 import xml.etree.ElementTree as ET
-import yaml
 from pprint import pprint
+
+import yaml
 
 from tableau_utilities.tableau_file.tableau_file import Datasource
 from tableau_utilities.tableau_server.tableau_server import TableauServer
@@ -210,46 +211,27 @@ def create_column_config(columns, datasource_name, folder_mapping):
             persona = choose_persona(role=c['@role'], role_type=c['@type'], datatype=c['@datatype'])
             # column_config = {c['@caption': {}}
 
-            description = None
+            description = ''
             if 'desc' in c:
                 description = c['desc']['formatted-text']['run']
 
             folder_name = None
 
-            # for mapping in folder_mapping:
-            #
-            # # folder_name = [folder_mapping[column_name] for m in folder_mapping if column_name ==  ]
-            #
             if column_name in folder_mapping.keys():
                 folder_name = folder_mapping[column_name]
 
-            # column_config = {
-            #     c['@caption']: {
-            #         "description": description,
-            #         "folder": folder_name,
-            #         "persona": persona,
-            #         "datasources": [
-            #             {
-            #                 "name": datasource_name,
-            #                 "local-name": column_name,
-            #                 "sql_alias": column_name
-            #             },
-            #         ]
-            #     },
-            # }
-
-            column_configs[c['@caption']] =  {
-                    "description": description,
-                    "folder": folder_name,
-                    "persona": persona,
-                    "datasources": [
-                        {
-                            "name": datasource_name,
-                            "local-name": column_name,
-                            "sql_alias": column_name
-                        },
-                    ]
-                }
+            column_configs[c['@caption']] = {
+                "description": description,
+                "folder": folder_name,
+                "persona": persona,
+                "datasources": [
+                    {
+                        "name": datasource_name,
+                        "local-name": column_name,
+                        "sql_alias": column_name
+                    },
+                ]
+            }
 
             # column_configs.append(column_config)
 
@@ -263,7 +245,7 @@ def build_folder_mapping(datasource_path):
     for f in folders:
         folder_name = f['@name']
         print(type(f))
-        print('-'*50)
+        print('-' * 50)
         print(f)
 
         print(f)
@@ -288,7 +270,8 @@ def build_config(datasource, datasource_path):
     # Build the folder mapping
     folder_mapping = build_folder_mapping(datasource_path)
 
-    column_configs = create_column_config(columns=columns, datasource_name=datasource.name, folder_mapping=folder_mapping)
+    column_configs = create_column_config(columns=columns, datasource_name=datasource.name,
+                                          folder_mapping=folder_mapping)
     print(column_configs)
     print(type(column_configs))
 
@@ -301,14 +284,10 @@ def build_config(datasource, datasource_path):
     return column_configs
 
 
-
-
 def generate_config(server, datasource_name):
     datasource, datasource_path = download_datasource(server, datasource_name)
     print(datasource_path)
     config = build_config(datasource, datasource_path)
-
-
 
     #     print("BUILDING CONFIG FOR:", datasource.project_name, (datasource.id, datasource.name))
     #     # datasource_path = server.download_datasource(datasource.id, include_extract=False)
