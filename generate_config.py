@@ -285,7 +285,7 @@ def build_config(datasource, datasource_path):
     print(type(column_configs))
 
     for config in column_configs:
-        pprint(config, sort_dicts=False)
+        pprint(config, sort_dicts=False, width=400, compact=False)
         # print(config)
 
     folder_mapping = build_folder_mapping(datasource_path)
