@@ -30,10 +30,11 @@ def do_args():
     parser.add_argument('--password', help='password')
     parser.add_argument('--token_secret', help='Personal Access Token Secret')
     parser.add_argument('--token_name', help='Personal Access Token Name')
+    parser.add_argument('--datasource', help='The name of the datasources to generate a config for')
     return parser.parse_args()
 
 
-def all_columns_all_datasources(server):
+def generate_config(server, datasource_name):
     """ Gets a list of all columns in all datasources
 
     Args:
@@ -46,10 +47,16 @@ def all_columns_all_datasources(server):
     datasource_list = [d for d in server.get_datasources()]
     rows = dict()
 
-    print(datasource_list)
+    for datasource in datasource_list:
 
-    # for datasource in datasource_list:
-    #     print(datasource.project_name, (datasource.id, datasource.name))
+        if datasource.name == datasource_name:
+            print("BUILDING CONFIG FOR:", datasource.project_name, (datasource.id, datasource.name))
+        else:
+            print("SKIPPING:", datasource.project_name, (datasource.id, datasource.name))
+
+
+
+
     #     datasource_path = server.download_datasource(datasource.id, include_extract=False)
     #     columns = [c.dict() for c in Datasource(datasource_path).columns]
     #     rows.setdefault(datasource.name, [])
@@ -63,8 +70,6 @@ if __name__ == '__main__':
     args = do_args()
 
     host = f'https://{args.server}.online.tableau.com'
-    # print(host)
-    # print(args.user, args.user, args.password)
 
     if args.user and args.password:
         ts = TableauServer(
@@ -84,6 +89,6 @@ if __name__ == '__main__':
         )
 
 
-    config = all_columns_all_datasources(ts)
+    config = generate_config(ts, datasource_name=args.datasource)
     # with open('generated_config.json', 'w') as fd:
     #     json.dump(config, fd, indent=3)
