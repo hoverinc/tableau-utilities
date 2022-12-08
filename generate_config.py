@@ -171,7 +171,8 @@ def choose_persona(role, role_type, datatype):
     if persona_name is not None:
         return persona_name
     else:
-        raise ValueError(f"There is no persona for the combination of ROLE {role}, ROLE_TYPE {role_type}, and DATATYPE {datatype}'")
+        raise ValueError(
+            f"There is no persona for the combination of ROLE {role}, ROLE_TYPE {role_type}, and DATATYPE {datatype}'")
 
     # for persona_title, persona_details in personas.items():
     #
@@ -202,40 +203,30 @@ def create_column_config(columns, datasource_name):
 
     column_configs = []
 
-    print('-' * 100)
-    print(datasource_name)
-    # persona = choose_persona()
     for c in columns:
 
         # Skip the table datatype for now
         if c['@datatype'] == 'table':
             pass
         else:
-            print(c)
             persona = choose_persona(role=c['@role'], role_type=c['@type'], datatype=c['@datatype'])
-            print(persona)
+            column_config = {
+                c['@caption': {
+                    "description": c['desc']['formatted-text']['run'],
+                    "folder": None,
+                    "persona": persona,
+                    "datasources": [
+                        {
+                            "name": datasource_name,
+                            "local-name": c['@name'],
+                            "sql_alias": c['@name']
+                        },
+                    ]
+                },
+            }
 
-    #     # print(c)
-    #     print(persona)
-    #
-    #   column_config = {c['@caption': {
-    #   "description": "The 18 digit account Id for a Salesforce opportunity",
-    #   "folder": None,
-    #   "persona": "string_dimension",
-    #   "datasources": [
-    #     {
-    #       "name": datasource_name,
-    #       "local-name": c['@name'],
-    #       "sql_alias": c['@name']
-    #     }
-    #   ]
-    # }
-    #   column_configs.append(column_config)
-    #
-    #
-    #
-    #   }
-    #   print(c)
+            print(type(column_config))
+            print(column_config)
 
 
 def build_config(datasource, datasource_path):
