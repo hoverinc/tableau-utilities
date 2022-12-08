@@ -236,6 +236,28 @@ def create_column_config(columns, datasource_name):
     return column_configs
 
 
+def build_folder_mapping(datasource_path):
+    folders = [c.dict() for c in Datasource(datasource_path).folders_common]
+
+    mapping_list = []
+    for f in folders:
+        folder_name = f['@name']
+        print(type(f))
+        print('-'*50)
+        print(f)
+
+        print(f)
+
+        for item in f['folder-item']:
+            # print(item)
+            # print(folder_name, item)
+            field_name = item['@name']
+            field_and_folder = {field_name: folder_name}
+            mapping_list.append(field_and_folder)
+
+    return mapping_list
+
+
 def build_config(datasource, datasource_path):
     rows = dict()
     columns = [c.dict() for c in Datasource(datasource_path).columns]
@@ -248,7 +270,13 @@ def build_config(datasource, datasource_path):
 
     for config in column_configs:
         pprint(config, sort_dicts=False)
-        print(config)
+        # print(config)
+
+    folder_mapping = build_folder_mapping(datasource_path)
+
+    for f in folder_mapping:
+        print(f)
+
 
     # for c in columns:
     #     print(c)
@@ -260,7 +288,16 @@ def build_config(datasource, datasource_path):
 
     # folders = [c.dict() for c in Datasource(datasource_path).folders_common]
     # for f in folders:
-    #     print(f)
+    #     # print(type(f))
+    #     print('-'*50)
+    #     # print(f)
+    #
+    #     for item in f['folder-item']:
+    #         if item['@type'] == 'field':
+    #             print('OH NO', item)
+    #         # print(item)
+    #
+    # print(type(folders))
 
 
 def generate_config(server, datasource_name):
