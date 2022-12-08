@@ -215,6 +215,7 @@ def create_column_config(columns, datasource_name):
             description = None
             if 'desc' in c:
                 description = c['desc']['formatted-text']['run']
+
             column_config = {
                 c['@caption']: {
                     "description": description,
@@ -246,7 +247,8 @@ def build_config(datasource, datasource_path):
     print(type(column_configs))
 
     for config in column_configs:
-        pprint(config)
+        pprint(config, sort_dicts=False)
+        print(config)
 
     # for c in columns:
     #     print(c)
