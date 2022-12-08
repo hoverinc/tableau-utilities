@@ -210,9 +210,14 @@ def create_column_config(columns, datasource_name):
             pass
         else:
             persona = choose_persona(role=c['@role'], role_type=c['@type'], datatype=c['@datatype'])
+            # column_config = {c['@caption': {}}
+
+            description = None
+            if 'desc' in c:
+                description = c['desc']['formatted-text']['run']
             column_config = {
-                c['@caption': {
-                    "description": c['desc']['formatted-text']['run'],
+                c['@caption']: {
+                    "description": description,
                     "folder": None,
                     "persona": persona,
                     "datasources": [
@@ -225,8 +230,10 @@ def create_column_config(columns, datasource_name):
                 },
             }
 
-            print(type(column_config))
-            print(column_config)
+            column_configs.append(column_config)
+
+    return column_configs
+
 
 
 def build_config(datasource, datasource_path):
@@ -235,7 +242,9 @@ def build_config(datasource, datasource_path):
     rows.setdefault(datasource.name, [])
     rows[datasource.name].extend(columns)
 
-    create_column_config(columns=columns, datasource_name=datasource.name)
+    column_configs = create_column_config(columns=columns, datasource_name=datasource.name)
+    print(column_configs)
+    print(type(column_configs))
 
     # for c in columns:
     #     print(c)
