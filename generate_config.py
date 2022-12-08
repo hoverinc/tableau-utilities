@@ -223,8 +223,22 @@ def create_column_config(columns, datasource_name, folder_mapping):
             if column_name in folder_mapping.keys():
                 folder_name = folder_mapping[column_name]
 
-            column_config = {
-                c['@caption']: {
+            # column_config = {
+            #     c['@caption']: {
+            #         "description": description,
+            #         "folder": folder_name,
+            #         "persona": persona,
+            #         "datasources": [
+            #             {
+            #                 "name": datasource_name,
+            #                 "local-name": column_name,
+            #                 "sql_alias": column_name
+            #             },
+            #         ]
+            #     },
+            # }
+
+            column_configs[c['@caption']] =  {
                     "description": description,
                     "folder": folder_name,
                     "persona": persona,
@@ -235,10 +249,9 @@ def create_column_config(columns, datasource_name, folder_mapping):
                             "sql_alias": column_name
                         },
                     ]
-                },
-            }
+                }
 
-            column_configs.append(column_config)
+            # column_configs.append(column_config)
 
     return column_configs
 
