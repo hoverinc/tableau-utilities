@@ -59,6 +59,10 @@ def generate_config(server, datasource_name):
             for c in columns:
                 print(c)
 
+            folders = [c.dict() for c in Datasource(datasource_path).folders_common]
+            for f in folders:
+                print(f)
+
         else:
             print("SKIPPING:", datasource.project_name, (datasource.id, datasource.name))
 
