@@ -196,12 +196,16 @@ def create_column_config(columns, datasource_name, folder_mapping):
       }
       ````
 
+    Returns:
+        column_confgs
+        calculated_column_configs
+
     """
 
     column_configs = {}
+    calculated_column_configs = {}
 
     for c in columns:
-
         column_name = c['@name'][1:-1]
 
         # Skip the table datatype for now
@@ -209,59 +213,89 @@ def create_column_config(columns, datasource_name, folder_mapping):
             pass
         else:
             persona = choose_persona(role=c['@role'], role_type=c['@type'], datatype=c['@datatype'])
-            # column_config = {c['@caption': {}}
 
             description = ''
             if 'desc' in c:
                 description = c['desc']['formatted-text']['run']
 
             folder_name = None
-
             if column_name in folder_mapping.keys():
                 folder_name = folder_mapping[column_name]
 
-            column_configs[c['@caption']] = {
-                "description": description,
-                "folder": folder_name,
-                "persona": persona,
-                "datasources": [
-                    {
-                        "name": datasource_name,
-                        "local-name": column_name,
-                        "sql_alias": column_name
-                    },
-                ]
-            }
+            # Calculations are written to a separate config in the Airflow DAG
+            if 'calculation' in c:
 
-            # column_configs.append(column_config)
+                calculated_column_configs[c['@caption']] = {
+                    "description": description,
+                    "calculation": c['calculation']['@formula'],
+                    "folder": folder_name,
+                    "persona": persona,
+                    "datasources": [
+                        {
+                            "name": datasource_name,
+                            "local-name": column_name,
+                            "sql_alias": column_name
+                        },
+                    ]
+                }
 
-    return column_configs
+            else:
+
+                column_configs[c['@caption']] = {
+                    "description": description,
+                    "folder": folder_name,
+                    "persona": persona,
+                    "datasources": [
+                        {
+                            "name": datasource_name,
+                            "local-name": column_name,
+                            "sql_alias": column_name
+                        },
+                    ]
+                }
+
+    return column_configs, calculated_column_configs
 
 
 def build_folder_mapping(datasource_path):
+    """  Builds a dictionary mapping columns to folders
+
+    Args:
+      The path to the datasource
+
+    Returns:
+        A dictionary with the mapping like
+
+        ```
+        {'column1': 'folderA',
+         'column2': 'folderA',
+         'column3': 'folderB',
+        ```
+
+    """
+
     folders = [c.dict() for c in Datasource(datasource_path).folders_common]
 
     mappings = {}
     for f in folders:
         folder_name = f['@name']
-        print(type(f))
-        print('-' * 50)
-        print(f)
-
-        print(f)
 
         for item in f['folder-item']:
-            # print(item)
-            # print(folder_name, item)
             field_name = item['@name'][1:-1]
             mappings[field_name] = folder_name
-            # field_and_folder = {field_name: folder_name}
-            # mapping_list.append(field_and_folder)
 
     return mappings
 
 
 def build_config(datasource, datasource_path):
+    """ Builds a column config and caluclated field column config.  Writes each to individual files
+
+    Args:
+        datasource:
+        datasource_path:
+
+    """
+
     rows = dict()
     columns = [c.dict() for c in Datasource(datasource_path).columns]
     rows.setdefault(datasource.name, [])
@@ -270,25 +304,29 @@ def build_config(datasource, datasource_path):
     # Build the folder mapping
     folder_mapping = build_folder_mapping(datasource_path)
 
-    column_configs = create_column_config(columns=columns, datasource_name=datasource.name,
-                                          folder_mapping=folder_mapping)
-    print(column_configs)
-    print(type(column_configs))
+    column_configs, calculated_column_configs = create_column_config(columns=columns,
+                                                                     datasource_name=datasource.name,
+                                                                     folder_mapping=folder_mapping)
 
+    print('-' * 20, 'COLUMN CONFIG', '-' * 20)
     for config in column_configs:
         pprint(config, sort_dicts=False, width=200)
 
-    return column_configs
+    print('-'*20, 'CALCULATED FIELD COLUMN CONFIG', '-'*20)
+    for config in calculated_column_configs:
+        pprint(config, sort_dicts=False, width=200)
+
+    with open("column_config.json", "w") as outfile:
+        json.dump(column_configs, outfile)
+
+    with open("tableau_calc_config.json", "w") as outfile:
+        json.dump(calculated_column_configs, outfile)
 
 
 def generate_config(server, datasource_name):
     datasource, datasource_path = download_datasource(server, datasource_name)
     print(datasource_path)
-    config = build_config(datasource, datasource_path)
-
-    with open("generated_config.json", "w") as outfile:
-        json.dump(config, outfile)
-
+    build_config(datasource, datasource_path)
 
 
 if __name__ == '__main__':
@@ -316,8 +354,4 @@ if __name__ == '__main__':
     if args.list_datasources:
         download_datasource(ts, list_datasources=True)
     else:
-        config = generate_config(ts, datasource_name=args.datasource)
-        # with open("generated_config.json", "w") as outfile:
-        #     json.dump(config, outfile)
-    # with open('generated_config.json', 'w') as fd:
-    #     json.dump(config, fd, indent=3)
+        generate_config(ts, datasource_name=args.datasource)
