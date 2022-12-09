@@ -2,10 +2,7 @@ import argparse
 import json
 import os
 import shutil
-import xml.etree.ElementTree as ET
 from pprint import pprint
-
-import yaml
 
 from tableau_utilities.tableau_file.tableau_file import Datasource
 from tableau_utilities.tableau_server.tableau_server import TableauServer
