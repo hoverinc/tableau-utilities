@@ -34,6 +34,9 @@ def do_args():
     parser.add_argument('--datasource', help='The name of the datasources to generate a config for')
     parser.add_argument('--list_datasources', action='store_true',
                         help='Print the data sources and metadata about them to the console')
+    parser.add_argument('--merge', action='store_true',
+                        help='Merges config B into config A. Adds new config items. If there are conflicts '
+                             'it will assume config B in the correct information.')
     return parser.parse_args()
 
 
@@ -59,6 +62,7 @@ def download_datasource(server, datasource_name=None, list_datasources=False):
     sources = []
     for datasource in datasource_list:
         if list_datasources:
+            print(datasource)
             info = {'name': datasource.name,
                     'project': datasource.project_name,
                     'connected_workbooks': datasource.connected_workbooks_count}
@@ -329,20 +333,19 @@ def generate_config(server, datasource_name):
 if __name__ == '__main__':
     args = do_args()
 
-    host = f'https://{args.server}.online.tableau.com'
+    if ('LoadFiles' in vars(args) and
+            'SourceFolder' not in vars(args) and
+            'SourceFile' not in vars(args)):
+        pass
 
-    if args.user and args.password:
+    if args.server:
+        host = f'https://{args.server}.online.tableau.com'
+
         ts = TableauServer(
+            personal_access_token_name=args.token_name,
+            personal_access_token_secret=args.token_secret,
             user=args.user,
             password=args.password,
-            site=args.site,
-            host=host,
-            api_version=args.api_version
-        )
-    elif args.token_secret and args.token_name:
-        ts = TableauServer(
-            token_name=args.token_name,
-            token_secret=args.token_secret,
             site=args.site,
             host=host,
             api_version=args.api_version

@@ -18,19 +18,22 @@ class TableauConnectionError(Exception):
 class TableauServer:
     """ Connects and interacts with Tableau Online/Server, via the REST API. """
 
-    def __init__(self, host, site, user=None, password=None, token_secret=None, token_name=None, api_version=3.16):
-        """
+    def __init__(self, host, site, user=None, password=None, personal_access_token_secret=None, personal_access_token_name=None, api_version=3.16):
+        """ To sign in to Tableau a user needs either a username & password or token secret & token name
+
         Args:
             host (str): Tableau server address
             user (str): The username to sign in to Tableau Online with
             password (str): The password to sign in to Tableau Online with
+            personal_access_token_name (str): The name of the personal access token used
+            personal_access_token_secret (str): The secret of the personal access token used
             site (str): The Tableau Online site id
             api_version (float): The Tableau REST API version
         """
         self.user = user
         self.__pw = password
-        self.token_secret = token_secret
-        self.token_name = token_name
+        self.personal_access_token_secret = personal_access_token_secret
+        self.personal_access_token_name = personal_access_token_name
         self.host = host
         self.site = site
         self.api = api_version
@@ -61,12 +64,17 @@ class TableauServer:
 
         url = f"{self.host}/api/{self.api}/auth/signin"
 
-        if self.token_secret and self.token_name:
-            body = {"credentials": {"personalAccessTokenSecret": self.token_secret,
-                                    "personalAccessTokenName": self.token_name,
+        if self.personal_access_token_secret and self.personal_access_token_name:
+            body = {"credentials": {"personalAccessTokenSecret": self.personal_access_token_secret,
+                                    "personalAccessTokenName": self.personal_access_token_name,
                                     "site": {"contentUrl": self.site}}}
-        else:
+        elif self.user and self.__pw:
             body = {"credentials": {"name": self.user, "password": self.__pw, "site": {"contentUrl": self.site}}}
+        else:
+            raise TableauConnectionError(
+                'Please provide either user and password, or token_secret and token_name'
+            )
+
         res = self.post(url, json=body).get('credentials', {})
         # Set auth token and site ID attributes on sign in
         self.session.headers.update({'x-tableau-auth': res.get('token')})
