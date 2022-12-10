@@ -34,7 +34,7 @@ def do_args():
     parser.add_argument('--datasource', help='The name of the datasources to generate a config for')
     parser.add_argument('--clean_up_first', action='store_true', help='Deletes the directory and files before running')
     parser.add_argument('--folder_name', default='tmp_tdsx_and_config',  help='Specifies the folder to write the datasource and configs to')
-    parser.add_argument('--file_prefix', help='Adds a prefix to the output files')
+    parser.add_argument('--file_prefix', action='store_true', help='Adds a prefix of the datasource name to the output file names')
     return parser.parse_args()
 
 
@@ -313,7 +313,15 @@ def build_config(datasource, datasource_path):
     print('CALCULATED COLUMN CONFIG PATH:', datasource_path)
 
 
-def generate_config(server, datasource_name):
+def generate_config(server, datasource_name, prefix=False):
+    """ Downloads a datasource and saves configs for that datasource
+
+    Args:
+        server: the tableau server authentication
+        datasource_name: The name of the datasource to generate the config for
+        prefix: If true the configs will have the datasource name as a prefix
+
+    """
 
     datasource, datasource_path = download_datasource(server, datasource_name)
     build_config(datasource, datasource_path)
@@ -334,13 +342,16 @@ if __name__ == '__main__':
         api_version=args.api_version
     )
 
+    tmp_folder = args.folder_name
     if args.clean_up_first:
-        shutil.rmtree('tmp_tdsx', ignore_errors=True)
+        shutil.rmtree(args.folder_name, ignore_errors=True)
 
-        tmp_folder = 'tmp_tdsx'
-        os.makedirs(tmp_folder, exist_ok=True)
-        os.chdir(tmp_folder)
+    os.makedirs(tmp_folder, exist_ok=True)
+    os.chdir(tmp_folder)
 
+    if args.file_prefix:
+        add_prefix = True
+    else:
+        add_prefix = False
 
-
-    generate_config(ts, datasource_name=args.datasource)
+    generate_config(ts, datasource_name=args.datasource, prefix=add_prefix)
