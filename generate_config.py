@@ -50,19 +50,14 @@ def download_datasource(server, datasource_name=None, list_datasources=False):
         list_datasources: Prints a sorted list of all the datasources from a site
 
     Returns:
-        The path of the datasource to download
+        datasource: The datasource object for the datasource that was downloaded
+        datasource_path: The path of the datasource that was downloaded
     """
-
-    shutil.rmtree('tmp_tdsx', ignore_errors=True)
-    tmp_folder = 'tmp_tdsx'
-    os.makedirs(tmp_folder, exist_ok=True)
-    os.chdir(tmp_folder)
     datasource_list = [d for d in server.get_datasources()]
 
     sources = []
     for datasource in datasource_list:
         if list_datasources:
-            print(datasource)
             info = {'name': datasource.name,
                     'project': datasource.project_name,
                     'connected_workbooks': datasource.connected_workbooks_count}
@@ -79,8 +74,13 @@ def download_datasource(server, datasource_name=None, list_datasources=False):
 
 
 def choose_persona(role, role_type, datatype):
-    """  The config relies on a persona which is a combination of role, role_type and datatype.
+    """  The config relies on a persona which is a combination of role, role_type and datatype for each column.
     This returns the persona name or raises an exception if the combination is not found
+
+    Args:
+        role: dimension or measure
+        role_type: nominal, ordinal, or quantitative
+        datatype: string, date, datetype, real, or boolean
 
     """
 
@@ -160,9 +160,6 @@ def choose_persona(role, role_type, datatype):
     persona_name = None
     for persona in personas:
         for k, v in persona.items():
-            # print(v['role'], v['role_type'], v['datatype'])
-            # print(role, role_type, datatype)
-            # print('-'*20)
             if role == v['role'] and role_type == v['role_type'] == role_type and datatype == v['datatype']:
                 persona_name = k
                 break
@@ -198,8 +195,9 @@ def create_column_config(columns, datasource_name, folder_mapping):
       ````
 
     Returns:
-        column_confgs
-        calculated_column_configs
+        column_configs: A dictionary with the configs for fields that are pulled from the source database
+        calculated_column_configs: A dictionary with the configs for calculated fields added in the workbook that built
+            the datasource
 
     """
 
@@ -292,8 +290,8 @@ def build_config(datasource, datasource_path):
     """ Builds a column config and caluclated field column config.  Writes each to individual files
 
     Args:
-        datasource:
-        datasource_path:
+        datasource: The datasoruce object
+        datasource_path: The name of the datasource
 
     """
 
@@ -323,10 +321,19 @@ def build_config(datasource, datasource_path):
     with open("tableau_calc_config.json", "w") as outfile:
         json.dump(calculated_column_configs, outfile)
 
+    print('DATSOURCE PATH:', datasource_path)
+    print('COLUMN CONFIG PATH:', datasource_path)
+    print('CALCULATED COLUMN CONFIG PATH:', datasource_path)
+
 
 def generate_config(server, datasource_name):
+
+    shutil.rmtree('tmp_tdsx', ignore_errors=True)
+    tmp_folder = 'tmp_tdsx'
+    os.makedirs(tmp_folder, exist_ok=True)
+    os.chdir(tmp_folder)
+
     datasource, datasource_path = download_datasource(server, datasource_name)
-    print(datasource_path)
     build_config(datasource, datasource_path)
 
 
