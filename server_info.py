@@ -1,7 +1,6 @@
 import argparse
-import json
-import os
-import shutil
+import pandas as pd
+from tabulate import tabulate
 from pprint import pprint
 
 from tableau_utilities.tableau_file.tableau_file import Datasource
@@ -55,26 +54,31 @@ def datasource_info(server, list_datasources=False, show_datasources=False, sort
 
     sources = []
     for datasource in datasource_list:
-        if list_datasources:
-            print(datasource.__dict__)
-            info = datasource.__dict__
-            sources.append(info)
+        info = datasource.__dict__
+        sources.append(info)
 
     sorted_sources = sorted(sources, key=lambda d: d[sort_field])
+
+        # if list_datasources:
+        #     print(datasource.__dict__)
+        #     info = datasource.__dict__
+        #     sources.append(info)
+
 
     if list_datasources:
         for source in sorted_sources:
             print(source['name'])
 
+    # TO DO: This is only printing a pretty table when columns are limited
+    if show_datasources:
+        df = pd.DataFrame(sources)
+        df = df[['name', 'created_at', 'is_certified']]
+        # print(df.to_markdown())
+        print(tabulate(df, headers='keys', tablefmt='psql', colalign='left'))
 
 
 if __name__ == '__main__':
     args = do_args()
-
-    if ('LoadFiles' in vars(args) and
-            'SourceFolder' not in vars(args) and
-            'SourceFile' not in vars(args)):
-        pass
 
     if args.server:
         host = f'https://{args.server}.online.tableau.com'
@@ -91,4 +95,6 @@ if __name__ == '__main__':
 
     if args.list_datasources:
         datasource_info(ts, list_datasources=True)
+    if args.show_datasources:
+        datasource_info(ts, show_datasources=True)
 
