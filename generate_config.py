@@ -6,6 +6,7 @@ from pprint import pprint
 
 from tableau_utilities.tableau_file.tableau_file import Datasource
 from tableau_utilities.tableau_server.tableau_server import TableauServer
+from tableau_utilities.general.funcs import convert_to_snake_case
 
 
 def do_args():
@@ -273,12 +274,14 @@ def build_folder_mapping(datasource_path):
     return mappings
 
 
-def build_config(datasource, datasource_path):
+def build_config(datasource_name, datasource, datasource_path, prefix):
     """ Builds a column config and caluclated field column config.  Writes each to individual files
 
     Args:
+        datasource_name: The name of the datasource
         datasource: The datasoruce object
-        datasource_path: The name of the datasource
+        datasource_path: The path to the of the datasource
+        prefix: If true the output files are prefixed with the datasource name
 
     """
 
@@ -302,10 +305,20 @@ def build_config(datasource, datasource_path):
     for config in calculated_column_configs:
         pprint(config, sort_dicts=False, width=200)
 
-    with open("column_config.json", "w") as outfile:
+    datasource_name_snake = convert_to_snake_case(datasource_name)
+    output_file_column_config = 'column_config.json'
+    output_file_calculated_column_config = 'tableau_calc_config.json'
+
+
+    if prefix:
+        output_file_column_config = f'{datasource_name_snake}__{output_file_column_config}'
+        output_file_calculated_column_config = f'{datasource_name_snake}__{output_file_calculated_column_config}'
+
+
+    with open(output_file_column_config, "w") as outfile:
         json.dump(column_configs, outfile)
 
-    with open("tableau_calc_config.json", "w") as outfile:
+    with open(output_file_calculated_column_config, "w") as outfile:
         json.dump(calculated_column_configs, outfile)
 
     print('DATSOURCE PATH:', datasource_path)
@@ -324,7 +337,7 @@ def generate_config(server, datasource_name, prefix=False):
     """
 
     datasource, datasource_path = download_datasource(server, datasource_name)
-    build_config(datasource, datasource_path)
+    build_config(datasource_name, datasource, datasource_path, prefix)
 
 
 if __name__ == '__main__':
