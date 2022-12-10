@@ -4,8 +4,9 @@ import os
 import shutil
 from pprint import pprint
 
-from tableau_utilities.tableau_file.tableau_file import Datasource
 from tableau_utilities.tableau_server.tableau_server import TableauServer
+from tableau_utilities.tableau_file.tableau_file import Datasource
+from tableau_utilities.tableau_file.tableau_file_objects import MetadataRecord
 from tableau_utilities.general.funcs import convert_to_snake_case
 
 
@@ -157,6 +158,13 @@ def choose_persona(role, role_type, datatype):
     else:
         raise ValueError(
             f"There is no persona for the combination of ROLE {role}, ROLE_TYPE {role_type}, and DATATYPE {datatype}'")
+
+def get_metadata_record_columns():
+    """
+
+    """
+
+    MetadataRecord
 
 
 def create_column_config(columns, datasource_name, folder_mapping):

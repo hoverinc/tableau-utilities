@@ -112,6 +112,7 @@ class Datasource(TableauFile):
         )
         self.folders_common: tfo.FoldersCommon = tfo.FoldersCommon(**self.__get_section('folders-common')[0])
         self.extract: tfo.Extract = tfo.Extract(**self.__get_section('extract')[0])
+        self.metadata_records: tfo.MetadataRecord = tfo.MetadataRecord(**self.__get_section('extract')[0])
 
     def sections(self):
         """ Yields each section defined in the class, for iteration """
@@ -120,6 +121,7 @@ class Datasource(TableauFile):
         yield self.columns
         yield self.folders_common
         yield self.extract
+        yield self.metadata_records
 
     def __get_section(self, tag):
         """ Sets DatasourceItems for each section """
