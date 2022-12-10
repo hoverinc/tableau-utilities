@@ -324,12 +324,6 @@ def generate_config(server, datasource_name):
 if __name__ == '__main__':
     args = do_args()
 
-    # if ('LoadFiles' in vars(args) and
-    #         'SourceFolder' not in vars(args) and
-    #         'SourceFile' not in vars(args)):
-    #     pass
-
-
     host = f'https://{args.server}.online.tableau.com'
 
     ts = TableauServer(
