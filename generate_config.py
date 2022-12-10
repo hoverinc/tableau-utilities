@@ -26,12 +26,15 @@ def do_args():
         required=True,
         help='Site name. i.e. <site> in https://<server_address>.online.tableau.com/#/site/<site>',
         default=None)
-    parser.add_argument('--api_version', help='Tableau API version', default='2.8')
+    parser.add_argument('--api_version', help='Tableau API version', default='3.17')
     parser.add_argument('--user', help='user name')
     parser.add_argument('--password', help='password')
     parser.add_argument('--token_secret', help='Personal Access Token Secret')
     parser.add_argument('--token_name', help='Personal Access Token Name')
     parser.add_argument('--datasource', help='The name of the datasources to generate a config for')
+    parser.add_argument('--clean_up_first', action='store_true', help='Deletes the directory and files before running')
+    parser.add_argument('--folder_name', default='tmp_tdsx_and_config',  help='Specifies the folder to write the datasource and configs to')
+    parser.add_argument('--file_prefix', help='Adds a prefix to the output files')
     return parser.parse_args()
 
 
@@ -312,11 +315,6 @@ def build_config(datasource, datasource_path):
 
 def generate_config(server, datasource_name):
 
-    shutil.rmtree('tmp_tdsx', ignore_errors=True)
-    tmp_folder = 'tmp_tdsx'
-    os.makedirs(tmp_folder, exist_ok=True)
-    os.chdir(tmp_folder)
-
     datasource, datasource_path = download_datasource(server, datasource_name)
     build_config(datasource, datasource_path)
 
@@ -335,5 +333,14 @@ if __name__ == '__main__':
         host=host,
         api_version=args.api_version
     )
+
+    if args.clean_up_first:
+        shutil.rmtree('tmp_tdsx', ignore_errors=True)
+
+        tmp_folder = 'tmp_tdsx'
+        os.makedirs(tmp_folder, exist_ok=True)
+        os.chdir(tmp_folder)
+
+
 
     generate_config(ts, datasource_name=args.datasource)
