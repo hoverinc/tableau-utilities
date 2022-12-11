@@ -175,12 +175,14 @@ def get_metadata_record_columns(datasource_name, datasource, datasource_path, pr
     """
 
     rows = dict()
-    metadata_records = [c.dict() for c in Datasource(datasource_path).metadata_records]
+    metadata_records = [c.dict() for c in Datasource(datasource_path).connection.metadata_records]
     rows.setdefault(datasource.name, [])
     rows[datasource.name].extend(metadata_records)
 
     for m in metadata_records:
-        print(m)
+        if m['@class'] == 'column':
+            # print(m)
+            print(m['remote-name'], m['remote-alias'], m['local-type'])
 
 
 def create_column_config(columns, datasource_name, folder_mapping):
@@ -219,6 +221,12 @@ def create_column_config(columns, datasource_name, folder_mapping):
     for c in columns:
         column_name = c['@name'][1:-1]
 
+        # Make a title case caption from the database name if there is no caption
+        if '@caption' in 'c':
+            caption = c['@caption']
+        else:
+            caption = column_name.replace('_', ' ').title()
+
         # Skip the table datatype for now
         if c['@datatype'] == 'table':
             pass
@@ -236,7 +244,7 @@ def create_column_config(columns, datasource_name, folder_mapping):
             # Calculations are written to a separate config in the Airflow DAG
             if 'calculation' in c:
 
-                calculated_column_configs[c['@caption']] = {
+                calculated_column_configs[caption] = {
                     "description": description,
                     "calculation": c['calculation']['@formula'],
                     "folder": folder_name,
@@ -252,7 +260,7 @@ def create_column_config(columns, datasource_name, folder_mapping):
 
             else:
 
-                column_configs[c['@caption']] = {
+                column_configs[caption] = {
                     "description": description,
                     "folder": folder_name,
                     "persona": persona,
@@ -361,8 +369,8 @@ def generate_config(server, datasource_name, prefix=False):
     """
 
     datasource, datasource_path = download_datasource(server, datasource_name)
-    # get_metadata_record_columns(datasource_name, datasource, datasource_path, prefix)
-    build_config(datasource_name, datasource, datasource_path, prefix)
+    get_metadata_record_columns(datasource_name, datasource, datasource_path, prefix)
+    # build_config(datasource_name, datasource, datasource_path, prefix)
 
 
 if __name__ == '__main__':
