@@ -181,7 +181,7 @@ def get_metadata_record_columns(datasource_name, datasource, datasource_path, pr
 
     for m in metadata_records:
         if m['@class'] == 'column':
-            # print(m)
+            print(m)
             print(m['remote-name'], m['remote-alias'], m['local-type'])
 
 
