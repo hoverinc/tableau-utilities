@@ -159,12 +159,28 @@ def choose_persona(role, role_type, datatype):
         raise ValueError(
             f"There is no persona for the combination of ROLE {role}, ROLE_TYPE {role_type}, and DATATYPE {datatype}'")
 
-def get_metadata_record_columns():
+def get_metadata_record_columns(datasource_name, datasource, datasource_path, prefix):
     """
 
     """
 
-    MetadataRecord
+    """ Builds a column config and caluclated field column config.  Writes each to individual files
+
+    Args:
+        datasource_name: The name of the datasource
+        datasource: The datasoruce object
+        datasource_path: The path to the of the datasource
+        prefix: If true the output files are prefixed with the datasource name
+
+    """
+
+    rows = dict()
+    metadata_records = [c.dict() for c in Datasource(datasource_path).metadata_records]
+    rows.setdefault(datasource.name, [])
+    rows[datasource.name].extend(metadata_records)
+
+    for m in metadata_records:
+        print(m)
 
 
 def create_column_config(columns, datasource_name, folder_mapping):
@@ -345,6 +361,7 @@ def generate_config(server, datasource_name, prefix=False):
     """
 
     datasource, datasource_path = download_datasource(server, datasource_name)
+    # get_metadata_record_columns(datasource_name, datasource, datasource_path, prefix)
     build_config(datasource_name, datasource, datasource_path, prefix)
 
 
