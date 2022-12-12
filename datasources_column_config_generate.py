@@ -185,8 +185,7 @@ def get_metadata_record_columns(datasource_name, datasource, datasource_path):
     for m in metadata_records:
         if m['@class'] == 'column':
 
-        # For these we don't have all the information needed to assign a persona. We'll assume they are dimensions
-        # as that is a safer plan instead of measures where bad math can be done
+            # I think it's low risk to assume these data typers are all dimensions
             if m["local-type"] == 'string':
                 persona = 'string_dimension'
             elif m["local-type"] == 'date':
@@ -195,10 +194,14 @@ def get_metadata_record_columns(datasource_name, datasource, datasource_path):
                 persona = 'datetime_dimension'
             elif m["local-type"] == 'boolean':
                 persona = 'boolean_dimension'
+            # There's no good way to assume if integer & real data types are dimensions or measures
+            # Instead of making assumptions on these the config will skip adding these fields and users will
+            # need to make manual adjustments
+            # Leaving these ELIF's in case there is a better way to do this later
             elif m["local-type"] == 'integer':
-                persona = 'discrete_number_dimension'
+                persona = None
             elif m["local-type"] == 'real':
-                persona = 'continuous_decimal_dimension'
+                persona = None
 
             metadata_record_columns[m['remote-name']] = {'persona': persona,
             "datasources": [
@@ -305,22 +308,20 @@ def create_column_config(columns, datasource_name, folder_mapping, metadata_reco
                     ]
                 }
 
-    # Add column configs for metadata_record columns when there wasn't a column object in the above coce
-
+    # Add column configs for metadata_record columns when there wasn't a column object already
     for k, v in metadata_record_columns.items():
         if k in column_name_list:
             pass
         else:
             caption = k.replace('_', ' ').title()
 
-            # if v['persona'] in ['string_dimension', 'date_dimension', 'datetime_dimension', 'boolean_dimension', 'discrete_number_dimension']:
-
-            column_configs[caption] = {
-                "description": '',
-                "folder": None,
-                "persona": v['persona'],
-                "datasources": v['datasources']
-            }
+            if v['persona'] in ['string_dimension', 'date_dimension', 'datetime_dimension', 'boolean_dimension']:
+                column_configs[caption] = {
+                    "description": '',
+                    "folder": None,
+                    "persona": v['persona'],
+                    "datasources": v['datasources']
+                }
 
     return column_configs, calculated_column_configs
 
