@@ -24,9 +24,9 @@ setup(
     entry_points={
         'console_scripts': [
             'tableau_utilities = tableau_utilities.main:main',
-            'tableau_utilities_config_gen = tableau_utilities.datasources_column_config_generate:main'
-            'tableau_utilities_config_merge = tableau_utilities.datasources_column_config_merge:main'
-            'tableau_utilities_server = tableau_utilities.server:main'
+            'tab-util-config-gen = tableau_utilities.datasources_column_config_generate:main'
+            'tab-util-config-merge = tableau_utilities.datasources_column_config_merge:main'
+            'tab-util-server = tableau_utilities.server:main'
         ]
     }
 )
