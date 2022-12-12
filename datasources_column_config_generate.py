@@ -313,12 +313,14 @@ def create_column_config(columns, datasource_name, folder_mapping, metadata_reco
         else:
             caption = k.replace('_', ' ').title()
 
-            column_configs[caption] = {
-                "description": '',
-                "folder": None,
-                "persona": v['persona'],
-                "datasources": v['datasources']
-            }
+            if v['persona'] in ['string_dimension', 'date_dimension', 'datetime_dimension', 'boolean_dimension']:
+
+                column_configs[caption] = {
+                    "description": '',
+                    "folder": None,
+                    "persona": v['persona'],
+                    "datasources": v['datasources']
+                }
 
     return column_configs, calculated_column_configs
 
