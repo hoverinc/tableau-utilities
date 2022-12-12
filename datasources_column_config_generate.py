@@ -159,7 +159,8 @@ def choose_persona(role, role_type, datatype):
         raise ValueError(
             f"There is no persona for the combination of ROLE {role}, ROLE_TYPE {role_type}, and DATATYPE {datatype}'")
 
-def get_metadata_record_columns(datasource_name, datasource, datasource_path, prefix):
+
+def get_metadata_record_columns(datasource_name, datasource, datasource_path):
     """
 
     """
@@ -179,19 +180,48 @@ def get_metadata_record_columns(datasource_name, datasource, datasource_path, pr
     rows.setdefault(datasource.name, [])
     rows[datasource.name].extend(metadata_records)
 
+    metadata_record_columns = {}
+
     for m in metadata_records:
         if m['@class'] == 'column':
-            print(m)
-            print(m['remote-name'], m['remote-alias'], m['local-type'])
+
+        # For these we don't have all the information needed to assign a persona. We'll assume they are dimensions
+        # as that is a safer plan instead of measures where bad math can be done
+            if m["local-type"] == 'string':
+                persona = 'string_dimension'
+            elif m["local-type"] == 'date':
+                persona = 'date_dimension'
+            elif m["local-type"] == 'datetime':
+                persona = 'datetime_dimension'
+            elif m["local-type"] == 'boolean':
+                persona = 'boolean_dimension'
+            elif m["local-type"] == 'integer':
+                persona = 'discrete_number_dimension'
+            elif m["local-type"] == 'real':
+                persona = 'discrete_decimal_dimension'
+
+            metadata_record_columns[m['remote-name']] = {'persona': persona,
+            "datasources": [
+                        {
+                            "name": datasource_name,
+                            "local-name": m['local-name'][1:-1],
+                            "sql_alias": m['remote-name']
+                        },
+                ]
+
+            }
+
+    return metadata_record_columns
 
 
-def create_column_config(columns, datasource_name, folder_mapping):
+def create_column_config(columns, datasource_name, folder_mapping, metadata_record_columns):
     """ Generates a list of column configs with None for a folder
 
     Args:
         columns
         datasource_name
         folder_mapping: A list of dictionaries mapping column name to folder name
+        metadata_record_columns
 
     ```{
       "Salesforce Opportunity Id": {
@@ -217,9 +247,11 @@ def create_column_config(columns, datasource_name, folder_mapping):
 
     column_configs = {}
     calculated_column_configs = {}
+    column_name_list = []
 
     for c in columns:
         column_name = c['@name'][1:-1]
+        column_name_list.append(column_name)
 
         # Make a title case caption from the database name if there is no caption
         if '@caption' in 'c':
@@ -273,6 +305,21 @@ def create_column_config(columns, datasource_name, folder_mapping):
                     ]
                 }
 
+    # Add column configs for metadata_record columns when there wasn't a column object in the above coce
+
+    for k, v in metadata_record_columns.items():
+        if k in column_name_list:
+            pass
+        else:
+            caption = k.replace('_', ' ').title()
+
+            column_configs[caption] = {
+                "description": '',
+                "folder": None,
+                "persona": v['persona'],
+                "datasources": v['datasources']
+            }
+
     return column_configs, calculated_column_configs
 
 
@@ -299,20 +346,22 @@ def build_folder_mapping(datasource_path):
     for f in folders:
         folder_name = f['@name']
 
-        for item in f['folder-item']:
-            field_name = item['@name'][1:-1]
-            mappings[field_name] = folder_name
+        if 'folder-item' in f:
+            for item in f['folder-item']:
+                field_name = item['@name'][1:-1]
+                mappings[field_name] = folder_name
 
     return mappings
 
 
-def build_config(datasource_name, datasource, datasource_path, prefix):
+def build_config(datasource_name, datasource, datasource_path, metadata_record_columns, prefix):
     """ Builds a column config and caluclated field column config.  Writes each to individual files
 
     Args:
         datasource_name: The name of the datasource
         datasource: The datasoruce object
         datasource_path: The path to the of the datasource
+        metadata_record_columns: The columns from the metadata records
         prefix: If true the output files are prefixed with the datasource name
 
     """
@@ -327,7 +376,8 @@ def build_config(datasource_name, datasource, datasource_path, prefix):
 
     column_configs, calculated_column_configs = create_column_config(columns=columns,
                                                                      datasource_name=datasource.name,
-                                                                     folder_mapping=folder_mapping)
+                                                                     folder_mapping=folder_mapping,
+                                                                     metadata_record_columns=metadata_record_columns)
 
     print('-' * 20, 'COLUMN CONFIG', '-' * 20)
     for config in column_configs:
@@ -341,11 +391,9 @@ def build_config(datasource_name, datasource, datasource_path, prefix):
     output_file_column_config = 'column_config.json'
     output_file_calculated_column_config = 'tableau_calc_config.json'
 
-
     if prefix:
         output_file_column_config = f'{datasource_name_snake}__{output_file_column_config}'
         output_file_calculated_column_config = f'{datasource_name_snake}__{output_file_calculated_column_config}'
-
 
     with open(output_file_column_config, "w") as outfile:
         json.dump(column_configs, outfile)
@@ -369,8 +417,8 @@ def generate_config(server, datasource_name, prefix=False):
     """
 
     datasource, datasource_path = download_datasource(server, datasource_name)
-    get_metadata_record_columns(datasource_name, datasource, datasource_path, prefix)
-    # build_config(datasource_name, datasource, datasource_path, prefix)
+    metadata_record_columns = get_metadata_record_columns(datasource_name, datasource, datasource_path)
+    build_config(datasource_name, datasource, datasource_path, metadata_record_columns, prefix)
 
 
 if __name__ == '__main__':
