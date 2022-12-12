@@ -12,21 +12,22 @@ setup(
     long_description=readme,
     long_description_content_type='text/markdown',
     name="tableau_utilities",
-    version="2.0.0",
+    version="2.0.1",
     packages=[
         'tableau_utilities',
         'tableau_utilities.general',
         'tableau_utilities.tableau_file',
-        'tableau_utilities.tableau_server'
+        'tableau_utilities.tableau_server',
+        'tableau_utilities.scripts'
     ],
     package_data={'tableau_utilities': ['tableau_file/*.yml']},
     include_package_data=True,
     entry_points={
         'console_scripts': [
             'tableau_utilities = tableau_utilities.main:main',
-            'tab-util-config-gen = tableau_utilities.datasources_column_config_generate:main'
-            'tab-util-config-merge = tableau_utilities.datasources_column_config_merge:main'
-            'tab-util-server = tableau_utilities.server:main'
+            'tab-util-config-gen = tableau_utilities.scripts.datasources_column_config_generate:main',
+            'tab-util-config-merge = tableau_utilities.scripts.datasources_column_config_merge:main',
+            'tab-util-server = tableau_utilities.scripts.server:main',
         ]
     }
 )

@@ -6,7 +6,6 @@ from pprint import pprint
 
 from tableau_utilities.tableau_server.tableau_server import TableauServer
 from tableau_utilities.tableau_file.tableau_file import Datasource
-from tableau_utilities.tableau_file.tableau_file_objects import MetadataRecord
 from tableau_utilities.general.funcs import convert_to_snake_case
 
 
@@ -424,7 +423,7 @@ def generate_config(server, datasource_name, prefix=False):
     build_config(datasource_name, datasource, datasource_path, metadata_record_columns, prefix)
 
 
-if __name__ == '__main__':
+def main():
     args = do_args()
 
     host = f'https://{args.server}.online.tableau.com'
@@ -452,3 +451,8 @@ if __name__ == '__main__':
         add_prefix = False
 
     generate_config(ts, datasource_name=args.datasource, prefix=add_prefix)
+
+
+if __name__ == '__main__':
+    main()
+
