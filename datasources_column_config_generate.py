@@ -198,7 +198,7 @@ def get_metadata_record_columns(datasource_name, datasource, datasource_path):
             elif m["local-type"] == 'integer':
                 persona = 'discrete_number_dimension'
             elif m["local-type"] == 'real':
-                persona = 'discrete_decimal_dimension'
+                persona = 'continuous_decimal_dimension'
 
             metadata_record_columns[m['remote-name']] = {'persona': persona,
             "datasources": [
@@ -313,14 +313,14 @@ def create_column_config(columns, datasource_name, folder_mapping, metadata_reco
         else:
             caption = k.replace('_', ' ').title()
 
-            if v['persona'] in ['string_dimension', 'date_dimension', 'datetime_dimension', 'boolean_dimension']:
+            # if v['persona'] in ['string_dimension', 'date_dimension', 'datetime_dimension', 'boolean_dimension', 'discrete_number_dimension']:
 
-                column_configs[caption] = {
-                    "description": '',
-                    "folder": None,
-                    "persona": v['persona'],
-                    "datasources": v['datasources']
-                }
+            column_configs[caption] = {
+                "description": '',
+                "folder": None,
+                "persona": v['persona'],
+                "datasources": v['datasources']
+            }
 
     return column_configs, calculated_column_configs
 
