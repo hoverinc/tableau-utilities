@@ -4,6 +4,7 @@ import os
 import shutil
 import sys
 from pprint import pprint
+import pandas as pd
 
 from tableau_utilities.tableau_server.tableau_server import TableauServer
 from tableau_utilities.tableau_file.tableau_file import Datasource
@@ -37,8 +38,18 @@ def do_args():
     parser.add_argument('--clean_up_first', action='store_true', help='Deletes the directory and files before running')
     parser.add_argument('--folder_name', default='tmp_tdsx_and_config',  help='Specifies the folder to write the datasource and configs to')
     parser.add_argument('--file_prefix', action='store_true', help='Adds a prefix of the datasource name to the output file names')
+    parser.add_argument('--definitions_mapping', help='Allows a csv with definitions to be inputted for backpopulating defs.')
     return parser.parse_args()
 
+
+def load_csv_with_definitions(file):
+    """
+
+    """
+
+    df = pd.read_csv(file)
+    definitions = df.to_dict()
+    return definitions
 
 def download_datasource(server, datasource_name=None, list_datasources=False):
     """ Downloads the specified datasources
