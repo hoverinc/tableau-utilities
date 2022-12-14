@@ -38,18 +38,30 @@ def do_args():
     parser.add_argument('--clean_up_first', action='store_true', help='Deletes the directory and files before running')
     parser.add_argument('--folder_name', default='tmp_tdsx_and_config',  help='Specifies the folder to write the datasource and configs to')
     parser.add_argument('--file_prefix', action='store_true', help='Adds a prefix of the datasource name to the output file names')
-    parser.add_argument('--definitions_mapping', help='Allows a csv with definitions to be inputted for backpopulating defs.')
+    parser.add_argument('--definitions_csv', help='Allows a csv with definitions to be inputted for adding definitions to a config. It may be easier to populate definitions in a spreadsheet than in the configo ')
     return parser.parse_args()
 
 
-def load_csv_with_definitions(file):
-    """
+def load_csv_with_definitions(file=None):
+    """ Returns a dictionary with the definitions from a csv. The columns are expected to include column_name and description
+
+    Args:
+        file: The path to the .csv file with the definitions. The csv must include a column_name and description.
+
+    Returns:
+        dictionary mapping column name to definition
 
     """
 
     df = pd.read_csv(file)
-    definitions = df.to_dict()
-    return definitions
+    definitions = df.to_dict('records')
+
+    definitions_mapping = {}
+
+    for column in definitions:
+        definitions_mapping[column['column_name']] = column['description']
+
+    return definitions_mapping
 
 def download_datasource(server, datasource_name=None, list_datasources=False):
     """ Downloads the specified datasources
@@ -228,7 +240,7 @@ def get_metadata_record_columns(datasource_name, datasource, datasource_path):
     return metadata_record_columns
 
 
-def create_column_config(columns, datasource_name, folder_mapping, metadata_record_columns):
+def create_column_config(columns, datasource_name, folder_mapping, metadata_record_columns, definitions_mapping):
     """ Generates a list of column configs with None for a folder
 
     Args:
@@ -265,22 +277,12 @@ def create_column_config(columns, datasource_name, folder_mapping, metadata_reco
 
     for c in columns:
         column_name = c['@name'][1:-1]
-        print(c)
-        # print('JAY IS HERE')
-        # if column_name == 'Calculation_684969377404796933':
-        #     print('JAY IS HERE')
-        #     print(column_name, c['@caption'])
-        #     sys.exit(0)
-
 
         column_name_list.append(column_name)
 
         # Make a title case caption from the database name if there is no caption
         if '@caption' in c:
             caption = c['@caption']
-            # if caption == 'First Alert Created Flag':
-            #     print(caption)
-            #     sys.exit(0)
         else:
             caption = column_name.replace('_', ' ').title()
 
@@ -290,9 +292,14 @@ def create_column_config(columns, datasource_name, folder_mapping, metadata_reco
         else:
             persona = choose_persona(role=c['@role'], role_type=c['@type'], datatype=c['@datatype'])
 
-            description = ''
-            if 'desc' in c:
+            # Takes the description from the csv if there is one
+            # Assumes the csv  is the source of truth if there are definitions in both
+            if caption in definitions_mapping:
+                description = definitions_mapping[caption]
+            elif 'desc' in c:
                 description = c['desc']['formatted-text']['run']
+            else:
+                description = ''
 
             folder_name = None
             if column_name in folder_mapping.keys():
@@ -300,10 +307,6 @@ def create_column_config(columns, datasource_name, folder_mapping, metadata_reco
 
             # Calculations are written to a separate config in the Airflow DAG
             if 'calculation' in c:
-
-                # if caption == 'First Alert Created Flag':
-                #     print(caption)
-                #     sys.exit(0)
 
                 calculated_column_configs[caption] = {
                     "description": description,
@@ -383,7 +386,7 @@ def build_folder_mapping(datasource_path):
     return mappings
 
 
-def build_config(datasource_name, datasource, datasource_path, metadata_record_columns, prefix):
+def build_config(datasource_name, datasource, datasource_path, metadata_record_columns, prefix, definitions_mapping):
     """ Builds a column config and caluclated field column config.  Writes each to individual files
 
     Args:
@@ -392,6 +395,7 @@ def build_config(datasource_name, datasource, datasource_path, metadata_record_c
         datasource_path: The path to the of the datasource
         metadata_record_columns: The columns from the metadata records
         prefix: If true the output files are prefixed with the datasource name
+        definitions_mapping
 
     """
 
@@ -406,7 +410,8 @@ def build_config(datasource_name, datasource, datasource_path, metadata_record_c
     column_configs, calculated_column_configs = create_column_config(columns=columns,
                                                                      datasource_name=datasource.name,
                                                                      folder_mapping=folder_mapping,
-                                                                     metadata_record_columns=metadata_record_columns)
+                                                                     metadata_record_columns=metadata_record_columns,
+                                                                     definitions_mapping=definitions_mapping)
 
     print('-' * 20, 'COLUMN CONFIG', '-' * 20)
     for config in column_configs:
@@ -435,23 +440,24 @@ def build_config(datasource_name, datasource, datasource_path, metadata_record_c
     print('CALCULATED COLUMN CONFIG PATH:', datasource_path)
 
 
-def generate_config(server, datasource_name, prefix=False):
+def generate_config(server, datasource_name, prefix=False, definitions_csv_path=None):
     """ Downloads a datasource and saves configs for that datasource
 
     Args:
         server: the tableau server authentication
         datasource_name: The name of the datasource to generate the config for
         prefix: If true the configs will have the datasource name as a prefix
+        definitions_csv_path: The path to a csv with column names and definitions
 
     """
 
-    print('-'*100)
-    print('-'*100)
-    print('-'*100)
-
     datasource, datasource_path = download_datasource(server, datasource_name)
     metadata_record_columns = get_metadata_record_columns(datasource_name, datasource, datasource_path)
-    build_config(datasource_name, datasource, datasource_path, metadata_record_columns, prefix)
+
+    definitions_mapping = None
+    if definitions_csv_path is not None:
+        definitions_mapping = load_csv_with_definitions(file=definitions_csv_path)
+    build_config(datasource_name, datasource, datasource_path, metadata_record_columns, prefix, definitions_mapping)
 
 
 def main():
@@ -481,7 +487,7 @@ def main():
     else:
         add_prefix = False
 
-    generate_config(ts, datasource_name=args.datasource, prefix=add_prefix)
+    generate_config(ts, datasource_name=args.datasource, prefix=add_prefix, definitions_csv_path=args.definitions_csv)
 
 
 if __name__ == '__main__':
