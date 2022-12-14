@@ -294,8 +294,9 @@ def create_column_config(columns, datasource_name, folder_mapping, metadata_reco
 
             # Takes the description from the csv if there is one
             # Assumes the csv  is the source of truth if there are definitions in both
-            if caption in definitions_mapping:
-                description = definitions_mapping[caption]
+            if definitions_mapping is not None:
+                if caption in definitions_mapping:
+                    description = definitions_mapping[caption]
             elif 'desc' in c:
                 description = c['desc']['formatted-text']['run']
             else:
