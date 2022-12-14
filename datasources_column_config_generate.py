@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 import shutil
+import sys
 from pprint import pprint
 
 from tableau_utilities.tableau_server.tableau_server import TableauServer
@@ -253,11 +254,22 @@ def create_column_config(columns, datasource_name, folder_mapping, metadata_reco
 
     for c in columns:
         column_name = c['@name'][1:-1]
+        print(c)
+        # print('JAY IS HERE')
+        # if column_name == 'Calculation_684969377404796933':
+        #     print('JAY IS HERE')
+        #     print(column_name, c['@caption'])
+        #     sys.exit(0)
+
+
         column_name_list.append(column_name)
 
         # Make a title case caption from the database name if there is no caption
-        if '@caption' in 'c':
+        if '@caption' in c:
             caption = c['@caption']
+            # if caption == 'First Alert Created Flag':
+            #     print(caption)
+            #     sys.exit(0)
         else:
             caption = column_name.replace('_', ' ').title()
 
@@ -277,6 +289,10 @@ def create_column_config(columns, datasource_name, folder_mapping, metadata_reco
 
             # Calculations are written to a separate config in the Airflow DAG
             if 'calculation' in c:
+
+                # if caption == 'First Alert Created Flag':
+                #     print(caption)
+                #     sys.exit(0)
 
                 calculated_column_configs[caption] = {
                     "description": description,
@@ -417,6 +433,10 @@ def generate_config(server, datasource_name, prefix=False):
         prefix: If true the configs will have the datasource name as a prefix
 
     """
+
+    print('-'*100)
+    print('-'*100)
+    print('-'*100)
 
     datasource, datasource_path = download_datasource(server, datasource_name)
     metadata_record_columns = get_metadata_record_columns(datasource_name, datasource, datasource_path)
