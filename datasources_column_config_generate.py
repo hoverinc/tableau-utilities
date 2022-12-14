@@ -489,7 +489,6 @@ def main():
 
     generate_config(ts, datasource_name=args.datasource, prefix=add_prefix, definitions_csv_path=args.definitions_csv)
 
-
 if __name__ == '__main__':
     main()
 
