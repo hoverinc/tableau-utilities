@@ -66,6 +66,16 @@ def merge_configs(existing_config, additional_config):
             print('EXISTING COLUMN',  column_name, existing_config[column_name])
             print('ADDITIONAL COLUMN', column_name, column_details)
 
+            # Set the values from the dictionaries
+            description_current = existing_config[column_name]['description']
+            description_new = column_details['description']
+            folder_current = existing_config[column_name]['folder']
+            folder_new = column_details['folder']
+            persona_current = existing_config[column_name]['persona']
+            persona_new = column_details['persona']
+            datasources_current = existing_config[column_name]['datasources']
+            datasources_new = column_details['datasources']
+
 
             if column_name == 'Salesforce Account Id':
                 print(column_details['description'])
@@ -85,39 +95,50 @@ def merge_configs(existing_config, additional_config):
         #     # Replace these attributes if there are values in the new configuration
             if len(column_details['description'].strip()) > 0:
                 print('CHANGING DESCRIPTION')
-                print('DESCRIPTION CURRENT:', existing_config[column_name]['description'])
-                print('DESCRIPTION NEW:', column_details['description'])
-                existing_config[column_name]['description'] = column_details['description']
+                print('DESCRIPTION CURRENT:', description_current)
+                print('DESCRIPTION NEW:', description_new)
+                existing_config[column_name]['description'] = description_new
                 print('DESCRIPTION SET TO:', existing_config[column_name]['description'])
                 # print('EXITING')
                 # sys.exit(0)
 
             if len(column_details['folder'].strip()) > 0:
                 print('CHANGING FOLDER')
-                print('FOLDER CURRENT:', existing_config[column_name]['folder'])
-                print('FOLDER NEW:', column_details['folder'])
-                existing_config[column_name]['folder'] = column_details['folder']
+                print('FOLDER CURRENT:', folder_current)
+                print('FOLDER NEW:', folder_new)
+                existing_config[column_name]['folder'] = folder_new
                 print('FOLDER SET TO:', existing_config[column_name]['folder'])
                 # print('EXITING')
                 # sys.exit(0)
 
             if len(column_details['persona'].strip()) > 0:
                 print('CHANGING PERSONA')
-                print('PERSONA CURRENT:', existing_config[column_name]['persona'])
-                print('PERSONA NEW:', column_details['persona'])
-                existing_config[column_name]['persona'] = column_details['persona']
+                print('PERSONA CURRENT:', persona_current)
+                print('PERSONA NEW:', persona_new)
+                existing_config[column_name]['persona'] = persona_new
                 print('PERSONA SET TO:', existing_config[column_name]['persona'])
 
             datasources_list = []
             print('CHANGING DATASOURCES')
-            print('DATASOURCES CURRENT:', existing_config[column_name]['datasources'])
-            print('DATASOURCES NEW:', column_details['datasources'])
+            print('DATASOURCES CURRENT:', datasources_current)
+            print('DATASOURCES NEW:', datasources_new)
 
-            for each_datasource in existing_config[column_name]['datasources']:
-                if each_datasource['name'] == column_details['datasources'][0]['name']:
+            datasources_names_current = [d['name'] for d in datasources_current]
+            print(datasources_names_current)
+
+            # If the config has the datasource take the new one otherwise keep all datasources
+            for each_datasource in datasources_current:
+                if each_datasource['name'] == datasources_new[0]['name']:
                     datasources_list.append(column_details['datasources'][0])
                 else:
                     datasources_list.append(each_datasource)
+
+            # Add the new datasource if it's not in the existing things at all
+            if datasources_new[0]['name'] not in datasources_names_current:
+                datasources_list.append(column_details['datasources'][0])
+
+            existing_config[column_name]['datasources'] = datasources_list
+            print('DATASOURCES SET TO:', existing_config[column_name]['datasources'])
 
             if column_name == 'Salesforce Account Id':
                 print('EXITING')
