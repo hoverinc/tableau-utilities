@@ -36,6 +36,15 @@ def write_file(file_path):
 
 
 def merge_configs(existing_config, additional_config):
+    """ Takes 2 configs and adds information from the additional_cong to the existing_config
+    The output of the merged config should  be merged into the existing config in a PR
+    This assumes that the user is merging the same type of config
+
+    Args:
+        existing_config: The current existing config
+        additional_config: The additional config to add
+
+    """
 
     print(type(existing_config))
     print(type(additional_config))
@@ -76,23 +85,19 @@ def merge_configs(existing_config, additional_config):
             datasources_current = existing_config[column_name]['datasources']
             datasources_new = column_details['datasources']
 
+            # Only used when it's a calculation config
+            if 'calculation' in column_details:
+                calculation_current = existing_config[column_name]['calculation']
+                calculation_new = column_details['calculation']
 
-            if column_name == 'Salesforce Account Id':
-                print(column_details['description'])
-                print(len(column_details['description']))
-                # print('EXITING')
-                # sys.exit(0)
-        #
-        #
-        #     print('-' * 50)
-        #     print('ALTERING COLUMN:', column_name)
-        #     print('EXISTING COLUMN',  column_name, existing_config[column_name])
-        #     print('ADDITIONAL COLUMN', column_name, column_details)
-        #
-        #     if column_name == 'Salesforce Account Current Contract End Date':
-        #         sys.exit(0)
-        #
-        #     # Replace these attributes if there are values in the new configuration
+                if len(column_details['calculation'].strip()) > 0:
+                    print('CHANGING CALCULATION')
+                    print('CALCULATION CURRENT:', calculation_current)
+                    print('CALCULATION NEW:', calculation_new)
+                    existing_config[column_name]['description'] = calculation_new
+                    print('CALCULATION SET TO:', existing_config[column_name]['calculation'])
+
+            # Replace these attributes if there are values in the new configuration
             if len(column_details['description'].strip()) > 0:
                 print('CHANGING DESCRIPTION')
                 print('DESCRIPTION CURRENT:', description_current)
@@ -140,9 +145,9 @@ def merge_configs(existing_config, additional_config):
             existing_config[column_name]['datasources'] = datasources_list
             print('DATASOURCES SET TO:', existing_config[column_name]['datasources'])
 
-            if column_name == 'Salesforce Account Id':
-                print('EXITING')
-                sys.exit(0)
+            # if column_name == 'Salesforce Account Id':
+            #     print('EXITING')
+            #     sys.exit(0)
 
 
 
