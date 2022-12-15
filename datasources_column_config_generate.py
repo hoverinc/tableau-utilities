@@ -478,7 +478,7 @@ def main():
 
     tmp_folder = args.folder_name
     if args.clean_up_first:
-        shutil.rmtree(args.folder_name, ignore_errors=True)
+        shutil.rmtree(tmp_folder, ignore_errors=True)
 
     os.makedirs(tmp_folder, exist_ok=True)
     os.chdir(tmp_folder)

@@ -20,19 +20,26 @@ def do_args():
                         help='The path to the current configuration')
     parser.add_argument('-a', '--additional_config',
                         help='The path to the configuration. This code ASSUMES that the additional config is for a single datasource ')
+    parser.add_argument('-n', '--merged_config', default='merged_config',
+                        help='The name of the merged config JSON file.  For my_config.json enter my_config. Do not enter the .json extension')
+    parser.add_argument('-f', '--folder_name', default='tmp_tdsx_and_config',
+                        help='Specifies the folder to write the datasource and configs to')
 
     return parser.parse_args()
 
 
 def read_file(file_path):
-    with open(file_path, "r") as input_file:
-        config = json.load(input_file)
+    with open(file_path, "r") as infile:
+        config = json.load(infile)
 
     return config
 
-def write_file(file_path):
-    with open(output_file_column_config, "w") as outfile:
-        json.dump(column_configs, outfile)
+
+def write_file(file_name, config):
+    with open(file_name, "w") as outfile:
+        json.dump(config, outfile)
+
+    print('CONFIG PATH:', file_name)
 
 
 def merge_configs(existing_config, additional_config):
@@ -46,21 +53,11 @@ def merge_configs(existing_config, additional_config):
 
     """
 
-    print(type(existing_config))
-    print(type(additional_config))
-
-    print(existing_config)
-    print(additional_config)
-
-    new_config = {}
-
     for column_name, column_details in additional_config.items():
         print(column_name)
         # if column_name == 'Salesforce Account Id':
         #     print(column_details['description'])
         #     print(len(column_details['description']))
-
-
 
         # If the column doesn't exist add it
         if column_name not in existing_config:
@@ -145,37 +142,7 @@ def merge_configs(existing_config, additional_config):
             existing_config[column_name]['datasources'] = datasources_list
             print('DATASOURCES SET TO:', existing_config[column_name]['datasources'])
 
-            # if column_name == 'Salesforce Account Id':
-            #     print('EXITING')
-            #     sys.exit(0)
-
-
-
-
-
-
-        #     print('ALTERED COLUMN', column_name, existing_config[column_name])
-
-
-
-
-
-
-
-
-
-
-
-
-        # If the column name is in the existing config then
-        # 1. Add the description, folder, and persona from the new config
-        # 2. Add or overwrite the datasource information in the datasources
-
-        print('-'*20)
-
-
-
-
+    return existing_config
 
 
 if __name__ == '__main__':
@@ -186,4 +153,11 @@ if __name__ == '__main__':
     additional_config = read_file(args.additional_config)
 
     # Merge
-    merge_configs(existing_config, additional_config)
+    new_config = merge_configs(existing_config, additional_config)
+    # print(new_config)
+
+    # Write
+    os.makedirs(args.folder_name, exist_ok=True)
+    os.chdir(args.folder_name)
+    file_name = f'{args.merged_config}.json'
+    write_file(file_name=file_name, config=new_config)
