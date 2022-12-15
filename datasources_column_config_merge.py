@@ -83,19 +83,36 @@ def merge_configs(existing_config, additional_config):
         #         sys.exit(0)
         #
         #     # Replace these attributes if there are values in the new configuration
-
             if len(column_details['description'].strip()) > 0:
                 print('CHANGING DESCRIPTION')
                 print('DESCRIPTION CURRENT:', existing_config[column_name]['description'])
                 print('DESCRIPTION NEW:', column_details['description'])
                 existing_config[column_name]['description'] = column_details['description']
                 print('DESCRIPTION SET TO:', existing_config[column_name]['description'])
+                # print('EXITING')
+                # sys.exit(0)
+
+            if len(column_details['folder'].strip()) > 0:
+                print('CHANGING FOLDER')
+                print('FOLDER CURRENT:', existing_config[column_name]['folder'])
+                print('FOLDER NEW:', column_details['folder'])
+                existing_config[column_name]['folder'] = column_details['folder']
+                print('FOLDER SET TO:', existing_config[column_name]['folder'])
+                # print('EXITING')
+                # sys.exit(0)
+
+            if len(column_details['persona'].strip()) > 0:
+                print('CHANGING PERSONA')
+                print('PERSONA CURRENT:', existing_config[column_name]['persona'])
+                print('PERSONA NEW:', column_details['persona'])
+                existing_config[column_name]['persona'] = column_details['persona']
+                print('PERSONA SET TO:', existing_config[column_name]['persona'])
+
+
+            if column_name == 'Salesforce Account Id':
                 print('EXITING')
                 sys.exit(0)
-        #
-        #     if not column_details['folder'] != '':
-        #         existing_config[column_name]['folder'] = column_details['folder']
-        #
+
         #     if not column_details['persona'] != '':
         #         existing_config[column_name]['persona'] = column_details['persona']
         #
