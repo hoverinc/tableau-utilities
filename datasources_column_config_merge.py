@@ -84,7 +84,7 @@ def merge_configs(existing_config, additional_config):
         #
         #     # Replace these attributes if there are values in the new configuration
 
-            if len(column_details['description']) > 0:
+            if len(column_details['description'].strip()) > 0:
                 print('CHANGING DESCRIPTION')
                 print('DESCRIPTION CURRENT:', existing_config[column_name]['description'])
                 print('DESCRIPTION NEW:', column_details['description'])
