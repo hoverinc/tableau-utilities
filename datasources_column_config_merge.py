@@ -15,9 +15,9 @@ def do_args():
     """
 
     parser = argparse.ArgumentParser(description='List columns in Tableau datasources')
-    parser.add_argument('-e', '--existing_config', action='store_true',
+    parser.add_argument('-e', '--existing_config',
                         help='The path to the current configuration')
-    parser.add_argument('-a', '--additional_config', action='store_true',
+    parser.add_argument('-a', '--additional_config',
                         help='The path to the configuration. This config ')
 
     return parser.parse_args()
@@ -25,13 +25,16 @@ def do_args():
 
 def merge_configs(existing_config, additional_config):
 
-    for column in existing_config:
-        print(column)
+    print(existing_config)
+    print(additional_config)
 
-    for column in additional_config:
-        print(column)
+    # for column in existing_config:
+    #     print(column)
+    #
+    # for column in additional_config:
+    #     print(column)
 
 if __name__ == '__main__':
     args = do_args()
 
-    merge_configs(existing_config, additional_config)
+    merge_configs(args.existing_config, args.additional_config)
