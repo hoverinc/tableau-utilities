@@ -108,22 +108,26 @@ def merge_configs(existing_config, additional_config):
                 existing_config[column_name]['persona'] = column_details['persona']
                 print('PERSONA SET TO:', existing_config[column_name]['persona'])
 
+            datasources_list = []
+            print('CHANGING DATASOURCES')
+            print('DATASOURCES CURRENT:', existing_config[column_name]['datasources'])
+            print('DATASOURCES NEW:', column_details['datasources'])
+
+            for each_datasource in existing_config[column_name]['datasources']:
+                if each_datasource['name'] == column_details['datasources'][0]['name']:
+                    datasources_list.append(column_details['datasources'][0])
+                else:
+                    datasources_list.append(each_datasource)
 
             if column_name == 'Salesforce Account Id':
                 print('EXITING')
                 sys.exit(0)
 
-        #     if not column_details['persona'] != '':
-        #         existing_config[column_name]['persona'] = column_details['persona']
-        #
-        #     datasources_list = []
-        #
-        #     for each_datasource in existing_config[column_name]['datasources']:
-        #         if each_datasource['name'] == column_details['datasources'][0]['name']:
-        #             datasources_list.append(column_details['datasources'][0])
-        #         else:
-        #             datasources_list.append(each_datasource)
-        #
+
+
+
+
+
         #     print('ALTERED COLUMN', column_name, existing_config[column_name])
 
 
