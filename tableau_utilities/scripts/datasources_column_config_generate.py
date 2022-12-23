@@ -284,6 +284,7 @@ def create_column_config(columns, datasource_name, folder_mapping, metadata_reco
     for c in columns:
         column_name = c['@name'][1:-1]
 
+        # Keeps a list of column names from the column object.
         column_name_list.append(column_name)
 
         # Make a title case caption from the database name if there is no caption
@@ -312,9 +313,6 @@ def create_column_config(columns, datasource_name, folder_mapping, metadata_reco
             if column_name in folder_mapping.keys():
                 folder_name = folder_mapping[column_name]
 
-
-                # fiscal_year_start =
-
             # Calculations are written to a separate config in the Airflow DAG
             if 'calculation' in c:
 
@@ -335,8 +333,8 @@ def create_column_config(columns, datasource_name, folder_mapping, metadata_reco
                 # Optional Properties to Add
                 if '@fiscal_year_start' in c:
                     calculated_column_configs[caption]['fiscal_year_start'] = c['@fiscal_year_start']
-                if '@default_format' in c:
-                    calculated_column_configs[caption]['default_format'] = c['@default_format']
+                if '@default-format' in c:
+                    calculated_column_configs[caption]['default_format'] = c['@default-format']
 
             else:
 
@@ -355,9 +353,9 @@ def create_column_config(columns, datasource_name, folder_mapping, metadata_reco
 
                 # Optional Properties to Add
                 if '@fiscal_year_start' in c:
-                    calculated_column_configs[caption]['fiscal_year_start'] = c['@fiscal_year_start']
-                if '@default_format' in c:
-                    calculated_column_configs[caption]['default_format'] = c['@default_format']
+                    column_configs[caption]['fiscal_year_start'] = c['@fiscal_year_start']
+                if '@default-format' in c:
+                    column_configs[caption]['default_format'] = c['@default-format']
 
     # Add column configs for metadata_record columns when there wasn't a column object already
     # This is only need for non-calulated fields
