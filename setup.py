@@ -24,10 +24,11 @@ setup(
     include_package_data=True,
     entry_points={
         'console_scripts': [
-            'tableau_utilities = tableau_utilities.scripts.main:main',
-            'tab-util-config-gen = tableau_utilities.scripts.datasources_column_config_generate:main',
-            'tab-util-config-merge = tableau_utilities.scripts.datasources_column_config_merge:main',
-            'tab-util-server = tableau_utilities.scripts.server:main',
+            'tableau_utilities = tableau_utilities.scripts.cli:main',
+            # 'tableau_utilities = tableau_utilities.scripts.main:main',
+            # 'tab-util-config-gen = tableau_utilities.scripts.datasources_column_config_generate:main',
+            # 'tab-util-config-merge = tableau_utilities.scripts.datasources_column_config_merge:main',
+            # 'tab-util-server = tableau_utilities.scripts.server:main',
         ]
     }
 )
