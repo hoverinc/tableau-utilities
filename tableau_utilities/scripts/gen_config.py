@@ -11,37 +11,6 @@ from tableau_utilities.tableau_file.tableau_file import Datasource
 from tableau_utilities.general.funcs import convert_to_snake_case
 
 
-# def do_args():
-#     """ Parse arguments.
-#
-#     Returns: an argparse.Namespace
-#     """
-#
-#     parser = argparse.ArgumentParser(description='List columns in Tableau datasources')
-#     parser.add_argument(
-#         '--server',
-#         required=True,
-#         help='Tableau Server URL. i.e. <server_address> in https://<server_address>.online.tableau.com',
-#         default=None
-#     )
-#     parser.add_argument(
-#         '--site',
-#         required=True,
-#         help='Site name. i.e. <site> in https://<server_address>.online.tableau.com/#/site/<site>',
-#         default=None)
-#     parser.add_argument('--api_version', help='Tableau API version', default='3.17')
-#     parser.add_argument('--user', help='user name')
-#     parser.add_argument('--password', help='password')
-#     parser.add_argument('--token_secret', help='Personal Access Token Secret')
-#     parser.add_argument('--token_name', help='Personal Access Token Name')
-#     parser.add_argument('--datasource', help='The name of the datasources to generate a config for')
-#     parser.add_argument('--clean_up_first', action='store_true', help='Deletes the directory and files before running')
-#     parser.add_argument('--folder_name', default='tmp_tdsx_and_config',  help='Specifies the folder to write the datasource and configs to')
-#     parser.add_argument('--file_prefix', action='store_true', help='Adds a prefix of the datasource name to the output file names')
-#     parser.add_argument('--definitions_csv', help='Allows a csv with definitions to be inputted for adding definitions to a config. It may be easier to populate definitions in a spreadsheet than in the configo ')
-#     return parser.parse_args()
-
-
 def load_csv_with_definitions(file=None):
     """ Returns a dictionary with the definitions from a csv. The columns are expected to include column_name and description
 
@@ -461,7 +430,7 @@ def build_config(datasource_name, datasource, datasource_path, metadata_record_c
     print('CALCULATED COLUMN CONFIG PATH:', datasource_path)
 
 
-def generate_config(args):
+def generate_config(args, server):
     """ Downloads a datasource and saves configs for that datasource
 
     Args:
@@ -472,42 +441,28 @@ def generate_config(args):
 
     """
 
-    # print(args.server)
-    print(args.datasource)
+    datasource_name = args.datasource
+    definitions_csv_path = args.definitions_csv
 
-    # host = f'https://{args.server}.online.tableau.com'
-    #
-    # ts = TableauServer(
-    #     personal_access_token_name=args.token_name,
-    #     personal_access_token_secret=args.token_secret,
-    #     user=args.user,
-    #     password=args.password,
-    #     site=args.site,
-    #     host=host,
-    #     api_version=args.api_version
-    # )
-    #
-    # tmp_folder = args.folder_name
-    # if args.clean_up_first:
-    #     shutil.rmtree(tmp_folder, ignore_errors=True)
-    #
-    # os.makedirs(tmp_folder, exist_ok=True)
-    # os.chdir(tmp_folder)
-    #
-    # if args.file_prefix:
-    #     add_prefix = True
-    # else:
-    #     add_prefix = False
-    #
-    # # generate_config(ts, datasource_name=args.datasource, prefix=add_prefix, definitions_csv_path=args.definitions_csv)
-    #
-    # datasource, datasource_path = download_datasource(server, datasource_name)
-    # metadata_record_columns = get_metadata_record_columns(datasource_name, datasource, datasource_path)
-    #
-    # definitions_mapping = None
-    # if definitions_csv_path is not None:
-    #     definitions_mapping = load_csv_with_definitions(file=definitions_csv_path)
-    # build_config(datasource_name, datasource, datasource_path, metadata_record_columns, prefix, definitions_mapping)
+    tmp_folder = args.folder_name
+    if args.clean_up_first:
+        shutil.rmtree(tmp_folder, ignore_errors=True)
+
+    os.makedirs(tmp_folder, exist_ok=True)
+    os.chdir(tmp_folder)
+
+    if args.file_prefix:
+        add_prefix = True
+    else:
+        add_prefix = False
+
+    datasource, datasource_path = download_datasource(server, datasource_name)
+    metadata_record_columns = get_metadata_record_columns(datasource_name, datasource, datasource_path)
+
+    definitions_mapping = None
+    if definitions_csv_path is not None:
+        definitions_mapping = load_csv_with_definitions(file=definitions_csv_path)
+    build_config(datasource_name, datasource, datasource_path, metadata_record_columns, add_prefix, definitions_mapping)
 
 
 

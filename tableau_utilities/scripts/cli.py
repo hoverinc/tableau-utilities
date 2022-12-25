@@ -6,6 +6,7 @@ import shutil
 import sys
 from pprint import pprint
 
+from tableau_utilities.tableau_server.tableau_server import TableauServer
 from tableau_utilities.scripts.datasources_column_config_generate import main
 from tableau_utilities.scripts.gen_config import generate_config
 
@@ -21,33 +22,34 @@ def do_args():
                                                  '-Manage Tableau Server/Online\n'
                                                  '-Manage configurations to edit datasource metadata',
                                      formatter_class=RawTextHelpFormatter)
-    parser = argparse.ArgumentParser(prog='PROG')
-    # parser.add_argument('--foo', action='store_true', help='foo help')
-    # parser.add_argument(prog='scriptname',  choices=['server_info', 'generate_config', 'merge_config'])
+    parser = argparse.ArgumentParser(prog='tableau_utilities')
     subparsers = parser.add_subparsers(help='You must choose a script area to run',  required=True)
 
-    group1 = parser.add_argument_group('server_information', 'Server Information')
-    group1.add_argument(
+    group_server = parser.add_argument_group('server_information', 'Server Information')
+    group_server.add_argument(
         '--server',
         help='Tableau Server URL. i.e. <server_address> in https://<server_address>.online.tableau.com',
         default=None
     )
-    group1.add_argument(
+    group_server.add_argument(
         '--site',
         help='Site name. i.e. <site> in https://<server_address>.online.tableau.com/#/site/<site>',
         default=None)
-    group1.add_argument('--api_version', help='Tableau API version', default='3.17')
+    group_server.add_argument('--api_version', help='Tableau API version', default='3.17')
 
-    group2 = parser.add_argument_group('user_pass', 'Authentication with username and password method')
-    group2.add_argument('--user', help='user name')
-    group2.add_argument('--password', help='password')
+    group_user_password = parser.add_argument_group('user_pass', 'Authentication with username and password method')
+    group_user_password.add_argument('--user', help='user name')
+    group_user_password.add_argument('--password', help='password')
 
-    group3 = parser.add_argument_group('token_info', 'Authentication with a Personal Access Token (PAT)')
-    group3.add_argument('--token_secret', help='Personal Access Token Secret')
-    group3.add_argument('--token_name', help='Personal Access Token Name')
+    group_token = parser.add_argument_group('token_info', 'Authentication with a Personal Access Token (PAT)')
+    group_token.add_argument('--token_secret', help='Personal Access Token Secret')
+    group_token.add_argument('--token_name', help='Personal Access Token Name')
 
-    # create the parser for the "a" command
-    parser_config_gen = subparsers.add_parser('generate_config', help='a help')
+    # SERVER INFO
+    parser_server_info = subparsers.add_parser('server_info', help='Retrieve and view information from Tableau Cloud/Server')
+
+    # GENERATE CONFIG
+    parser_config_gen = subparsers.add_parser('generate_config', help='Generate configs to programatically manage metdatadata in Tableau datasources via Airflow')
     parser_config_gen.add_argument('--datasource', help='The name of the datasources to generate a config for')
     parser_config_gen.add_argument('--clean_up_first', action='store_true', help='Deletes the directory and files before running')
     parser_config_gen.add_argument('--folder_name', default='tmp_tdsx_and_config',
@@ -58,8 +60,8 @@ def do_args():
                         help='Allows a csv with definitions to be inputted for adding definitions to a config. It may be easier to populate definitions in a spreadsheet than in the configo ')
     parser_config_gen.set_defaults(func=generate_config)
 
-    # create the parser for the "b" command
-    parser_config_merge = subparsers.add_parser('merge_config', help='b help')
+    # MERGE CONFIG
+    parser_config_merge = subparsers.add_parser('merge_config', help='Merge a new config into the existing master config')
     parser_config_merge.add_argument('-e', '--existing_config',
                         help='The path to the current configuration')
     parser_config_merge.add_argument('-a', '--additional_config',
@@ -68,23 +70,8 @@ def do_args():
                         help='The name of the merged config JSON file.  For my_config.json enter my_config. Do not enter the .json extension')
     parser_config_merge.add_argument('-f', '--folder_name', default='tmp_tdsx_and_config',
                         help='Specifies the folder to write the datasource and configs to')
-    # parser_foo.set_defaults(func=foo)
-
-    # parser.add_argument('-g', '--config_generate', action='store_true',
-    #                     help='CLI to generate column configs to automated editing of Tableau medatadata')
-    # parser.add_argument('-m', '--conffig_merge',
-    # parser.add_argument('-s', '--server_info',
-    #                     help='The name of the merged config JSON file.  For my_config.json enter my_config. Do not enter the .json extension')
-    # parser.add_argument('-m', '--folder_name',
-    #                     help='Specifies the folder to write the datasource and configs to')
 
     return parser.parse_args()
-
-# def create_server_object():
-#
-#
-#
-#     return server
 
 
 def main():
@@ -101,20 +88,13 @@ def main():
         api_version=args.api_version
     )
 
-    args.func(args)
-    # print("i made it to this version")
-    # print(args.scriptname)
+    # Passes the TS object into all functions even though it's not always needed
+    args.func(args, ts)
+
 
 
 if __name__ == '__main__':
     main()
-
-
-
-
-    # if args.config_generate:
-    #     datasources_column_config_generate.main()
-
 
 
 
