@@ -10,9 +10,6 @@ from tableau_utilities.scripts.datasources_column_config_generate import main
 from tableau_utilities.scripts.gen_config import generate_config
 
 
-# def generate_config(args):
-#     print("in the function")
-#     print(args.datasource)
 
 def do_args():
     """ Parse arguments.
@@ -27,23 +24,27 @@ def do_args():
     parser = argparse.ArgumentParser(prog='PROG')
     # parser.add_argument('--foo', action='store_true', help='foo help')
     # parser.add_argument(prog='scriptname',  choices=['server_info', 'generate_config', 'merge_config'])
-    subparsers = parser.add_subparsers(help='Select a script type to run',  required=True)
+    subparsers = parser.add_subparsers(help='You must choose a script area to run',  required=True)
 
-
-    parser.add_argument(
+    group1 = parser.add_argument_group('server_information', 'Server Information')
+    group1.add_argument(
         '--server',
         help='Tableau Server URL. i.e. <server_address> in https://<server_address>.online.tableau.com',
         default=None
     )
-    parser.add_argument(
+    group1.add_argument(
         '--site',
         help='Site name. i.e. <site> in https://<server_address>.online.tableau.com/#/site/<site>',
         default=None)
-    parser.add_argument('--api_version', help='Tableau API version', default='3.17')
-    parser.add_argument('--user', help='user name')
-    parser.add_argument('--password', help='password')
-    parser.add_argument('--token_secret', help='Personal Access Token Secret')
-    parser.add_argument('--token_name', help='Personal Access Token Name')
+    group1.add_argument('--api_version', help='Tableau API version', default='3.17')
+
+    group2 = parser.add_argument_group('user_pass', 'Authentication with username and password method')
+    group2.add_argument('--user', help='user name')
+    group2.add_argument('--password', help='password')
+
+    group3 = parser.add_argument_group('token_info', 'Authentication with a Personal Access Token (PAT)')
+    group3.add_argument('--token_secret', help='Personal Access Token Secret')
+    group3.add_argument('--token_name', help='Personal Access Token Name')
 
     # create the parser for the "a" command
     parser_config_gen = subparsers.add_parser('generate_config', help='a help')
@@ -79,9 +80,27 @@ def do_args():
 
     return parser.parse_args()
 
+# def create_server_object():
+#
+#
+#
+#     return server
+
 
 def main():
     args = do_args()
+
+    host = f'https://{args.server}.online.tableau.com'
+    ts = TableauServer(
+        personal_access_token_name=args.token_name,
+        personal_access_token_secret=args.token_secret,
+        user=args.user,
+        password=args.password,
+        site=args.site,
+        host=host,
+        api_version=args.api_version
+    )
+
     args.func(args)
     # print("i made it to this version")
     # print(args.scriptname)
