@@ -9,7 +9,7 @@ from pprint import pprint
 from tableau_utilities.tableau_server.tableau_server import TableauServer
 from tableau_utilities.scripts.datasources_column_config_generate import main
 from tableau_utilities.scripts.gen_config import generate_config
-
+from tableau_utilities.scripts.merge_config import merge_configs
 
 
 def do_args():
@@ -62,14 +62,15 @@ def do_args():
 
     # MERGE CONFIG
     parser_config_merge = subparsers.add_parser('merge_config', help='Merge a new config into the existing master config')
-    parser_config_merge.add_argument('-e', '--existing_config',
+    parser_config_merge.add_argument('-ec', '--existing_config',
                         help='The path to the current configuration')
-    parser_config_merge.add_argument('-a', '--additional_config',
+    parser_config_merge.add_argument('-ac', '--additional_config',
                         help='The path to the configuration. This code ASSUMES that the additional config is for a single datasource ')
-    parser_config_merge.add_argument('-n', '--merged_config', default='merged_config',
+    parser_config_merge.add_argument('-mc', '--merged_config', default='merged_config',
                         help='The name of the merged config JSON file.  For my_config.json enter my_config. Do not enter the .json extension')
-    parser_config_merge.add_argument('-f', '--folder_name', default='tmp_tdsx_and_config',
+    parser_config_merge.add_argument('-fo', '--folder_name', default='tmp_tdsx_and_config',
                         help='Specifies the folder to write the datasource and configs to')
+    parser_config_merge.set_defaults(func=generate_config)
 
     return parser.parse_args()
 
@@ -90,7 +91,6 @@ def main():
 
     # Passes the TS object into all functions even though it's not always needed
     args.func(args, ts)
-
 
 
 if __name__ == '__main__':
