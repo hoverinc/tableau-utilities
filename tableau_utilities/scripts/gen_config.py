@@ -444,13 +444,6 @@ def generate_config(args, server):
     datasource_name = args.datasource
     definitions_csv_path = args.definitions_csv
 
-    tmp_folder = args.folder_name
-    if args.clean_up_first:
-        shutil.rmtree(tmp_folder, ignore_errors=True)
-
-    os.makedirs(tmp_folder, exist_ok=True)
-    os.chdir(tmp_folder)
-
     if args.file_prefix:
         add_prefix = True
     else:

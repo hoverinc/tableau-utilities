@@ -23,7 +23,7 @@ def do_args():
                                                  '-Manage configurations to edit datasource metadata',
                                      formatter_class=RawTextHelpFormatter)
     parser = argparse.ArgumentParser(prog='tableau_utilities')
-    subparsers = parser.add_subparsers(help='You must choose a script area to run',  required=True)
+    subparsers = parser.add_subparsers(title="commands", dest="command", help='You must choose a script area to run', required=True)
 
     group_server = parser.add_argument_group('server_information', 'Server Information')
     group_server.add_argument(
@@ -45,8 +45,14 @@ def do_args():
     group_token.add_argument('--token_secret', help='Personal Access Token Secret')
     group_token.add_argument('--token_name', help='Personal Access Token Name')
 
+    group_local_folder = parser.add_argument_group('local_folder', 'Manage where to read/write files')
+    group_local_folder.add_argument('--folder_name', default='tmp_tdsx_and_config',
+                        help='Specifies the folder to write the datasource and configs to')
+    group_local_folder.add_argument('--clean_up_first', action='store_true', help='Deletes the directory and files before running')
+
     # SERVER INFO
-    parser_server_info = subparsers.add_parser('server_info', help='Retrieve and view information from Tableau Cloud/Server')
+    parser_server_info = subparsers.add_parser('server_info',
+                                               help='Retrieve and view information from Tableau Cloud/Server')
     parser_server_info.add_argument('--list_object', choices=['datasource', 'project', 'workbook'], help='List information about the Object')
     parser_server_info.add_argument('--list_verbosity', choices=['names', 'names_ids', 'ids_names', 'full_df'],
                                    help='Set the amount of information and the format to display')
@@ -55,11 +61,12 @@ def do_args():
     parser_server_info.set_defaults(func=server_info)
 
     # GENERATE CONFIG
-    parser_config_gen = subparsers.add_parser('generate_config', help='Generate configs to programatically manage metdatadata in Tableau datasources via Airflow')
+    parser_config_gen = subparsers.add_parser('generate_config',
+                                              help='Generate configs to programatically manage metdatadata in Tableau datasources via Airflow')
     parser_config_gen.add_argument('--datasource', help='The name of the datasources to generate a config for')
-    parser_config_gen.add_argument('--clean_up_first', action='store_true', help='Deletes the directory and files before running')
-    parser_config_gen.add_argument('--folder_name', default='tmp_tdsx_and_config',
-                        help='Specifies the folder to write the datasource and configs to')
+    # parser_config_gen.add_argument('--clean_up_first', action='store_true', help='Deletes the directory and files before running')
+    # parser_config_gen.add_argument('--folder_name', default='tmp_tdsx_and_config',
+    #                     help='Specifies the folder to write the datasource and configs to')
     parser_config_gen.add_argument('--file_prefix', action='store_true',
                         help='Adds a prefix of the datasource name to the output file names')
     parser_config_gen.add_argument('--definitions_csv',
@@ -67,16 +74,17 @@ def do_args():
     parser_config_gen.set_defaults(func=generate_config)
 
     # MERGE CONFIG
-    parser_config_merge = subparsers.add_parser('merge_config', help='Merge a new config into the existing master config')
+    parser_config_merge = subparsers.add_parser('merge_config',
+                                                help='Merge a new config into the existing master config')
     parser_config_merge.add_argument('-ec', '--existing_config',
                         help='The path to the current configuration')
     parser_config_merge.add_argument('-ac', '--additional_config',
                         help='The path to the configuration. This code ASSUMES that the additional config is for a single datasource ')
     parser_config_merge.add_argument('-mc', '--merged_config', default='merged_config',
                         help='The name of the merged config JSON file.  For my_config.json enter my_config. Do not enter the .json extension')
-    parser_config_merge.add_argument('-fo', '--folder_name', default='tmp_tdsx_and_config',
-                        help='Specifies the folder to write the datasource and configs to')
-    parser_config_merge.set_defaults(func=generate_config)
+    # parser_config_merge.add_argument('-fo', '--folder_name', default='tmp_tdsx_and_config',
+    #                     help='Specifies the folder to write the datasource and configs to')
+    parser_config_merge.set_defaults(func=merge_configs)
 
     return parser.parse_args()
 
@@ -84,19 +92,36 @@ def do_args():
 def main():
     args = do_args()
 
-    host = f'https://{args.server}.online.tableau.com'
-    ts = TableauServer(
-        personal_access_token_name=args.token_name,
-        personal_access_token_secret=args.token_secret,
-        user=args.user,
-        password=args.password,
-        site=args.site,
-        host=host,
-        api_version=args.api_version
+    # Set/Reset the directory
+    tmp_folder = args.folder_name
+    if args.clean_up_first:
+        shutil.rmtree(tmp_folder, ignore_errors=True)
+
+    os.makedirs(tmp_folder, exist_ok=True)
+    os.chdir(tmp_folder)
+
+    needs_tableau_server = (
+        args.command == 'generate_config'
+        or args.command == 'server_info'
     )
 
-    # Passes the TS object into all functions even though it's not always needed
-    args.func(args, ts)
+    # Create the server object and run the functions
+    if needs_tableau_server:
+        host = f'https://{args.server}.online.tableau.com'
+        ts = TableauServer(
+            personal_access_token_name=args.token_name,
+            personal_access_token_secret=args.token_secret,
+            user=args.user,
+            password=args.password,
+            site=args.site,
+            host=host,
+            api_version=args.api_version
+        )
+        args.func(args, ts)
+
+    # Run functions that don't need the server
+    else:
+        args.func(args)
 
 
 if __name__ == '__main__':

@@ -212,32 +212,32 @@ def main():
             'warehouse': args.conn_warehouse
         }
 
-    needs_tableau_server = (
-        args.list_datasources
-        or args.list_workbooks
-        or args.download_ds
-        or args.download_wb
-        or args.publish
-        or args.embed_creds
-        or args.refresh
-    )
+    # needs_tableau_server = (
+    #     args.list_datasources
+    #     or args.list_workbooks
+    #     or args.download_ds
+    #     or args.download_wb
+    #     or args.publish
+    #     or args.embed_creds
+    #     or args.refresh
+    # )
 
-    if needs_tableau_server:
-        if not args.settings_path:
-            missing_creds = dict()
-            for _arg in ['user', 'password', 'site', 'server']:
-                if not args.__getattribute__(_arg):
-                    missing_creds.setdefault('missing', [])
-                    missing_creds['missing'].append(f'--{_arg}')
-            if missing_creds:
-                raise tu.TableauConnectionError(missing_creds)
-        server = tu.TableauServer(**settings['tableau_login'])
-    if args.list_datasources:
-        for d in server.get_datasources():
-            print(d.id, '::', d.name, '::', d.project_name)
-    if args.list_workbooks:
-        for w in server.get_workbooks():
-            print(w.id, '::', w.name, w.project_name)
+    # if needs_tableau_server:
+    #     if not args.settings_path:
+    #         missing_creds = dict()
+    #         for _arg in ['user', 'password', 'site', 'server']:
+    #             if not args.__getattribute__(_arg):
+    #                 missing_creds.setdefault('missing', [])
+    #                 missing_creds['missing'].append(f'--{_arg}')
+    #         if missing_creds:
+    #             raise tu.TableauConnectionError(missing_creds)
+    #     server = tu.TableauServer(**settings['tableau_login'])
+    # if args.list_datasources:
+    #     for d in server.get_datasources():
+    #         print(d.id, '::', d.name, '::', d.project_name)
+    # if args.list_workbooks:
+    #     for w in server.get_workbooks():
+    #         print(w.id, '::', w.name, w.project_name)
     if args.download_ds:
         tdsx = server.download_datasource(args.id, include_extract=False)
         print(f'Downloaded to {tdsx}')

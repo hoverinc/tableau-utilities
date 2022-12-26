@@ -126,7 +126,7 @@ def merge_2_configs(existing_config, additional_config):
     return existing_config
 
 
-def merge_configs(args, server=None):
+def merge_configs(args):
 
     # Read files
     existing_config = read_file(args.existing_config)
@@ -137,7 +137,5 @@ def merge_configs(args, server=None):
     # print(new_config)
 
     # Write
-    os.makedirs(args.folder_name, exist_ok=True)
-    os.chdir(args.folder_name)
     file_name = f'{args.merged_config}.json'
     write_file(file_name=file_name, config=new_config)
