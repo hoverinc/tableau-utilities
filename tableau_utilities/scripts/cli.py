@@ -10,7 +10,7 @@ from tableau_utilities.tableau_server.tableau_server import TableauServer
 from tableau_utilities.scripts.datasources_column_config_generate import main
 from tableau_utilities.scripts.gen_config import generate_config
 from tableau_utilities.scripts.merge_config import merge_configs
-
+from tableau_utilities.scripts.server_info import server_info
 
 def do_args():
     """ Parse arguments.
@@ -47,6 +47,12 @@ def do_args():
 
     # SERVER INFO
     parser_server_info = subparsers.add_parser('server_info', help='Retrieve and view information from Tableau Cloud/Server')
+    parser_server_info.add_argument('--list_object', choices=['datasource', 'project', 'workbook'], help='List information about the Object')
+    parser_server_info.add_argument('--list_verbosity', choices=['names', 'names_ids', 'full_df'],
+                                   help='Set the amount of information and the format to display')
+    parser_server_info.add_argument('--list_sort_field', default='name',
+                                   help='Set the amount of information and the format to display')
+    parser_server_info.set_defaults(func=server_info)
 
     # GENERATE CONFIG
     parser_config_gen = subparsers.add_parser('generate_config', help='Generate configs to programatically manage metdatadata in Tableau datasources via Airflow')

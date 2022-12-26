@@ -20,23 +20,23 @@ def do_args(argv=None):
         help='Path to your local settings.yaml file (See sample_settings.yaml)',
         default=None
     )
-    parser.add_argument(
-        '--server',
-        help='Tableau Server address. i.e. <server_address> in https://<server_address>.online.tableau.com',
-        default=None
-    )
-    parser.add_argument(
-        '--site',
-        help='Site name. i.e. <site> in https://<server_address>.online.tableau.com/#/site/<site>',
-        default=None
-    )
-    parser.add_argument(
-        '--api_version',
-        help='Tableau API version',
-        default='3.16'
-    )
-    parser.add_argument('--user', default=None, help='Tableau username')
-    parser.add_argument('--password', default=None, help='Tableau password')
+    # parser.add_argument(
+    #     '--server',
+    #     help='Tableau Server address. i.e. <server_address> in https://<server_address>.online.tableau.com',
+    #     default=None
+    # )
+    # parser.add_argument(
+    #     '--site',
+    #     help='Site name. i.e. <site> in https://<server_address>.online.tableau.com/#/site/<site>',
+    #     default=None
+    # )
+    # parser.add_argument(
+    #     '--api_version',
+    #     help='Tableau API version',
+    #     default='3.16'
+    # )
+    # parser.add_argument('--user', default=None, help='Tableau username')
+    # parser.add_argument('--password', default=None, help='Tableau password')
     parser.add_argument(
         '--conn_user',
         help='Username for embed credentials. See --embed_creds.',
