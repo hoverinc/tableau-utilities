@@ -7,6 +7,16 @@ from tableau_utilities.tableau_file.tableau_file import Datasource
 from tableau_utilities.tableau_server.tableau_server import TableauServer
 
 
+def object_list_to_dicts(object_list):
+
+    records = []
+    for object in object_list:
+        info = object.__dict__
+        records.append(info)
+
+    return records
+
+
 def print_info(object_list, verbosity, sort_field='name'):
     """ Downloads the specified datasources
     Args:
@@ -18,10 +28,7 @@ def print_info(object_list, verbosity, sort_field='name'):
         datasource_path: The path of the datasource that was downloaded
     """
 
-    records = []
-    for object in object_list:
-        info = object.__dict__
-        records.append(info)
+    records = object_list_to_dicts(object_list)
 
     sorted_records = sorted(records, key=lambda d: d[sort_field])
 
