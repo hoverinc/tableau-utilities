@@ -48,7 +48,7 @@ def do_args():
     # SERVER INFO
     parser_server_info = subparsers.add_parser('server_info', help='Retrieve and view information from Tableau Cloud/Server')
     parser_server_info.add_argument('--list_object', choices=['datasource', 'project', 'workbook'], help='List information about the Object')
-    parser_server_info.add_argument('--list_verbosity', choices=['names', 'names_ids', 'full_df'],
+    parser_server_info.add_argument('--list_verbosity', choices=['names', 'names_ids', 'ids_names', 'full_df'],
                                    help='Set the amount of information and the format to display')
     parser_server_info.add_argument('--list_sort_field', default='name',
                                    help='Set the amount of information and the format to display')

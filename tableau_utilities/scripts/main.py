@@ -57,18 +57,18 @@ def do_args(argv=None):
     parser.add_argument('--conn_host', default=None, help='Connection Host (URL)')
     parser.add_argument('--conn_role', default=None, help='Connection Role')
     parser.add_argument('--conn_warehouse', default=None, help='Connection Warehouse')
-    parser.add_argument(
-        '--list_datasources',
-        action='store_true',
-        default=False,
-        help='Print the datasource names and ids'
-    )
-    parser.add_argument(
-        '--list_workbooks',
-        action='store_true',
-        default=False,
-        help='Print the workbook names and ids'
-    )
+    # parser.add_argument(
+    #     '--list_datasources',
+    #     action='store_true',
+    #     default=False,
+    #     help='Print the datasource names and ids'
+    # )
+    # parser.add_argument(
+    #     '--list_workbooks',
+    #     action='store_true',
+    #     default=False,
+    #     help='Print the workbook names and ids'
+    # )
     parser.add_argument(
         '--update_connection',
         action='store_true',

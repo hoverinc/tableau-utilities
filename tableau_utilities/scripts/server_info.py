@@ -7,7 +7,7 @@ from tableau_utilities.tableau_file.tableau_file import Datasource
 from tableau_utilities.tableau_server.tableau_server import TableauServer
 
 
-def datasource_info(server, verbosity, sort_field='name'):
+def print_info(object_list, verbosity, sort_field='name'):
     """ Downloads the specified datasources
     Args:
         server (TableauServer): A Tableau server object
@@ -17,41 +17,39 @@ def datasource_info(server, verbosity, sort_field='name'):
         datasource: The datasource object for the datasource that was downloaded
         datasource_path: The path of the datasource that was downloaded
     """
-    datasource_list = [d for d in server.get_datasources()]
 
-    sources = []
-    for datasource in datasource_list:
-        info = datasource.__dict__
-        sources.append(info)
+    records = []
+    for object in object_list:
+        info = object.__dict__
+        records.append(info)
 
-    sorted_sources = sorted(sources, key=lambda d: d[sort_field])
-
-        # if list_datasources:
-        #     print(datasource.__dict__)
-        #     info = datasource.__dict__
-        #     sources.append(info)
-
+    sorted_records = sorted(records, key=lambda d: d[sort_field])
 
     if verbosity == 'names':
-        for source in sorted_sources:
-            print(source['name'])
+        for record in sorted_records:
+            print(record['name'])
     elif verbosity == 'names_ids':
-        for source in sorted_sources:
-            print(source['name'], source['id'])
-
-    # # TO DO: This is only printing a pretty table when columns are limited
-    # if show_datasources:
-    #     df = pd.DataFrame(sources)
-    #     df = df[['name', 'created_at', 'is_certified']]
-    #     # print(df.to_markdown())
-    #     print(tabulate(df, headers='keys', tablefmt='psql', colalign='left'))
+        for record in sorted_records:
+            print(record['name'], record['id'])
+    elif verbosity == 'ids_names':
+        for record in sorted_records:
+            print(record['id'], record['name'])
+    elif verbosity == 'full_df':
+        df = pd.DataFrame(sorted_records)
+        # df = df[['name', 'id']]
+        print(tabulate(df, headers='keys', tablefmt='psql', colalign='left'))
 
 
 def server_info(args, server):
     if args.list_object == 'datasource':
-        datasource_info(server, args.list_verbosity, args.list_sort_field)
+        object_list = [d for d in server.get_datasources()]
+        # datasource_info(server, args.list_verbosity, args.list_sort_field)
     if args.list_object == 'project':
-        datasource_info(server, args.list_verbosity, args.list_sort_field)
+        object_list = [p for p in server.get_projects()]
+        # datasource_info(server, args.list_verbosity, args.list_sort_field)
     if args.list_object == 'workbook':
-        datasource_info(server, args.list_verbosity, args.list_sort_field)
+        object_list = [w for w in server.get_workbooks()]
+        # datasource_info(server, args.list_verbosity, args.list_sort_field)
+
+    print_info(object_list, args.list_verbosity, args.list_sort_field)
 
