@@ -21,8 +21,7 @@ def get_prpject_and_object_names(id, object_list):
             return o['name'], o['project_name']
 
 
-
-def download_objects(args, server):
+def download_objects(args, server, include_extract):
 
     if args.object_type == 'datasource':
         object_list = [d for d in server.get_datasources()]
@@ -38,11 +37,10 @@ def download_objects(args, server):
     if id is not None:
         project_name, object_name = get_prpject_and_object_names(id, object_list)
 
-
     if id is None:
         id = get_object_id(project_name, object_name, object_list)
 
-    print(f'GETTING OBJECT ID: {id}, OBJECT NAME: {object_name}, PROJECT NAME: {project_name}')
+    print(f'GETTING OBJECT ID: {id}, OBJECT NAME: {object_name}, PROJECT NAME: {project_name}, INCLUDE EXTRACT {args.include_extract}')
 
 
 
