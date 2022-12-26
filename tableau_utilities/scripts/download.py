@@ -21,7 +21,7 @@ def get_prpject_and_object_names(id, object_list):
             return o['name'], o['project_name']
 
 
-def download_objects(args, server, include_extract):
+def download_objects(args, server):
 
     if args.object_type == 'datasource':
         object_list = [d for d in server.get_datasources()]
@@ -42,6 +42,10 @@ def download_objects(args, server, include_extract):
 
     print(f'GETTING OBJECT ID: {id}, OBJECT NAME: {object_name}, PROJECT NAME: {project_name}, INCLUDE EXTRACT {args.include_extract}')
 
+    if args.object_type == 'datasource':
+        server.download_datasource(args.id, include_extract=args.include_extract)
+    if args.object_type == 'workbook':
+        server.download_workbook(args.id, include_extract=args.include_extract)
 
 
 
