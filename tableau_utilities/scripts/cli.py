@@ -64,9 +64,6 @@ def do_args():
     parser_config_gen = subparsers.add_parser('generate_config',
                                               help='Generate configs to programatically manage metdatadata in Tableau datasources via Airflow')
     parser_config_gen.add_argument('--datasource', help='The name of the datasources to generate a config for')
-    # parser_config_gen.add_argument('--clean_up_first', action='store_true', help='Deletes the directory and files before running')
-    # parser_config_gen.add_argument('--folder_name', default='tmp_tdsx_and_config',
-    #                     help='Specifies the folder to write the datasource and configs to')
     parser_config_gen.add_argument('--file_prefix', action='store_true',
                         help='Adds a prefix of the datasource name to the output file names')
     parser_config_gen.add_argument('--definitions_csv',
@@ -82,8 +79,6 @@ def do_args():
                         help='The path to the configuration. This code ASSUMES that the additional config is for a single datasource ')
     parser_config_merge.add_argument('-mc', '--merged_config', default='merged_config',
                         help='The name of the merged config JSON file.  For my_config.json enter my_config. Do not enter the .json extension')
-    # parser_config_merge.add_argument('-fo', '--folder_name', default='tmp_tdsx_and_config',
-    #                     help='Specifies the folder to write the datasource and configs to')
     parser_config_merge.set_defaults(func=merge_configs)
 
     return parser.parse_args()
