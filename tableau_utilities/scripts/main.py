@@ -83,29 +83,29 @@ def do_args(argv=None):
              ' indicated by datasource ID (--dsid) if supplied, or by --dsn and --project.'
              ' Provide username (--cred_user), password (--cred_pw), and connection type (--conn_type) to embed.'
     )
-    parser.add_argument(
-        '--id',
-        default=None,
-        help='The ID of the datasource or workbook. See --list_datasources'
-    )
-    parser.add_argument('--name', default=None, help='The datasource or workbook name')
-    parser.add_argument(
-        '--project',
-        default=None,
-        help='The project name for the datasource or workbook'
-    )
-    parser.add_argument(
-        '--download_ds',
-        default=False,
-        action='store_true',
-        help='Download the datasource indicated by datasource ID (--id) if supplied, or by --name and --project.'
-    )
-    parser.add_argument(
-        '--download_wb',
-        default=False,
-        action='store_true',
-        help='Download the workbook indicated by workbook ID (--id) if supplied, or by --name and --project.'
-    )
+    # parser.add_argument(
+    #     '--id',
+    #     default=None,
+    #     help='The ID of the datasource or workbook. See --list_datasources'
+    # )
+    # parser.add_argument('--name', default=None, help='The datasource or workbook name')
+    # parser.add_argument(
+    #     '--project',
+    #     default=None,
+    #     help='The project name for the datasource or workbook'
+    # )
+    # parser.add_argument(
+    #     '--download_ds',
+    #     default=False,
+    #     action='store_true',
+    #     help='Download the datasource indicated by datasource ID (--id) if supplied, or by --name and --project.'
+    # )
+    # parser.add_argument(
+    #     '--download_wb',
+    #     default=False,
+    #     action='store_true',
+    #     help='Download the workbook indicated by workbook ID (--id) if supplied, or by --name and --project.'
+    # )
     parser.add_argument(
         '--refresh',
         default=False,

@@ -7,7 +7,7 @@ import sys
 from pprint import pprint
 
 from tableau_utilities.tableau_server.tableau_server import TableauServer
-from tableau_utilities.scripts.datasources_column_config_generate import main
+# from tableau_utilities.scripts.datasources_column_config_generate import main
 from tableau_utilities.scripts.gen_config import generate_config
 from tableau_utilities.scripts.merge_config import merge_configs
 from tableau_utilities.scripts.server_info import server_info
@@ -54,10 +54,22 @@ def do_args():
     parser_server_info = subparsers.add_parser('server_info',
                                                help='Retrieve and view information from Tableau Cloud/Server')
     parser_server_info.add_argument('--list_object', choices=['datasource', 'project', 'workbook'], help='List information about the Object')
-    parser_server_info.add_argument('--list_verbosity', choices=['names', 'names_ids', 'ids_names', 'full_df'],
+    parser_server_info.add_argument('--list_verbosity', choices=['names', 'names_ids', 'ids_names', 'full_df', 'full_dictionary', 'full_dictionary_pretty'],
                                    help='Set the amount of information and the format to display')
     parser_server_info.add_argument('--list_sort_field', default='name',
                                    help='Set the amount of information and the format to display')
+    parser_server_info.set_defaults(func=server_info)
+
+    # DOWNLOAD
+    parser_server_download = subparsers.add_parser('server_download',
+                                               help='Retrieve and view objects from Tableau Cloud/Server')
+    parser_server_download.add_argument('--object_type', choices=['datasource', 'workbook'],
+                                    help='List information about the Object')
+    parser_server_download.add_argument('--id', help='Set the amount of information and the format to display')
+    parser_server_download.add_argument('--name',  help='The datasource or workbook name')
+    parser_server_download.add_argument('--project', help='The project name for the datasource or workbook')
+    parser_server_download.add_argument('--include_extract', action='store_true',
+                                        help='includes the extract in the download if specified. This will make downloads take a long time for large extracts')
     parser_server_info.set_defaults(func=server_info)
 
     # GENERATE CONFIG
@@ -98,6 +110,7 @@ def main():
     needs_tableau_server = (
         args.command == 'generate_config'
         or args.command == 'server_info'
+        or args.command == 'server_download'
     )
 
     # Create the server object and run the functions

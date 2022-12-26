@@ -38,6 +38,12 @@ def print_info(object_list, verbosity, sort_field='name'):
         df = pd.DataFrame(sorted_records)
         # df = df[['name', 'id']]
         print(tabulate(df, headers='keys', tablefmt='psql', colalign='left'))
+    elif verbosity == 'full_dictionary':
+        for record in sorted_records:
+            print(record)
+    elif verbosity == 'full_dictionary_pretty':
+        for record in sorted_records:
+            pprint(record)
 
 
 def server_info(args, server):
