@@ -11,6 +11,8 @@ from tableau_utilities.tableau_server.tableau_server import TableauServer
 from tableau_utilities.scripts.gen_config import generate_config
 from tableau_utilities.scripts.merge_config import merge_configs
 from tableau_utilities.scripts.server_info import server_info
+from tableau_utilities.scripts.download import download_objects
+
 
 def do_args():
     """ Parse arguments.
@@ -67,10 +69,10 @@ def do_args():
                                     help='List information about the Object')
     parser_server_download.add_argument('--id', help='Set the amount of information and the format to display')
     parser_server_download.add_argument('--name',  help='The datasource or workbook name')
-    parser_server_download.add_argument('--project', help='The project name for the datasource or workbook')
+    parser_server_download.add_argument('--project_name', help='The project name for the datasource or workbook')
     parser_server_download.add_argument('--include_extract', action='store_true',
                                         help='includes the extract in the download if specified. This will make downloads take a long time for large extracts')
-    parser_server_info.set_defaults(func=server_info)
+    parser_server_download.set_defaults(func=download_objects)
 
     # GENERATE CONFIG
     parser_config_gen = subparsers.add_parser('generate_config',
