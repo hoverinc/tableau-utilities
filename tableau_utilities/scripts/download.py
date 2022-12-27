@@ -43,9 +43,9 @@ def download_objects(args, server):
     print(f'GETTING OBJECT ID: {id}, OBJECT NAME: {object_name}, PROJECT NAME: {project_name}, INCLUDE EXTRACT {args.include_extract}')
 
     if args.object_type == 'datasource':
-        server.download_datasource(args.id, include_extract=args.include_extract)
+        server.download_datasource(id, include_extract=args.include_extract)
     if args.object_type == 'workbook':
-        server.download_workbook(args.id, include_extract=args.include_extract)
+        server.download_workbook(id, include_extract=args.include_extract)
 
 
 
