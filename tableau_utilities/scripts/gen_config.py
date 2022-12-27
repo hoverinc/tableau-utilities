@@ -380,9 +380,3 @@ def generate_config(args, server):
     if definitions_csv_path is not None:
         definitions_mapping = load_csv_with_definitions(file=definitions_csv_path)
     build_config(datasource_name, datasource, datasource_path, metadata_record_columns, add_prefix, definitions_mapping)
-
-
-
-
-
-

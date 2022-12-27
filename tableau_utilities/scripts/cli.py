@@ -11,7 +11,7 @@ from tableau_utilities.tableau_server.tableau_server import TableauServer
 from tableau_utilities.scripts.gen_config import generate_config
 from tableau_utilities.scripts.merge_config import merge_configs
 from tableau_utilities.scripts.server_info import server_info
-from tableau_utilities.scripts.download import download_objects
+from tableau_utilities.scripts.download_publish import download_objects
 
 
 def do_args():
@@ -62,8 +62,8 @@ def do_args():
                                    help='Set the amount of information and the format to display')
     parser_server_info.set_defaults(func=server_info)
 
-    # DOWNLOAD
-    parser_server_download = subparsers.add_parser('server_download',
+    # DOWNLOAD & PUBLISH
+    parser_server_download = subparsers.add_parser('server_download_publish',
                                                help='Retrieve and view objects from Tableau Cloud/Server')
     parser_server_download.add_argument('--object_type', choices=['datasource', 'workbook'],
                                     help='List information about the Object')
