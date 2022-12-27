@@ -101,6 +101,13 @@ def do_args():
 def main():
     args = do_args()
 
+    print(args.server, args.site, args.token_secret, args.token_name)
+
+    site = os.getenv("TABLEAU_SITENAME_TEST")
+    server = os.getenv("TABLEAU_SERVER_ADDRESS_TEST")
+    token_name = os.getenv("TABLEAU_PERSONAL_ACCESS_TOKEN_NAME_TEST")
+    token_secret = os.getenv("TABLEAU_PERSONAL_ACCESS_TOKEN_VALUE_TEST")
+
     # Set/Reset the directory
     tmp_folder = args.folder_name
     if args.clean_up_first:
@@ -117,13 +124,13 @@ def main():
 
     # Create the server object and run the functions
     if needs_tableau_server:
-        host = f'https://{args.server}.online.tableau.com'
+        host = f'https://{server}.online.tableau.com'
         ts = TableauServer(
-            personal_access_token_name=args.token_name,
-            personal_access_token_secret=args.token_secret,
+            personal_access_token_name=token_name,
+            personal_access_token_secret=token_secret,
             user=args.user,
             password=args.password,
-            site=args.site,
+            site=site,
             host=host,
             api_version=args.api_version
         )
