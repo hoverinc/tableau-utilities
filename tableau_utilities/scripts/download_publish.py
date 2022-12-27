@@ -1,4 +1,3 @@
-
 from tableau_utilities.scripts.server_info import object_list_to_dicts
 
 
@@ -37,7 +36,7 @@ def get_project_and_object_names(id, object_list):
             return o['name'], o['project_name']
 
 
-def download_objects(args, server):
+def download_publish(args, server):
 
     if args.object_type == 'datasource':
         object_list = [d for d in server.get_datasources()]
@@ -58,8 +57,15 @@ def download_objects(args, server):
 
     print(f'GETTING OBJECT ID: {id}, OBJECT NAME: {object_name}, PROJECT NAME: {project_name}, INCLUDE EXTRACT {args.include_extract}')
 
-    if args.object_type == 'datasource':
-        server.download_datasource(id, include_extract=args.include_extract)
-    if args.object_type == 'workbook':
-        server.download_workbook(id, include_extract=args.include_extract)
+    if args.action_type == 'download':
+        if args.object_type == 'datasource':
+            server.download_datasource(id, include_extract=args.include_extract)
+        if args.object_type == 'workbook':
+            server.download_workbook(id, include_extract=args.include_extract)
+    elif args.action_type == 'publish':
+        print('PUBLISHING', id)
+        if args.object_type == 'datasource':
+            server.publish_datasource(args.file_path, datasource_id=id, datasource_name=object_name, project_name=project_name)
+        if args.object_type == 'workbook':
+            server.publish_workbook(args.file_path, workbook_id=id, workbook_name=object_name, project_name=project_name)
 

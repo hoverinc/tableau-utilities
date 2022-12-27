@@ -11,7 +11,7 @@ from tableau_utilities.tableau_server.tableau_server import TableauServer
 from tableau_utilities.scripts.gen_config import generate_config
 from tableau_utilities.scripts.merge_config import merge_configs
 from tableau_utilities.scripts.server_info import server_info
-from tableau_utilities.scripts.download_publish import download_objects
+from tableau_utilities.scripts.download_publish import download_publish
 
 
 def do_args():
@@ -65,14 +65,17 @@ def do_args():
     # DOWNLOAD & PUBLISH
     parser_server_download = subparsers.add_parser('server_download_publish',
                                                help='Retrieve and view objects from Tableau Cloud/Server')
+    parser_server_download.add_argument('--action_type', choices=['download', 'publish'],
+                                    help='List information about the Object')
     parser_server_download.add_argument('--object_type', choices=['datasource', 'workbook'],
                                     help='List information about the Object')
     parser_server_download.add_argument('--id', help='Set the amount of information and the format to display')
     parser_server_download.add_argument('--name',  help='The datasource or workbook name')
     parser_server_download.add_argument('--project_name', help='The project name for the datasource or workbook')
+    parser_server_download.add_argument('--file_path', help='The path to the file to publish')
     parser_server_download.add_argument('--include_extract', action='store_true',
                                         help='includes the extract in the download if specified. This will make downloads take a long time for large extracts')
-    parser_server_download.set_defaults(func=download_objects)
+    parser_server_download.set_defaults(func=download_publish)
 
     # GENERATE CONFIG
     parser_config_gen = subparsers.add_parser('generate_config',
@@ -119,7 +122,7 @@ def main():
     needs_tableau_server = (
         args.command == 'generate_config'
         or args.command == 'server_info'
-        or args.command == 'server_download'
+        or args.command == 'server_download_publish'
     )
 
     # Create the server object and run the functions
