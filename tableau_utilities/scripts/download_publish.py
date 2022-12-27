@@ -10,11 +10,16 @@ def get_object_id(project_name, object_name, object_list):
         object_list: The list of datasource or workbook objects
 
     Returns:
-          id: The ID for the object
+          id: The ID for the object if it exists
 
     """
 
-    return [o['id'] for o in object_list if o['name'] == object_name and  o['project_name'] == project_name][0]
+    try:
+        id = [o['id'] for o in object_list if o['name'] == object_name and  o['project_name'] == project_name][0]
+    except:
+        id = None
+
+    return id
 
 
 def get_project_and_object_names(id, object_list):
@@ -63,9 +68,10 @@ def download_publish(args, server):
         if args.object_type == 'workbook':
             server.download_workbook(id, include_extract=args.include_extract)
     elif args.action_type == 'publish':
-        print('PUBLISHING', id)
+        print(f'PUBLISHING ID: {id}, OBJECT NAME: {object_name}, PROJECT NAME: {project_name}')
         if args.object_type == 'datasource':
-            server.publish_datasource(args.file_path, datasource_id=id, datasource_name=object_name, project_name=project_name)
+            response = server.publish_datasource(args.file_path, datasource_id=id, datasource_name=object_name, project_name=project_name)
         if args.object_type == 'workbook':
-            server.publish_workbook(args.file_path, workbook_id=id, workbook_name=object_name, project_name=project_name)
+            response = server.publish_workbook(args.file_path, workbook_id=id, workbook_name=object_name, project_name=project_name)
+        print(f'RESPONSE {response}')
 

@@ -112,11 +112,11 @@ def do_args(argv=None):
         action='store_true',
         help='Refresh the datasource indicated by datasource ID (--dsid) if supplied, or by --dsn and --project.'
     )
-    parser.add_argument(
-        '--tdsx',
-        default=None,
-        help='Path to the tdsx file. See --modify_column and --publish'
-    )
+    # parser.add_argument(
+    #     '--tdsx',
+    #     default=None,
+    #     help='Path to the tdsx file. See --modify_column and --publish'
+    # )
     parser.add_argument(
         '--publish',
         default=False,
@@ -272,8 +272,8 @@ def main():
         datasource.connection.named_connections[args.conn_type].connection = named_conn
     if tdsx:
         datasource.save()
-    if args.publish:
-        server.publish_datasource(tdsx, dsid=args.id, name=args.name, project=args.project)
+    # if args.publish:
+    #     server.publish_datasource(tdsx, dsid=args.id, name=args.name, project=args.project)
     if args.embed_creds:
         server.embed_datasource_credentials(
             args.id,
