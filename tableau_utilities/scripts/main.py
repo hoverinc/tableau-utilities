@@ -238,13 +238,13 @@ def main():
     # if args.list_workbooks:
     #     for w in server.get_workbooks():
     #         print(w.id, '::', w.name, w.project_name)
-    if args.download_ds:
-        tdsx = server.download_datasource(args.id, include_extract=False)
-        print(f'Downloaded to {tdsx}')
-    if tdsx:
-        datasource = tu.Datasource(tdsx)
-    if args.download_wb:
-        server.download_workbook(args.id, include_extract=False)
+    # if args.download_ds:
+    #     tdsx = server.download_datasource(args.id, include_extract=False)
+    #     print(f'Downloaded to {tdsx}')
+    # if tdsx:
+    #     datasource = tu.Datasource(tdsx)
+    # if args.download_wb:
+    #     server.download_workbook(args.id, include_extract=False)
     if args.add_column or args.modify_column:
         column = tfo.Column(
                 name=args.column_name,
@@ -255,7 +255,7 @@ def main():
                 desc=args.desc,
                 calculation=args.calculation
             )
-        datasource.enforce_column(column, remote_name=args.remote_name, folder_name=args.folder_name)
+        datasource.enforce_column(column, remote    _name=args.remote_name, folder_name=args.folder_name)
     if args.add_folder:
         datasource.folders_common.folder.add(tfo.Folder(name=args.folder_name))
     if args.delete_folder:
