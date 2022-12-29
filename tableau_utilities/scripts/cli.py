@@ -79,12 +79,12 @@ def do_args():
 
     # GENERATE CONFIG
     parser_config_gen = subparsers.add_parser('generate_config',
-                                              help='Generate configs to programatically manage metdatadata in Tableau datasources via Airflow')
-    parser_config_gen.add_argument('--datasource', help='The name of the datasources to generate a config for')
+                                              help='Generate configs to programatically manage metdatadata in Tableau datasources via Airflow.')
+    parser_config_gen.add_argument('--datasource', help='The name of the datasource to generate a config for.')
     parser_config_gen.add_argument('--file_prefix', action='store_true',
-                        help='Adds a prefix of the datasource name to the output file names')
+                        help='Adds a prefix of the datasource name to the output file names.')
     parser_config_gen.add_argument('--definitions_csv',
-                        help='Allows a csv with definitions to be inputted for adding definitions to a config. It may be easier to populate definitions in a spreadsheet than in the configo ')
+                        help='Add data defintions from a csv to the config. It may be easier to bulk populate definitions in a spreadsheet than in the config.')
     parser_config_gen.set_defaults(func=generate_config)
 
     # MERGE CONFIG
