@@ -1,9 +1,7 @@
-import argparse
 import pandas as pd
 from tabulate import tabulate
 from pprint import pprint
 
-from tableau_utilities.tableau_file.tableau_file import Datasource
 from tableau_utilities.tableau_server.tableau_server import TableauServer
 
 
@@ -17,7 +15,7 @@ def object_list_to_dicts(object_list):
     return records
 
 
-def print_info(object_list, verbosity, sort_field='name'):
+def print_info(object_list, format, sort_field='name'):
     """ Downloads the specified datasources
     Args:
         server (TableauServer): A Tableau server object
@@ -32,23 +30,23 @@ def print_info(object_list, verbosity, sort_field='name'):
 
     sorted_records = sorted(records, key=lambda d: d[sort_field])
 
-    if verbosity == 'names':
+    if format == 'names':
         for record in sorted_records:
             print(record['name'])
-    elif verbosity == 'names_ids':
+    elif format == 'names_ids':
         for record in sorted_records:
             print(record['name'], record['id'])
-    elif verbosity == 'ids_names':
+    elif format == 'ids_names':
         for record in sorted_records:
             print(record['id'], record['name'])
-    elif verbosity == 'full_df':
+    elif format == 'full_df':
         df = pd.DataFrame(sorted_records)
         # df = df[['name', 'id']]
         print(tabulate(df, headers='keys', tablefmt='psql', colalign='left'))
-    elif verbosity == 'full_dictionary':
+    elif format == 'full_dictionary':
         for record in sorted_records:
             print(record)
-    elif verbosity == 'full_dictionary_pretty':
+    elif format == 'full_dictionary_pretty':
         for record in sorted_records:
             pprint(record)
 
@@ -56,13 +54,10 @@ def print_info(object_list, verbosity, sort_field='name'):
 def server_info(args, server):
     if args.list_object == 'datasource':
         object_list = [d for d in server.get_datasources()]
-        # datasource_info(server, args.list_verbosity, args.list_sort_field)
     if args.list_object == 'project':
         object_list = [p for p in server.get_projects()]
-        # datasource_info(server, args.list_verbosity, args.list_sort_field)
     if args.list_object == 'workbook':
         object_list = [w for w in server.get_workbooks()]
-        # datasource_info(server, args.list_verbosity, args.list_sort_field)
 
-    print_info(object_list, args.list_verbosity, args.list_sort_field)
+    print_info(object_list, args.list_format, args.list_sort_field)
 

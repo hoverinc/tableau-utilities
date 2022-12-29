@@ -25,7 +25,8 @@ def do_args():
                                                  '-Manage configurations to edit datasource metadata',
                                      formatter_class=RawTextHelpFormatter)
     parser = argparse.ArgumentParser(prog='tableau_utilities')
-    subparsers = parser.add_subparsers(title="commands", dest="command", help='You must choose a script area to run', required=True)
+    subparsers = parser.add_subparsers(title="commands", dest="command", help='You must choose a script area to run',
+                                       required=True)
 
     group_server = parser.add_argument_group('server_information', 'Server Information')
     group_server.add_argument(
@@ -49,53 +50,63 @@ def do_args():
 
     group_local_folder = parser.add_argument_group('local_folder', 'Manage where to read/write files')
     group_local_folder.add_argument('--folder_name', default='tmp_tdsx_and_config',
-                        help='Specifies the folder to write the datasource and configs to')
-    group_local_folder.add_argument('--clean_up_first', action='store_true', help='Deletes the directory and files before running')
+                                    help='Specifies the folder to write the datasource and configs to')
+    group_local_folder.add_argument('--clean_up_first', action='store_true',
+                                    help='Deletes the directory and files before running')
 
     # SERVER INFO
     parser_server_info = subparsers.add_parser('server_info',
                                                help='Retrieve and view information from Tableau Cloud/Server')
-    parser_server_info.add_argument('--list_object', choices=['datasource', 'project', 'workbook'], help='List information about the Object')
-    parser_server_info.add_argument('--list_verbosity', choices=['names', 'names_ids', 'ids_names', 'full_df', 'full_dictionary', 'full_dictionary_pretty'],
-                                   help='Set the amount of information and the format to display')
+    parser_server_info.add_argument('--list_object', choices=['datasource', 'project', 'workbook'],
+                                    help='Specify the type of object for the information.')
+    parser_server_info.add_argument('--list_format',
+                                    choices=['names', 'names_ids', 'ids_names', 'full_df', 'full_dictionary',
+                                             'full_dictionary_pretty'],
+                                    help='Set the fields and format for the information.')
     parser_server_info.add_argument('--list_sort_field', default='name',
-                                   help='Set the amount of information and the format to display')
+                                    help='Choose the field for sorting the information.')
     parser_server_info.set_defaults(func=server_info)
 
     # DOWNLOAD & PUBLISH
     parser_server_download = subparsers.add_parser('server_download_publish',
-                                               help='Retrieve and view objects from Tableau Cloud/Server')
+                                                   help='Download and publish objects to Tableau Cloud/Server')
     parser_server_download.add_argument('--action_type', choices=['download', 'publish'],
-                                    help='List information about the Object')
+                                        help='List information about the Object')
     parser_server_download.add_argument('--object_type', choices=['datasource', 'workbook'],
-                                    help='List information about the Object')
+                                        help='List information about the Object')
     parser_server_download.add_argument('--id', help='Set the amount of information and the format to display')
     parser_server_download.add_argument('--name',  help='The datasource or workbook name')
     parser_server_download.add_argument('--project_name', help='The project name for the datasource or workbook')
     parser_server_download.add_argument('--file_path', help='The path to the file to publish')
     parser_server_download.add_argument('--include_extract', action='store_true',
-                                        help='includes the extract in the download if specified. This will make downloads take a long time for large extracts')
+                                        help='Includes the extract in the download if specified. '
+                                             'This will make downloads take a long time for large extracts.')
     parser_server_download.set_defaults(func=download_publish)
 
     # GENERATE CONFIG
     parser_config_gen = subparsers.add_parser('generate_config',
-                                              help='Generate configs to programatically manage metdatadata in Tableau datasources via Airflow.')
+                                              help='Generate configs to programatically manage metdatadata in Tableau '
+                                                   'datasources via Airflow.')
     parser_config_gen.add_argument('--datasource', help='The name of the datasource to generate a config for.')
     parser_config_gen.add_argument('--file_prefix', action='store_true',
-                        help='Adds a prefix of the datasource name to the output file names.')
+                                   help='Adds a prefix of the datasource name to the output file names.')
     parser_config_gen.add_argument('--definitions_csv',
-                        help='Add data defintions from a csv to the config. It may be easier to bulk populate definitions in a spreadsheet than in the config.')
+                                   help='Add data defintions from a csv to the config. It may be easier to bulk '
+                                        'populate definitions in a spreadsheet than in the config.')
     parser_config_gen.set_defaults(func=generate_config)
 
     # MERGE CONFIG
     parser_config_merge = subparsers.add_parser('merge_config',
                                                 help='Merge a new config into the existing master config')
-    parser_config_merge.add_argument('-ec', '--existing_config',
-                        help='The path to the current configuration')
-    parser_config_merge.add_argument('-ac', '--additional_config',
-                        help='The path to the configuration. This code ASSUMES that the additional config is for a single datasource ')
-    parser_config_merge.add_argument('-mc', '--merged_config', default='merged_config',
-                        help='The name of the merged config JSON file.  For my_config.json enter my_config. Do not enter the .json extension')
+    parser_config_merge.add_argument('--existing_config',
+                                     help='The path to the current configuration. The current configuration may have '
+                                          'more than 1 datasource.')
+    parser_config_merge.add_argument('--additional_config',
+                                     help='The path to the configuration to add. This code ASSUMES that the additional '
+                                          'config is for a single datasource ')
+    parser_config_merge.add_argument('--merged_config', default='merged_config',
+                                     help='The name of the merged config JSON file. Ex: fielname "my_config.json" '
+                                          'argument is "my_config" Do not enter the .json extension.')
     parser_config_merge.set_defaults(func=merge_configs)
 
     return parser.parse_args()
