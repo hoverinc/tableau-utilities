@@ -1,13 +1,9 @@
 from argparse import RawTextHelpFormatter
 import argparse
-import json
 import os
 import shutil
-import sys
-from pprint import pprint
 
 from tableau_utilities.tableau_server.tableau_server import TableauServer
-# from tableau_utilities.scripts.datasources_column_config_generate import main
 from tableau_utilities.scripts.gen_config import generate_config
 from tableau_utilities.scripts.merge_config import merge_configs
 from tableau_utilities.scripts.server_info import server_info
