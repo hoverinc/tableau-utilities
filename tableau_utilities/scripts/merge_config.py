@@ -68,7 +68,7 @@ def merge_2_configs(existing_config, additional_config):
                 calculation_current = existing_config[column_name]['calculation']
                 calculation_new = column_details['calculation']
 
-                if len(column_details['calculation'].strip()) > 0:
+                if len(calculation_new.strip()) > 0:
                     print('CHANGING CALCULATION')
                     print('CALCULATION CURRENT:', calculation_current)
                     print('CALCULATION NEW:', calculation_new)
@@ -76,7 +76,9 @@ def merge_2_configs(existing_config, additional_config):
                     print('CALCULATION SET TO:', existing_config[column_name]['calculation'])
 
             # Replace these attributes if there are values in the new configuration
-            if len(column_details['description'].strip()) > 0:
+
+            if (isinstance(description_new, list) and len(description_new) > 0) \
+                    or (isinstance(description_new, str) and len(description_new.strip()) > 0):
                 print('CHANGING DESCRIPTION')
                 print('DESCRIPTION CURRENT:', description_current)
                 print('DESCRIPTION NEW:', description_new)
@@ -85,7 +87,7 @@ def merge_2_configs(existing_config, additional_config):
                 # print('EXITING')
                 # sys.exit(0)
 
-            if len(column_details['folder'].strip()) > 0:
+            if len(folder_new.strip()) > 0:
                 print('CHANGING FOLDER')
                 print('FOLDER CURRENT:', folder_current)
                 print('FOLDER NEW:', folder_new)
@@ -94,7 +96,7 @@ def merge_2_configs(existing_config, additional_config):
                 # print('EXITING')
                 # sys.exit(0)
 
-            if len(column_details['persona'].strip()) > 0:
+            if len(persona_new.strip()) > 0:
                 print('CHANGING PERSONA')
                 print('PERSONA CURRENT:', persona_current)
                 print('PERSONA NEW:', persona_new)
