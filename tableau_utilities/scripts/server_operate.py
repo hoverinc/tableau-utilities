@@ -42,6 +42,13 @@ def get_project_and_object_names(id, object_list):
 
 
 def server_operate(args, server):
+    """ Allows downloading, publishing, and refreshing workbooks and datasources
+
+    Args:
+        args: The args from the cli
+        server: the Tableau Server authentication object
+
+    """
 
     if args.object_type == 'datasource':
         object_list = [d for d in server.get_datasources()]
