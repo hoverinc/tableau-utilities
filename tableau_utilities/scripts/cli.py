@@ -24,6 +24,8 @@ def do_args():
     parser = argparse.ArgumentParser(prog='tableau_utilities')
     subparsers = parser.add_subparsers(title="commands", dest="command", help='You must choose a script area to run',
                                        required=True)
+    parser.add_argument('--auth', choices=['settings.yaml', 'args_user_pass', 'args_token', 'os env variables'],
+                        help='The method for storing your credentials to pass into the CLI.')
 
     group_server = parser.add_argument_group('server_information', 'Server Information')
     group_server.add_argument(
@@ -119,26 +121,36 @@ def tableau_authentication(args):
 
     """
 
-    # Use the args passed in via the CLI command if they are there
-    if args.user is not None and args.password is not None:
-        user = args.user
-        password = args.password
-    elif args.token_name is not None and args.token_secret is not None:
-        token_name = args.token_name
-        token_secret = args.token_secret
+    # if args.auth in ['args_user_pass', 'args_token']:
+    #     user = args.user
+    #     password = args.password
+    #     token_name = args.token_name
+    #     token_secret = args.token_secret
+    #     site = args.site
+    #     server = args.server
+    #     api_version = args.api_version
+    # elif args.auth == 'settings.yaml':
+    #     pass
+    # elif args.auth =='os env variables':
+    #     site = os.getenv("TABLEAU_SITENAME")
+    #     server = os.getenv("TABLEAU_SERVER_ADDRESS")
+    #     token_name = os.getenv("TABLEAU_PERSONAL_ACCESS_TOKEN_NAME")
+    #     token_secret = os.getenv("TABLEAU_PERSONAL_ACCESS_TOKEN_VALUE")
+
+
+
 
     # Use the args picked up from the environment
     # This is the method to use when using 1password to authenticate
-    site = os.getenv("TABLEAU_SITENAME")
-    server = os.getenv("TABLEAU_SERVER_ADDRESS")
-    token_name = os.getenv("TABLEAU_PERSONAL_ACCESS_TOKEN_NAME")
-    token_secret = os.getenv("TABLEAU_PERSONAL_ACCESS_TOKEN_VALUE")
 
-    # settings = {}
-    #
-    # if args.settings_path:
-    #     with open(args.settings_path, 'r') as f:
-    #         settings = yaml.safe_load(f)
+
+    settings = {}
+
+    if args.settings_path:
+        with open(args.settings_path, 'r') as f:
+            settings = yaml.safe_load(f)
+
+    print(settings)
     # else:
     #     settings['tableau_login'] = {
     #         'host': f'https://{args.server}.online.tableau.com',
@@ -148,20 +160,20 @@ def tableau_authentication(args):
     #         'password': args.password
     #     }
     #
-    # # Create the server object and run the functions
-
-    host = f'https://{server}.online.tableau.com'
-    ts = TableauServer(
-        personal_access_token_name=token_name,
-        personal_access_token_secret=token_secret,
-        user=user,
-        password=password,
-        site=site,
-        host=host,
-        api_version=api_version
-    )
-
-    return ts
+    # # # Create the server object and run the functions
+    #
+    # host = f'https://{server}.online.tableau.com'
+    # ts = TableauServer(
+    #     personal_access_token_name=token_name,
+    #     personal_access_token_secret=token_secret,
+    #     user=user,
+    #     password=password,
+    #     site=site,
+    #     host=host,
+    #     api_version=api_version
+    # )
+    #
+    # return ts
 
 
 
@@ -185,19 +197,21 @@ def main():
     os.makedirs(tmp_folder, exist_ok=True)
     os.chdir(tmp_folder)
 
-    needs_tableau_server = (
-        args.command == 'generate_config'
-        or args.command == 'server_info'
-        or args.command == 'server_download_publish'
-    )
+    ts = tableau_authentication(args)
 
-    if needs_tableau_server:
-        ts = tableau_authentication(args)
-        args.func(args, ts)
-
-    # Run functions that don't need the server
-    else:
-        args.func(args)
+    # needs_tableau_server = (
+    #     args.command == 'generate_config'
+    #     or args.command == 'server_info'
+    #     or args.command == 'server_download_publish'
+    # )
+    #
+    # if needs_tableau_server:
+    #     ts = tableau_authentication(args)
+    #     args.func(args, ts)
+    #
+    # # Run functions that don't need the server
+    # else:
+    #     args.func(args)
 
 
 if __name__ == '__main__':
