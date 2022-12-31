@@ -10,6 +10,12 @@ from tableau_utilities.tableau_server.tableau_server import TableauServer
 
 
 def read_file(file_path):
+    """ Read a JSON file to a dictionary
+
+    Args:
+        file_path: The path of the file to read
+
+    """
     with open(file_path, "r") as infile:
         config = json.load(infile)
 
@@ -17,6 +23,13 @@ def read_file(file_path):
 
 
 def write_file(file_name, config):
+    """ Write a dictionary to a JSON file
+
+    Args:
+        file_name: The name of the file to write
+        config: The dictionary to write to the file
+
+    """
     with open(file_name, "w") as outfile:
         json.dump(config, outfile)
 
@@ -36,17 +49,11 @@ def merge_2_configs(existing_config, additional_config):
 
     for column_name, column_details in additional_config.items():
         print(column_name)
-        # if column_name == 'Salesforce Account Id':
-        #     print(column_details['description'])
-        #     print(len(column_details['description']))
 
         # If the column doesn't exist add it
         if column_name not in existing_config:
             print("ADDING COLUMN", column_name, column_details)
             existing_config[column_name] = column_details
-
-
-            # print('ADDING COLUMN', column_name, column_details)
 
         elif column_name in existing_config:
             print('ALTERING COLUMN:', column_name)
@@ -129,6 +136,9 @@ def merge_2_configs(existing_config, additional_config):
 
 
 def merge_configs(args):
+    """ Merges 2 configs for datasource automation
+
+    """
 
     # Read files
     existing_config = read_file(args.existing_config)

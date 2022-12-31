@@ -29,22 +29,21 @@ def load_csv_with_definitions(file=None):
 
     return definitions_mapping
 
-def download_datasource(server, datasource_name=None, list_datasources=False):
-    """ Downloads the specified datasources
 
+def download_datasource(server, datasource_name=None):
+    """ Downloads the specified datasources
 
     Args:
         server (TableauServer): A Tableau server object
         datasource_name: The name of the datasource to download
-        list_datasources: Prints a sorted list of all the datasources from a site
 
     Returns:
         datasource: The datasource object for the datasource that was downloaded
         datasource_path: The path of the datasource that was downloaded
     """
+
     datasource_list = [d for d in server.get_datasources()]
 
-    sources = []
     for datasource in datasource_list:
         if datasource.name == datasource_name:
             datasource_path = server.download_datasource(datasource.id, include_extract=False)
@@ -77,17 +76,12 @@ def choose_persona(role, role_type, datatype):
 
 
 def get_metadata_record_columns(datasource_name, datasource, datasource_path):
-    """
-
-    """
-
-    """ Builds a column config and caluclated field column config.  Writes each to individual files
+    """ Builds a column config for columns that are only in metadata records and not in column objects
 
     Args:
         datasource_name: The name of the datasource
         datasource: The datasoruce object
         datasource_path: The path to the of the datasource
-        prefix: If true the output files are prefixed with the datasource name
 
     """
 
@@ -132,21 +126,16 @@ def get_metadata_record_columns(datasource_name, datasource, datasource_path):
 
     return metadata_record_columns
 
-#
-# def add_optional_coluimn_config_properties(c, column):
-#     # default_format and fiscal_year_start date are only added when present
-#     if '@fiscal_year_start' in c:
-#         fiscal_year_start
-
 
 def create_column_config(columns, datasource_name, folder_mapping, metadata_record_columns, definitions_mapping):
     """ Generates a list of column configs with None for a folder
 
     Args:
-        columns
-        datasource_name
+        columns: The column dictionary from the datasource
+        datasource_name: The name of the datasource
         folder_mapping: A list of dictionaries mapping column name to folder name
-        metadata_record_columns
+        metadata_record_columns: The configs from the metadata records to use if there is no column object
+        definitions_mapping: The mapping of definitions from a csv
 
     ```{
       "Salesforce Opportunity Id": {
@@ -309,7 +298,7 @@ def build_config(datasource_name, datasource, datasource_path, metadata_record_c
         datasource_path: The path to the of the datasource
         metadata_record_columns: The columns from the metadata records
         prefix: If true the output files are prefixed with the datasource name
-        definitions_mapping
+        definitions_mapping: The path to a csv containing definitions
 
     """
 

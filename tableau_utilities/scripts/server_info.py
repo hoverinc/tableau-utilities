@@ -6,6 +6,15 @@ from tableau_utilities.tableau_server.tableau_server import TableauServer
 
 
 def object_list_to_dicts(object_list):
+    """ Turns a list of objects from the Tableau client to a dictionary
+
+    Args:
+        object_list: A list of objects from the Tableau client
+
+    Returns:
+        A dictionary version of the object_list
+
+    """
 
     records = []
     for object in object_list:
@@ -16,14 +25,20 @@ def object_list_to_dicts(object_list):
 
 
 def print_info(object_list, format, sort_field='name'):
-    """ Downloads the specified datasources
+    """ Prints information to console for a list of objects
+
     Args:
+        object_list: The response from Tableau Servers with the list of objects
+        format: The format for printing the information
+        sort_field: The field to sort the result on
+
+
         server (TableauServer): A Tableau server object
         datasource_name: The name of the datasource to download
         list_datasources: Prints a sorted list of all the datasources from a site
+
     Returns:
-        datasource: The datasource object for the datasource that was downloaded
-        datasource_path: The path of the datasource that was downloaded
+        None
     """
 
     records = object_list_to_dicts(object_list)
@@ -52,6 +67,13 @@ def print_info(object_list, format, sort_field='name'):
 
 
 def server_info(args, server):
+    """ Prints information for datasources, projects, or workbooks
+
+    Args:
+        args: The args from the cli
+        server: the Tableau Server authentication object
+
+    """
     if args.list_object == 'datasource':
         object_list = [d for d in server.get_datasources()]
     if args.list_object == 'project':
