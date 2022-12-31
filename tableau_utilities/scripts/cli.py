@@ -115,14 +115,24 @@ def do_args():
 
 
 def tableau_authentication(args):
-    """
+    """ Creates the Tableau server authentication from a variety of methods for passing in credentiuals
 
     """
 
-    site = os.getenv("TABLEAU_SITENAME_TEST")
-    server = os.getenv("TABLEAU_SERVER_ADDRESS_TEST")
-    token_name = os.getenv("TABLEAU_PERSONAL_ACCESS_TOKEN_NAME_TEST")
-    token_secret = os.getenv("TABLEAU_PERSONAL_ACCESS_TOKEN_VALUE_TEST")
+    # Use the args passed in via the CLI command if they are there
+    if args.user is not None and args.password is not None:
+        user = args.user
+        password = args.password
+    elif args.token_name is not None and args.token_secret is not None:
+        token_name = args.token_name
+        token_secret = args.token_secret
+
+    # Use the args picked up from the environment
+    # This is the method to use when using 1password to authenticate
+    site = os.getenv("TABLEAU_SITENAME")
+    server = os.getenv("TABLEAU_SERVER_ADDRESS")
+    token_name = os.getenv("TABLEAU_PERSONAL_ACCESS_TOKEN_NAME")
+    token_secret = os.getenv("TABLEAU_PERSONAL_ACCESS_TOKEN_VALUE")
 
     # settings = {}
     #
@@ -144,11 +154,11 @@ def tableau_authentication(args):
     ts = TableauServer(
         personal_access_token_name=token_name,
         personal_access_token_secret=token_secret,
-        user=args.user,
-        password=args.password,
+        user=user,
+        password=password,
         site=site,
         host=host,
-        api_version=args.api_version
+        api_version=api_version
     )
 
     return ts
