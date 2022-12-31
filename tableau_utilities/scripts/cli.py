@@ -136,6 +136,16 @@ def tableau_authentication(args):
         print('Using auth from the args passed in')
     elif args.auth == 'settings.yaml':
         print('Using auth from the settings yaml')
+        with open(args.settings_path, 'r') as f:
+            settings = yaml.safe_load(f)
+            site = settings['tableau_login']['site']
+            server = settings['tableau_login']['server']
+            token_name = settings['tableau_login']['token_name']
+            token_secret = settings['tableau_login']['token_secret']
+            api_version = settings['tableau_login']['api_version']
+            user = settings['tableau_login']['user']
+            password = settings['tableau_login']['password']
+
     elif args.auth =='os_env':
         print('Using auth OS environment')
         site = os.getenv("TABLEAU_SITENAME")

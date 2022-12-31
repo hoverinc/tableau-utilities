@@ -189,18 +189,18 @@ def do_args(argv=None):
 def main():
     args = do_args()
     tdsx = args.tdsx
-    settings = dict()
-    if args.settings_path:
-        with open(args.settings_path, 'r') as f:
-            settings = yaml.safe_load(f)
-    else:
-        settings['tableau_login'] = {
-            'host': f'https://{args.server}.online.tableau.com',
-            'site': args.site,
-            'api_version': args.api_version,
-            'user': args.user,
-            'password': args.password
-        }
+    # settings = dict()
+    # if args.settings_path:
+    #     with open(args.settings_path, 'r') as f:
+    #         settings = yaml.safe_load(f)
+    # else:
+    #     settings['tableau_login'] = {
+    #         'host': f'https://{args.server}.online.tableau.com',
+    #         'site': args.site,
+    #         'api_version': args.api_version,
+    #         'user': args.user,
+    #         'password': args.password
+    #     }
         settings['embed_connection'] = {
             'class_name': args.conn_type,
             'server': args.conn_host,
