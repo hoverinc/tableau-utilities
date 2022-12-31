@@ -130,22 +130,19 @@ def tableau_authentication(args):
     server = args.server
     api_version = args.api_version
 
-    # Use or override the defauls
-
     if args.auth in ['args_user_pass', 'args_token']:
         print('Using auth from the args passed in')
-    elif args.auth == 'settings.yaml':
+    elif args.auth == 'settings_yaml':
         print('Using auth from the settings yaml')
         with open(args.settings_path, 'r') as f:
             settings = yaml.safe_load(f)
-            site = settings['tableau_login']['site']
-            server = settings['tableau_login']['server']
-            token_name = settings['tableau_login']['token_name']
-            token_secret = settings['tableau_login']['token_secret']
-            api_version = settings['tableau_login']['api_version']
-            user = settings['tableau_login']['user']
-            password = settings['tableau_login']['password']
-
+        site = settings['tableau_login']['site']
+        server = settings['tableau_login']['server']
+        token_name = settings['tableau_login']['token_name']
+        token_secret = settings['tableau_login']['token_secret']
+        api_version = settings['tableau_login']['api_version']
+        user = settings['tableau_login']['user']
+        password = settings['tableau_login']['password']
     elif args.auth =='os_env':
         print('Using auth OS environment')
         site = os.getenv("TABLEAU_SITENAME")
@@ -169,18 +166,8 @@ def tableau_authentication(args):
     return ts
 
 
-
-
-
 def main():
     args = do_args()
-
-    print(args.server, args.site, args.token_secret, args.token_name)
-
-    # site = os.getenv("TABLEAU_SITENAME_TEST")
-    # server = os.getenv("TABLEAU_SERVER_ADDRESS_TEST")
-    # token_name = os.getenv("TABLEAU_PERSONAL_ACCESS_TOKEN_NAME_TEST")
-    # token_secret = os.getenv("TABLEAU_PERSONAL_ACCESS_TOKEN_VALUE_TEST")
 
     # Set/Reset the directory
     tmp_folder = args.folder_name
