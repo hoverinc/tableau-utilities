@@ -22,7 +22,7 @@ def do_args():
                                                  '-Manage configurations to edit datasource metadata',
                                      formatter_class=RawTextHelpFormatter)
     parser = argparse.ArgumentParser(prog='tableau_utilities')
-    subparsers = parser.add_subparsers(title="commands", dest="command", help='You must choose a script area to run',
+    subparsers = parser.add_subparsers(title="commands", dest="command", help='You must choose a command.',
                                        required=True)
     parser.add_argument('--auth', choices=['settings_yaml', 'args_user_pass', 'args_token', 'os_env'],
                         help='The method for storing your credentials to pass into the CLI.')
