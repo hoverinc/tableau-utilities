@@ -41,7 +41,7 @@ def get_project_and_object_names(id, object_list):
             return o['name'], o['project_name']
 
 
-def download_publish(args, server):
+def server_operate(args, server):
 
     if args.object_type == 'datasource':
         object_list = [d for d in server.get_datasources()]
@@ -73,5 +73,12 @@ def download_publish(args, server):
             response = server.publish_datasource(args.file_path, datasource_id=id, datasource_name=object_name, project_name=project_name)
         if args.object_type == 'workbook':
             response = server.publish_workbook(args.file_path, workbook_id=id, workbook_name=object_name, project_name=project_name)
+        print(f'RESPONSE {response}')
+    elif args.action_type == 'refresh':
+        print(f'REFRESHING ID: {id}, OBJECT NAME: {object_name}, PROJECT NAME: {project_name}')
+        if args.object_type == 'datasource':
+            response = server.refresh_datasouce(datasource_id=id)
+        if args.object_type == 'workbook':
+            response = server.refresh_workbook(workbook_id=id)
         print(f'RESPONSE {response}')
 

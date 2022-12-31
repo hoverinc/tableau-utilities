@@ -117,12 +117,12 @@ def do_args(argv=None):
     #     default=None,
     #     help='Path to the tdsx file. See --modify_column and --publish'
     # )
-    parser.add_argument(
-        '--publish',
-        default=False,
-        action='store_true',
-        help='Publish a datasource. Supply filename in --tdsx and ID in --id'
-    )
+    # parser.add_argument(
+    #     '--publish',
+    #     default=False,
+    #     action='store_true',
+    #     help='Publish a datasource. Supply filename in --tdsx and ID in --id'
+    # )
     parser.add_argument(
         '--add_column',
         default=False,
@@ -201,16 +201,16 @@ def main():
     #         'user': args.user,
     #         'password': args.password
     #     }
-        settings['embed_connection'] = {
-            'class_name': args.conn_type,
-            'server': args.conn_host,
-            'username': args.conn_user,
-            'password': args.conn_pw,
-            'service': args.conn_role,
-            'dbname': args.conn_db,
-            'schema': args.conn_schema,
-            'warehouse': args.conn_warehouse
-        }
+    #     settings['embed_connection'] = {
+    #         'class_name': args.conn_type,
+    #         'server': args.conn_host,
+    #         'username': args.conn_user,
+    #         'password': args.conn_pw,
+    #         'service': args.conn_role,
+    #         'dbname': args.conn_db,
+    #         'schema': args.conn_schema,
+    #         'warehouse': args.conn_warehouse
+    #     }
 
     # needs_tableau_server = (
     #     args.list_datasources
