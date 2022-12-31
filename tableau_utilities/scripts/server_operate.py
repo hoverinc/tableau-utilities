@@ -81,4 +81,3 @@ def server_operate(args, server):
         if args.object_type == 'workbook':
             response = server.refresh_workbook(workbook_id=id)
         print(f'RESPONSE {response}')
-
