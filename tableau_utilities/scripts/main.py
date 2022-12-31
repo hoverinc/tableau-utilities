@@ -13,13 +13,13 @@ def do_args(argv=None):
     Returns: an argparse.Namespace
     """
 
-    parser = argparse.ArgumentParser(
-        description='Interact with Tableau objects')
-    parser.add_argument(
-        '--settings_path',
-        help='Path to your local settings.yaml file (See sample_settings.yaml)',
-        default=None
-    )
+    # parser = argparse.ArgumentParser(
+    #     description='Interact with Tableau objects')
+    # parser.add_argument(
+    #     '--settings_path',
+    #     help='Path to your local settings.yaml file (See sample_settings.yaml)',
+    #     default=None
+    # )
     # parser.add_argument(
     #     '--server',
     #     help='Tableau Server address. i.e. <server_address> in https://<server_address>.online.tableau.com',

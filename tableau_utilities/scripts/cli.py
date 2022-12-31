@@ -2,6 +2,7 @@ from argparse import RawTextHelpFormatter
 import argparse
 import os
 import shutil
+import yaml
 
 from tableau_utilities.tableau_server.tableau_server import TableauServer
 from tableau_utilities.scripts.gen_config import generate_config
@@ -44,6 +45,11 @@ def do_args():
     group_token.add_argument('--token_secret', help='Personal Access Token Secret')
     group_token.add_argument('--token_name', help='Personal Access Token Name')
 
+    parser.add_argument(
+        '--settings_path',
+        help='Path to your local settings.yaml file (See sample_settings.yaml)',
+        default=None
+    )
     group_local_folder = parser.add_argument_group('local_folder', 'Manage where to read/write files')
     group_local_folder.add_argument('--folder_name', default='tmp_tdsx_and_config',
                                     help='Specifies the folder to write the datasource and configs to')
@@ -108,15 +114,58 @@ def do_args():
     return parser.parse_args()
 
 
-def main():
-    args = do_args()
+def tableau_authentication(args):
+    """
 
-    print(args.server, args.site, args.token_secret, args.token_name)
+    """
 
     site = os.getenv("TABLEAU_SITENAME_TEST")
     server = os.getenv("TABLEAU_SERVER_ADDRESS_TEST")
     token_name = os.getenv("TABLEAU_PERSONAL_ACCESS_TOKEN_NAME_TEST")
     token_secret = os.getenv("TABLEAU_PERSONAL_ACCESS_TOKEN_VALUE_TEST")
+
+    # settings = {}
+    #
+    # if args.settings_path:
+    #     with open(args.settings_path, 'r') as f:
+    #         settings = yaml.safe_load(f)
+    # else:
+    #     settings['tableau_login'] = {
+    #         'host': f'https://{args.server}.online.tableau.com',
+    #         'site': args.site,
+    #         'api_version': args.api_version,
+    #         'user': args.user,
+    #         'password': args.password
+    #     }
+    #
+    # # Create the server object and run the functions
+
+    host = f'https://{server}.online.tableau.com'
+    ts = TableauServer(
+        personal_access_token_name=token_name,
+        personal_access_token_secret=token_secret,
+        user=args.user,
+        password=args.password,
+        site=site,
+        host=host,
+        api_version=args.api_version
+    )
+
+    return ts
+
+
+
+
+
+def main():
+    args = do_args()
+
+    print(args.server, args.site, args.token_secret, args.token_name)
+
+    # site = os.getenv("TABLEAU_SITENAME_TEST")
+    # server = os.getenv("TABLEAU_SERVER_ADDRESS_TEST")
+    # token_name = os.getenv("TABLEAU_PERSONAL_ACCESS_TOKEN_NAME_TEST")
+    # token_secret = os.getenv("TABLEAU_PERSONAL_ACCESS_TOKEN_VALUE_TEST")
 
     # Set/Reset the directory
     tmp_folder = args.folder_name
@@ -132,18 +181,8 @@ def main():
         or args.command == 'server_download_publish'
     )
 
-    # Create the server object and run the functions
     if needs_tableau_server:
-        host = f'https://{server}.online.tableau.com'
-        ts = TableauServer(
-            personal_access_token_name=token_name,
-            personal_access_token_secret=token_secret,
-            user=args.user,
-            password=args.password,
-            site=site,
-            host=host,
-            api_version=args.api_version
-        )
+        ts = tableau_authentication(args)
         args.func(args, ts)
 
     # Run functions that don't need the server
