@@ -85,8 +85,6 @@ def do_args():
     parser_server_operate.add_argument('--include_extract', action='store_true',
                                         help='Includes the extract in the download if specified. '
                                              'This will make downloads take a long time for large extracts.')
-    if (args.name and not args.project_name) or (args.project_name and not args.name):
-        parser.error('--name and --project_name are required together')
     parser_server_operate.set_defaults(func=server_operate)
 
     # GENERATE CONFIG
@@ -116,6 +114,13 @@ def do_args():
     parser_config_merge.set_defaults(func=merge_configs)
 
     return parser.parse_args()
+
+def validate_args_server_operate(args):
+    """
+
+    """
+    if (args.name and not args.project_name) or (args.project_name and not args.name):
+        raise argparse.ArgumentError(args.name, '--name and --project_name are required together')
 
 
 def tableau_authentication(args):
@@ -171,6 +176,10 @@ def tableau_authentication(args):
 
 def main():
     args = do_args()
+
+    # Validate the argsuments
+    if args.command == 'server_operate':
+        validate_args_server_operate(args)
 
     # Set/Reset the directory
     tmp_folder = args.folder_name
