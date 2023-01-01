@@ -50,16 +50,24 @@ def server_operate(args, server):
 
     """
 
+    # Set the inputs from the args. These might be none
+    id = args.id
+    object_name = args.name
+    project_name = args.project_name
+
+    # # Valide the inputs
+    # if id is not None:
+    #     pass
+    # elif object_name is None or project_name is None:
+    #     raise(Exception)
+
+    # Get the list of objects for the object_type
     if args.object_type == 'datasource':
         object_list = [d for d in server.get_datasources()]
     if args.object_type == 'workbook':
         object_list = [w for w in server.get_workbooks()]
 
     object_list = object_list_to_dicts(object_list)
-
-    id = args.id
-    object_name = args.name
-    project_name = args.project_name
 
     if id is not None:
         project_name, object_name = get_project_and_object_names(id, object_list)

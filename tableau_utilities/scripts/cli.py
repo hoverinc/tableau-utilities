@@ -79,12 +79,14 @@ def do_args():
     parser_server_operate.add_argument('--object_type', choices=['datasource', 'workbook'],
                                         help='List information about the Object')
     parser_server_operate.add_argument('--id', help='Set the amount of information and the format to display')
-    parser_server_operate.add_argument('--name',  help='The datasource or workbook name')
-    parser_server_operate.add_argument('--project_name', help='The project name for the datasource or workbook')
+    parser_server_operate.add_argument('--name',  help='The datasource or workbook name. User with --project_name.')
+    parser_server_operate.add_argument('--project_name', help='The project name for the datasource or workbook. Use with --name.')
     parser_server_operate.add_argument('--file_path', help='The path to the file to publish')
     parser_server_operate.add_argument('--include_extract', action='store_true',
                                         help='Includes the extract in the download if specified. '
                                              'This will make downloads take a long time for large extracts.')
+    if (args.name and not args.project_name) or (args.project_name and not args.name):
+        parser.error('--name and --project_name are required together')
     parser_server_operate.set_defaults(func=server_operate)
 
     # GENERATE CONFIG
