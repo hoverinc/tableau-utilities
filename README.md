@@ -72,6 +72,17 @@ if __name__ == '__main__':
 
 ### CLI Usage
 
+#### Help
+1. See the top level CLI arguments including the commands.
+```commandline
+tableau_utilities --help
+```
+
+2. See the help for a `command`.  Each command has arguments for a different grouping of actions.
+```commandline
+tableau_utilities server_operate --help
+```
+
 #### Authentication Options
 1. Pass your credentials into the command
 ```commandline
@@ -85,8 +96,16 @@ if __name__ == '__main__':
 
 3. Use enviroment variables. This example also uses the 1password cli for retrieving the variables and putting them in the environment
 ```commandline
-op run --env-file=/Users/myname/.test_env -- tableau_utilities  --auth os_env server_info --list_object datasource --list_format names
+tableau_utilities --auth args_token --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az  server_info --list_object datasource --list_format names
 ```
+#### Examples for each command area
+
+* `server_info`: Lists all datasources in your site ordered by ID
+```commandline
+tableau_utilities --auth args_token --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az server_info --list_object datasource --list_format ids_names --list_sort_field id
+```
+
+* `server_operate`: Download a datasource by name
 
 - Lists all datasources in your site
   - `tableau_utilities --user <login> --password <password> --site <site name> --server <server address> --list_datasources`
