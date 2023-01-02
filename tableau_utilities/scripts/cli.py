@@ -11,125 +11,110 @@ from tableau_utilities.scripts.server_info import server_info
 from tableau_utilities.scripts.server_operate import server_operate
 
 
-def do_args():
-    """ Parse arguments.
+parser = argparse.ArgumentParser(prog='TABLEAU UTILITIES',
+                                 description='Tableau Utilities CLI:\n'
+                                             '-Manage Tableau Server/Online\n'
+                                             '-Manage configurations to edit datasource metadata',
+                                 formatter_class=RawTextHelpFormatter)
+parser = argparse.ArgumentParser(prog='tableau_utilities')
+subparsers = parser.add_subparsers(title="commands", dest="command", help='You must choose a command.',
+                                   required=True)
+parser.add_argument('--auth', choices=['settings_yaml', 'args_user_pass', 'args_token', 'os_env'],
+                    help='The method for storing your credentials to pass into the CLI.')
 
-    Returns: an argparse.Namespace
-    """
+group_server = parser.add_argument_group('server_information', 'Server Information')
+group_server.add_argument(
+    '--server',
+    help='Tableau Server URL. i.e. <server_address> in https://<server_address>.online.tableau.com',
+    default=None
+)
+group_server.add_argument(
+    '--site',
+    help='Site name. i.e. <site> in https://<server_address>.online.tableau.com/#/site/<site>',
+    default=None)
+group_server.add_argument('--api_version', help='Tableau API version', default='3.17')
 
-    parser = argparse.ArgumentParser(prog='TABLEAU UTILITIES',
-                                     description='Tableau Utilities CLI:\n'
-                                                 '-Manage Tableau Server/Online\n'
-                                                 '-Manage configurations to edit datasource metadata',
-                                     formatter_class=RawTextHelpFormatter)
-    parser = argparse.ArgumentParser(prog='tableau_utilities')
-    subparsers = parser.add_subparsers(title="commands", dest="command", help='You must choose a command.',
-                                       required=True)
-    parser.add_argument('--auth', choices=['settings_yaml', 'args_user_pass', 'args_token', 'os_env'],
-                        help='The method for storing your credentials to pass into the CLI.')
+group_user_password = parser.add_argument_group('user_pass', 'Authentication with username and password method')
+group_user_password.add_argument('--user', help='user name')
+group_user_password.add_argument('--password', help='password')
 
-    group_server = parser.add_argument_group('server_information', 'Server Information')
-    group_server.add_argument(
-        '--server',
-        help='Tableau Server URL. i.e. <server_address> in https://<server_address>.online.tableau.com',
-        default=None
-    )
-    group_server.add_argument(
-        '--site',
-        help='Site name. i.e. <site> in https://<server_address>.online.tableau.com/#/site/<site>',
-        default=None)
-    group_server.add_argument('--api_version', help='Tableau API version', default='3.17')
+group_token = parser.add_argument_group('token_info', 'Authentication with a Personal Access Token (PAT)')
+group_token.add_argument('--token_secret', help='Personal Access Token Secret')
+group_token.add_argument('--token_name', help='Personal Access Token Name')
 
-    group_user_password = parser.add_argument_group('user_pass', 'Authentication with username and password method')
-    group_user_password.add_argument('--user', help='user name')
-    group_user_password.add_argument('--password', help='password')
+parser.add_argument(
+    '--settings_path',
+    help='Path to your local settings.yaml file (See sample_settings.yaml)',
+    default=None
+)
+group_local_folder = parser.add_argument_group('local_folder', 'Manage where to read/write files')
+group_local_folder.add_argument('--folder_name', default='tmp_tdsx_and_config',
+                                help='Specifies the folder to write the datasource and configs to')
+group_local_folder.add_argument('--clean_up_first', action='store_true',
+                                help='Deletes the directory and files before running')
 
-    group_token = parser.add_argument_group('token_info', 'Authentication with a Personal Access Token (PAT)')
-    group_token.add_argument('--token_secret', help='Personal Access Token Secret')
-    group_token.add_argument('--token_name', help='Personal Access Token Name')
+# SERVER INFO
+parser_server_info = subparsers.add_parser('server_info',
+                                           help='Retrieve and view information from Tableau Cloud/Server')
+parser_server_info.add_argument('--list_object', choices=['datasource', 'project', 'workbook'],
+                                help='Specify the type of object for the information.')
+parser_server_info.add_argument('--list_format',
+                                choices=['names', 'names_ids', 'ids_names', 'full_df', 'full_dictionary',
+                                         'full_dictionary_pretty'],
+                                help='Set the fields and format for the information.')
+parser_server_info.add_argument('--list_sort_field', default='name',
+                                help='Choose the field for sorting the information.')
+parser_server_info.set_defaults(func=server_info)
 
-    parser.add_argument(
-        '--settings_path',
-        help='Path to your local settings.yaml file (See sample_settings.yaml)',
-        default=None
-    )
-    group_local_folder = parser.add_argument_group('local_folder', 'Manage where to read/write files')
-    group_local_folder.add_argument('--folder_name', default='tmp_tdsx_and_config',
-                                    help='Specifies the folder to write the datasource and configs to')
-    group_local_folder.add_argument('--clean_up_first', action='store_true',
-                                    help='Deletes the directory and files before running')
+# DOWNLOAD & PUBLISH
+parser_server_operate = subparsers.add_parser('server_operate',
+                                               help='Download, publish, and refresh objects on Tableau Cloud/Server')
+parser_server_operate.add_argument('--action_type', choices=['download', 'publish', 'refresh'],
+                                    help='List information about the Object')
+parser_server_operate.add_argument('--object_type', choices=['datasource', 'workbook'],
+                                    help='List information about the Object')
+parser_server_operate.add_argument('--id', help='Set the amount of information and the format to display')
+parser_server_operate.add_argument('--name',  help='The datasource or workbook name. User with --project_name.')
+parser_server_operate.add_argument('--project_name', help='The project name for the datasource or workbook. Use with --name.')
+parser_server_operate.add_argument('--file_path', help='The path to the file to publish')
+parser_server_operate.add_argument('--include_extract', action='store_true',
+                                    help='Includes the extract in the download if specified. '
+                                         'This will make downloads take a long time for large extracts.')
+parser_server_operate.set_defaults(func=server_operate)
 
-    # SERVER INFO
-    parser_server_info = subparsers.add_parser('server_info',
-                                               help='Retrieve and view information from Tableau Cloud/Server')
-    parser_server_info.add_argument('--list_object', choices=['datasource', 'project', 'workbook'],
-                                    help='Specify the type of object for the information.')
-    parser_server_info.add_argument('--list_format',
-                                    choices=['names', 'names_ids', 'ids_names', 'full_df', 'full_dictionary',
-                                             'full_dictionary_pretty'],
-                                    help='Set the fields and format for the information.')
-    parser_server_info.add_argument('--list_sort_field', default='name',
-                                    help='Choose the field for sorting the information.')
-    parser_server_info.set_defaults(func=server_info)
+# GENERATE CONFIG
+parser_config_gen = subparsers.add_parser('generate_config',
+                                          help='Generate configs to programatically manage metdatadata in Tableau '
+                                               'datasources via Airflow.')
+parser_config_gen.add_argument('--datasource', help='The name of the datasource to generate a config for.')
+parser_config_gen.add_argument('--file_prefix', action='store_true',
+                               help='Adds a prefix of the datasource name to the output file names.')
+parser_config_gen.add_argument('--definitions_csv',
+                               help='Add data defintions from a csv to the config. It may be easier to bulk '
+                                    'populate definitions in a spreadsheet than in the config.')
+parser_config_gen.set_defaults(func=generate_config)
 
-    # DOWNLOAD & PUBLISH
-    parser_server_operate = subparsers.add_parser('server_operate',
-                                                   help='Download, publish, and refresh objects on Tableau Cloud/Server')
-    parser_server_operate.add_argument('--action_type', choices=['download', 'publish', 'refresh'],
-                                        help='List information about the Object')
-    parser_server_operate.add_argument('--object_type', choices=['datasource', 'workbook'],
-                                        help='List information about the Object')
-    parser_server_operate.add_argument('--id', help='Set the amount of information and the format to display')
-    parser_server_operate.add_argument('--name',  help='The datasource or workbook name. User with --project_name.')
-    parser_server_operate.add_argument('--project_name', help='The project name for the datasource or workbook. Use with --name.')
-    parser_server_operate.add_argument('--file_path', help='The path to the file to publish')
-    parser_server_operate.add_argument('--include_extract', action='store_true',
-                                        help='Includes the extract in the download if specified. '
-                                             'This will make downloads take a long time for large extracts.')
-
-    # ArgumentParser.error
+# MERGE CONFIG
+parser_config_merge = subparsers.add_parser('merge_config',
+                                            help='Merge a new config into the existing master config')
+parser_config_merge.add_argument('--existing_config', required=True,
+                                 help='The path to the current configuration. The current configuration may have '
+                                      'more than 1 datasource.')
+parser_config_merge.add_argument('--additional_config',  required=True,
+                                 help='The path to the configuration to add. This code ASSUMES that the additional '
+                                      'config is for a single datasource ')
+parser_config_merge.add_argument('--merged_config', default='merged_config',
+                                 help='The name of the merged config JSON file. Ex: filename "my_config.json" '
+                                      'argument is "my_config" Do not enter the .json extension.')
+parser_config_merge.set_defaults(func=merge_configs)
 
 
-    if (parser_server_operate.name and not parser_server_operate.project_name) or (parser_server_operate.project_name and not parser_server_operate.name):
-        parser.error('--name and --project_name are required together')
-        # raise argparse.ArgumentError(parser_server_operate.name, '--name and --project_name are required together')
-
-    parser_server_operate.set_defaults(func=server_operate)
-
-    # GENERATE CONFIG
-    parser_config_gen = subparsers.add_parser('generate_config',
-                                              help='Generate configs to programatically manage metdatadata in Tableau '
-                                                   'datasources via Airflow.')
-    parser_config_gen.add_argument('--datasource', help='The name of the datasource to generate a config for.')
-    parser_config_gen.add_argument('--file_prefix', action='store_true',
-                                   help='Adds a prefix of the datasource name to the output file names.')
-    parser_config_gen.add_argument('--definitions_csv',
-                                   help='Add data defintions from a csv to the config. It may be easier to bulk '
-                                        'populate definitions in a spreadsheet than in the config.')
-    parser_config_gen.set_defaults(func=generate_config)
-
-    # MERGE CONFIG
-    parser_config_merge = subparsers.add_parser('merge_config',
-                                                help='Merge a new config into the existing master config')
-    parser_config_merge.add_argument('--existing_config',
-                                     help='The path to the current configuration. The current configuration may have '
-                                          'more than 1 datasource.')
-    parser_config_merge.add_argument('--additional_config',
-                                     help='The path to the configuration to add. This code ASSUMES that the additional '
-                                          'config is for a single datasource ')
-    parser_config_merge.add_argument('--merged_config', default='merged_config',
-                                     help='The name of the merged config JSON file. Ex: fielname "my_config.json" '
-                                          'argument is "my_config" Do not enter the .json extension.')
-    parser_config_merge.set_defaults(func=merge_configs)
-
-    return parser.parse_args()
 
 def validate_args_server_operate(args):
-    """
-
+    """ Validate that combinrations of args are present
     """
     if (args.name and not args.project_name) or (args.project_name and not args.name):
-        raise argparse.ArgumentError(args.name, '--name and --project_name are required together')
+        parser.error('--name and --project_name are required together')
 
 
 def tableau_authentication(args):
@@ -184,15 +169,11 @@ def tableau_authentication(args):
 
 
 def main():
-    args = do_args()
+    args = parser.parse_args()
 
-    if (args.name and not args.project_name) or (args.project_name and not args.name):
-        raise parser.error(args.name, '--name and --project_name are required together')
-
-
-    # # Validate the argsuments
-    # if args.command == 'server_operate':
-    #     validate_args_server_operate(args)
+    # # Validate the arguments
+    if args.command == 'server_operate':
+        validate_args_server_operate(args)
 
     # Set/Reset the directory
     tmp_folder = args.folder_name
