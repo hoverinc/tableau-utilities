@@ -220,7 +220,7 @@ def tableau_authentication(args):
 def main():
     args = parser.parse_args()
 
-    # # Validate the arguments
+    # Validate the arguments
     if args.command == 'server_operate':
         validate_args_server_operate(args)
     if args.command == 'generate_config':

@@ -347,7 +347,7 @@ def build_config(datasource_name, datasource, datasource_path, metadata_record_c
     print('CALCULATED COLUMN CONFIG PATH:', datasource_path)
 
 
-def generate_config(args, server):
+def generate_config(args, server=None):
     """ Downloads a datasource and saves configs for that datasource
 
     Args:
