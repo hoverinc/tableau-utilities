@@ -153,6 +153,12 @@ def tableau_authentication(args):
         token_secret = os.getenv("TABLEAU_PERSONAL_ACCESS_TOKEN_VALUE")
         api_version = args.api_version
 
+    if (token_secret and not token_name) or (token_name and not token_secret):
+        parser.error('--token_secret and --token_name are required together')
+
+    if (user and not password) or (password and not user):
+        parser.error('--password and --user are required together')
+
     # Create the server object and run the functions
     host = f'https://{server}.online.tableau.com'
     ts = TableauServer(
