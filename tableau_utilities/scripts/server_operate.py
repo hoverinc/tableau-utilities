@@ -41,6 +41,8 @@ def get_project_and_object_names(id, object_list):
             return o['name'], o['project_name']
 
 
+
+
 def server_operate(args, server):
     """ Allows downloading, publishing, and refreshing workbooks and datasources
 
@@ -54,12 +56,6 @@ def server_operate(args, server):
     id = args.id
     object_name = args.name
     project_name = args.project_name
-
-    # # Valide the inputs
-    # if id is not None:
-    #     pass
-    # elif object_name is None or project_name is None:
-    #     raise(Exception)
 
     # Get the list of objects for the object_type
     if args.object_type == 'datasource':

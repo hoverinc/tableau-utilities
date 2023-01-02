@@ -106,6 +106,14 @@ tableau_utilities --auth args_token --token_name my_token_name --token_secret 1q
 ```
 
 * `server_operate`: Download a datasource by name
+```commandline
+tableau_utilities --auth args_token --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az server_info server_operate --action_type download --object_type datasource --name 'My Datasource Name'  --project_name 'My Project Name'
+```
+
+* `generate_config`: Generate a config from a datasource
+```commandline
+tableau_utilities --auth args_token --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az server_info 
+```
 
 
 - Lists all datasources in your site

@@ -11,12 +11,11 @@ from tableau_utilities.scripts.server_info import server_info
 from tableau_utilities.scripts.server_operate import server_operate
 
 
-parser = argparse.ArgumentParser(prog='TABLEAU UTILITIES',
+parser = argparse.ArgumentParser(prog='tableau_utilities',
                                  description='Tableau Utilities CLI:\n'
                                              '-Manage Tableau Server/Online\n'
                                              '-Manage configurations to edit datasource metadata',
                                  formatter_class=RawTextHelpFormatter)
-parser = argparse.ArgumentParser(prog='tableau_utilities')
 subparsers = parser.add_subparsers(title="commands", dest="command", help='You must choose a command.',
                                    required=True)
 parser.add_argument('--auth', choices=['settings_yaml', 'args_user_pass', 'args_token', 'os_env'],
@@ -56,9 +55,9 @@ group_local_folder.add_argument('--clean_up_first', action='store_true',
 # SERVER INFO
 parser_server_info = subparsers.add_parser('server_info',
                                            help='Retrieve and view information from Tableau Cloud/Server')
-parser_server_info.add_argument('--list_object', choices=['datasource', 'project', 'workbook'],
+parser_server_info.add_argument('--list_object', choices=['datasource', 'project', 'workbook'], required=True,
                                 help='Specify the type of object for the information.')
-parser_server_info.add_argument('--list_format',
+parser_server_info.add_argument('--list_format', default='names',
                                 choices=['names', 'names_ids', 'ids_names', 'full_df', 'full_dictionary',
                                          'full_dictionary_pretty'],
                                 help='Set the fields and format for the information.')
@@ -69,11 +68,11 @@ parser_server_info.set_defaults(func=server_info)
 # DOWNLOAD & PUBLISH
 parser_server_operate = subparsers.add_parser('server_operate',
                                                help='Download, publish, and refresh objects on Tableau Cloud/Server')
-parser_server_operate.add_argument('--action_type', choices=['download', 'publish', 'refresh'],
+parser_server_operate.add_argument('--action_type', choices=['download', 'publish', 'refresh'], required=True,
                                     help='List information about the Object')
-parser_server_operate.add_argument('--object_type', choices=['datasource', 'workbook'],
+parser_server_operate.add_argument('--object_type', choices=['datasource', 'workbook'],  required=True,
                                     help='List information about the Object')
-parser_server_operate.add_argument('--id', help='Set the amount of information and the format to display')
+parser_server_operate.add_argument('--id', help='The ID for the object on Tableau Cloud/Server')
 parser_server_operate.add_argument('--name',  help='The datasource or workbook name. User with --project_name.')
 parser_server_operate.add_argument('--project_name', help='The project name for the datasource or workbook. Use with --name.')
 parser_server_operate.add_argument('--file_path', help='The path to the file to publish')
@@ -86,7 +85,9 @@ parser_server_operate.set_defaults(func=server_operate)
 parser_config_gen = subparsers.add_parser('generate_config',
                                           help='Generate configs to programatically manage metdatadata in Tableau '
                                                'datasources via Airflow.')
-parser_config_gen.add_argument('--datasource', help='The name of the datasource to generate a config for.')
+parser_config_gen.add_argument('-dsid', '--datasource_id', help='The name of the datasource to generate a config for.')
+parser_config_gen.add_argument('-dsn', '--datasource_name', help='The name of the datasource to generate a config for.')
+parser_config_gen.add_argument('-dspn', '--datasource_project_name', help='The name of project that has the datasource')
 parser_config_gen.add_argument('--file_prefix', action='store_true',
                                help='Adds a prefix of the datasource name to the output file names.')
 parser_config_gen.add_argument('--definitions_csv',
@@ -109,7 +110,6 @@ parser_config_merge.add_argument('--merged_config', default='merged_config',
 parser_config_merge.set_defaults(func=merge_configs)
 
 
-
 def validate_args_server_operate(args):
     """ Validate that combinrations of args are present
     """
@@ -118,7 +118,7 @@ def validate_args_server_operate(args):
 
 
 def tableau_authentication(args):
-    """ Creates the Tableau server authentication from a variety of methods for passing in credentiuals
+    """ Creates the Tableau server authentication from a variety of methods for passing in credentials
 
     """
 
@@ -133,6 +133,7 @@ def tableau_authentication(args):
 
     if args.auth in ['args_user_pass', 'args_token']:
         print('Using auth from the args passed in')
+    # Override the defaults with information from a settings file
     elif args.auth == 'settings_yaml':
         print('Using auth from the settings yaml')
         with open(args.settings_path, 'r') as f:
@@ -145,6 +146,7 @@ def tableau_authentication(args):
         api_version = settings['tableau_login']['api_version']
         user = settings['tableau_login']['user']
         password = settings['tableau_login']['password']
+    # Override the defaults with information from the OS
     elif args.auth =='os_env':
         print('Using auth OS environment')
         site = os.getenv("TABLEAU_SITENAME")
@@ -153,6 +155,7 @@ def tableau_authentication(args):
         token_secret = os.getenv("TABLEAU_PERSONAL_ACCESS_TOKEN_VALUE")
         api_version = args.api_version
 
+    # Validate the combinations for authentication methods
     if (token_secret and not token_name) or (token_name and not token_secret):
         parser.error('--token_secret and --token_name are required together')
 
