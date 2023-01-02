@@ -85,6 +85,9 @@ parser_server_operate.set_defaults(func=server_operate)
 parser_config_gen = subparsers.add_parser('generate_config',
                                           help='Generate configs to programatically manage metdatadata in Tableau '
                                                'datasources via Airflow.')
+parser_config_gen.add_argument('--datasource_source', choices=['local', 'online'],  required=True,
+                                   help='Specify the location of the datasource.')
+parser_config_gen.add_argument('-dsp', '--datasource_path', help='The name of the datasource to generate a config for.')
 parser_config_gen.add_argument('-dsid', '--datasource_id', help='The name of the datasource to generate a config for.')
 parser_config_gen.add_argument('-dsn', '--datasource_name', help='The name of the datasource to generate a config for.')
 parser_config_gen.add_argument('-dspn', '--datasource_project_name', help='The name of project that has the datasource')
@@ -111,10 +114,47 @@ parser_config_merge.set_defaults(func=merge_configs)
 
 
 def validate_args_server_operate(args):
-    """ Validate that combinrations of args are present
+    """ Validate that combinations of args are present
     """
     if (args.name and not args.project_name) or (args.project_name and not args.name):
         parser.error('--name and --project_name are required together')
+
+
+def validate_args_generate_config(args):
+    """ Validate that combinations of args are present
+
+    """
+
+    if args.datasource_source == 'local' and not args.datasource_path:
+        parser.error('--datasource_source local requires a --datasource_path')
+
+    if args.datasource_source == 'online':
+        if args.datasource_id:
+            pass
+        elif (args.datasource_name and not args.datasource_project_name) or (args.datasource_name and not args.datasource_project_name):
+            parser.error('--datasource_name and --datasource_project_name are required together')
+        else:
+            parser.error('--datasource_source online requires either a --datasource_id or a --datasource_name and --datasource_project_name')
+
+
+
+
+
+def validate_auth_included(args):
+    """ Validates that auth is included for operations that need it and that the parameters are present
+
+    """
+
+    if not args.auth:
+        parser.error('These commands required --auth method and credentials to authenticate with Tableau Server/Online')
+    if args.auth == 'args_user_pass':
+        if not args.user or  not args.password:
+            parser.error('You must include --user and --password for args_user_pass authentication')
+    if args.auth == 'args_token':
+        if not args.token_name or not args.token_secret:
+            parser.error('You must include --token_name and --token_secret for args_token authentication')
+    if args.auth == 'settings_yaml' and not args.settings_path:
+        parser.error('You must include --settings_path for settings_yaml authentication')
 
 
 def tableau_authentication(args):
@@ -183,6 +223,8 @@ def main():
     # # Validate the arguments
     if args.command == 'server_operate':
         validate_args_server_operate(args)
+    if args.command == 'generate_config':
+        validate_args_generate_config(args)
 
     # Set/Reset the directory
     tmp_folder = args.folder_name
@@ -193,12 +235,13 @@ def main():
     os.chdir(tmp_folder)
 
     needs_tableau_server = (
-        args.command == 'generate_config'
+        (args.command == 'generate_config' and args.datasource_source == 'online')
         or args.command == 'server_info'
         or args.command == 'server_operate'
     )
 
     if needs_tableau_server:
+        validate_auth_included(args)
         ts = tableau_authentication(args)
         args.func(args, ts)
 
