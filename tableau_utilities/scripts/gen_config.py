@@ -6,6 +6,7 @@ from tableau_utilities.tableau_server.tableau_server import TableauServer
 from tableau_utilities.tableau_file.tableau_file import Datasource
 from tableau_utilities.general.funcs import convert_to_snake_case
 from tableau_utilities.general.config_column_persona import personas
+from tableau_utilities.scripts.server_operate import get_object_list, fill_in_id_name_project
 
 
 def load_csv_with_definitions(file=None):
@@ -30,7 +31,7 @@ def load_csv_with_definitions(file=None):
     return definitions_mapping
 
 
-def download_datasource(server, datasource_name=None):
+def download_datasource(server, datasource_id):
     """ Downloads the specified datasources
 
     Args:
@@ -42,12 +43,15 @@ def download_datasource(server, datasource_name=None):
         datasource_path: The path of the datasource that was downloaded
     """
 
-    datasource_list = [d for d in server.get_datasources()]
+    datasource_path = server.download_datasource(datasource_id, include_extract=False)
+    return datasource_path
 
-    for datasource in datasource_list:
-        if datasource.name == datasource_name:
-            datasource_path = server.download_datasource(datasource.id, include_extract=False)
-            return datasource, datasource_path
+    # datasource_list = [d for d in server.get_datasources()]
+    #
+    # for datasource in datasource_list:
+    #     if datasource.name == datasource_name:
+    #         datasource_path = server.download_datasource(datasource.id, include_extract=False)
+    #         # return datasource, datasource_path
 
 
 def choose_persona(role, role_type, datatype):
@@ -354,13 +358,26 @@ def generate_config(args, server):
 
     """
 
-    datasource_name = args.datasource
+    datasource_id = args.datasource_id
+    datasource_name = args.datasource_name
+    project_name = args.datasource_project_name
     definitions_csv_path = args.definitions_csv
+
+    object_list = get_object_list(object_type='datasource', server=server)
+    datasource_id, datasource_name, project_name = fill_in_id_name_project(datasource_id, datasource_name, project_name, object_list)
+
+
 
     if args.file_prefix:
         add_prefix = True
     else:
         add_prefix = False
+
+
+
+
+    print(f'GETTING OBJECT ID: {id}, OBJECT NAME: {object_name}, PROJECT NAME: {project_name}, INCLUDE EXTRACT {args.include_extract}')
+
 
     datasource, datasource_path = download_datasource(server, datasource_name)
     metadata_record_columns = get_metadata_record_columns(datasource_name, datasource, datasource_path)
