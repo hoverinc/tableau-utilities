@@ -17,7 +17,8 @@ def do_args():
     Returns: an argparse.Namespace
     """
 
-    parser = argparse.ArgumentParser(description='Tableau Utilities CLI:\n'
+    parser = argparse.ArgumentParser(prog='TABLEAU UTILITIES',
+                                     description='Tableau Utilities CLI:\n'
                                                  '-Manage Tableau Server/Online\n'
                                                  '-Manage configurations to edit datasource metadata',
                                      formatter_class=RawTextHelpFormatter)
@@ -85,6 +86,14 @@ def do_args():
     parser_server_operate.add_argument('--include_extract', action='store_true',
                                         help='Includes the extract in the download if specified. '
                                              'This will make downloads take a long time for large extracts.')
+
+    # ArgumentParser.error
+
+
+    if (parser_server_operate.name and not parser_server_operate.project_name) or (parser_server_operate.project_name and not parser_server_operate.name):
+        parser.error('--name and --project_name are required together')
+        # raise argparse.ArgumentError(parser_server_operate.name, '--name and --project_name are required together')
+
     parser_server_operate.set_defaults(func=server_operate)
 
     # GENERATE CONFIG
@@ -177,9 +186,13 @@ def tableau_authentication(args):
 def main():
     args = do_args()
 
-    # Validate the argsuments
-    if args.command == 'server_operate':
-        validate_args_server_operate(args)
+    if (args.name and not args.project_name) or (args.project_name and not args.name):
+        raise parser.error(args.name, '--name and --project_name are required together')
+
+
+    # # Validate the argsuments
+    # if args.command == 'server_operate':
+    #     validate_args_server_operate(args)
 
     # Set/Reset the directory
     tmp_folder = args.folder_name
