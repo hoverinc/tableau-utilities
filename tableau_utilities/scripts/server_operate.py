@@ -41,6 +41,21 @@ def get_project_and_object_names(id, object_list):
             return o['name'], o['project_name']
 
 
+def get_object_list(object_type):
+    """ Gets a dictionary with the list of objects for a type
+
+    Args:
+        object_type: datasource or workbook
+
+    """
+
+    if args.object_type == 'datasource':
+        object_list = [d for d in server.get_datasources()]
+    if args.object_type == 'workbook':
+        object_list = [w for w in server.get_workbooks()]
+
+    object_list = object_list_to_dicts(object_list)
+    return object_list
 
 
 def server_operate(args, server):
@@ -57,13 +72,7 @@ def server_operate(args, server):
     object_name = args.name
     project_name = args.project_name
 
-    # Get the list of objects for the object_type
-    if args.object_type == 'datasource':
-        object_list = [d for d in server.get_datasources()]
-    if args.object_type == 'workbook':
-        object_list = [w for w in server.get_workbooks()]
-
-    object_list = object_list_to_dicts(object_list)
+    object_list = get_object_list(object_type=args.object_type)
 
     if id is not None:
         project_name, object_name = get_project_and_object_names(id, object_list)
