@@ -41,21 +41,49 @@ def get_project_and_object_names(id, object_list):
             return o['name'], o['project_name']
 
 
-def get_object_list(object_type):
+def get_object_list(object_type, server):
     """ Gets a dictionary with the list of objects for a type
 
     Args:
         object_type: datasource or workbook
+        server: the tableau server authentication object
 
     """
 
-    if args.object_type == 'datasource':
+    if object_type == 'datasource':
         object_list = [d for d in server.get_datasources()]
-    if args.object_type == 'workbook':
+    if object_type == 'workbook':
         object_list = [w for w in server.get_workbooks()]
 
     object_list = object_list_to_dicts(object_list)
     return object_list
+
+
+def fill_in_id_name_project(id, object_name, project_name, object_list):
+    """ Makes sure that the name, object_name, and project_name all have values and are not None
+
+    Args:
+        id: The id of the object
+        object_name: The name of the object
+        project_name: The name of the project the object is in
+        object_list: The list of objects
+
+    Returns:
+        id, object_name, project_name without a value of none for any
+
+    """
+
+    if id is not None:
+        project_name, object_name = get_project_and_object_names(id, object_list)
+
+    if id is None:
+        id = get_object_id(project_name, object_name, object_list)
+
+    # TO DO: Add error message
+    # if id is None or object_name is None or project_name is None:
+    #     raise
+
+    return id, object_name, project_name
 
 
 def server_operate(args, server):
@@ -72,13 +100,8 @@ def server_operate(args, server):
     object_name = args.name
     project_name = args.project_name
 
-    object_list = get_object_list(object_type=args.object_type)
-
-    if id is not None:
-        project_name, object_name = get_project_and_object_names(id, object_list)
-
-    if id is None:
-        id = get_object_id(project_name, object_name, object_list)
+    object_list = get_object_list(object_type=args.object_type, server=server)
+    id, object_name, project_name = fill_in_id_name_project(id, object_name, project_name, object_list)
 
     print(f'GETTING OBJECT ID: {id}, OBJECT NAME: {object_name}, PROJECT NAME: {project_name}, INCLUDE EXTRACT {args.include_extract}')
 
