@@ -116,10 +116,14 @@ tableau_utilities --auth args_token --token_name my_token_name --token_secret 1q
 
 ```
 
-* `generate_config`: Generate a config from a local file and print the debugging logs to the console
+* `generate_config`: Generate a config from a local file. Add a file prefix and print the debugging logs to the console
 ```commandline
-tableau_utilities --debugging_logs generate_config --datasource_source local --datasource_path '/Users/jayrosenthal/code/tableau-utilities/tmp_tdsx_and_config/My Awesome Datasource.tdsx'
- 
+tableau_utilities --debugging_logs generate_config --datasource_source local --datasource_path '/Users/jayrosenthal/code/tableau-utilities/tmp_tdsx_and_config/My Awesome Datasource.tdsx' --file_prefix
+```
+
+# `merge_config`: Merge a new config into your main config
+```commandline
+tableau_utilities merge_config --existing_config /Users/jayrosenthal/code/tableau-utilities/tmp_tdsx_and_config/main__column_config.json --additional_config /Users/jayrosenthal/code/tableau-utilities/tmp_tdsx_and_config/new__column_config.json
 ```
 
 

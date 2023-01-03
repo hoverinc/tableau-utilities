@@ -108,13 +108,13 @@ parser_config_gen.set_defaults(func=generate_config)
 # MERGE CONFIG
 parser_config_merge = subparsers.add_parser('merge_config',
                                             help='Merge a new config into the existing master config')
-parser_config_merge.add_argument('--existing_config', required=True,
+parser_config_merge.add_argument('-e', '--existing_config', required=True,
                                  help='The path to the current configuration. The current configuration may have '
                                       'more than 1 datasource.')
-parser_config_merge.add_argument('--additional_config',  required=True,
+parser_config_merge.add_argument('-a', '--additional_config',  required=True,
                                  help='The path to the configuration to add. This code ASSUMES that the additional '
                                       'config is for a single datasource ')
-parser_config_merge.add_argument('--merged_config', default='merged_config',
+parser_config_merge.add_argument('-m', '--merged_config', default='merged_config',
                                  help='The name of the merged config JSON file. Ex: filename "my_config.json" '
                                       'argument is "my_config" Do not enter the .json extension.')
 parser_config_merge.set_defaults(func=merge_configs)
