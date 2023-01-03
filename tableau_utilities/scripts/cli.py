@@ -18,9 +18,12 @@ parser = argparse.ArgumentParser(prog='tableau_utilities',
                                  formatter_class=RawTextHelpFormatter)
 subparsers = parser.add_subparsers(title="commands", dest="command", help='You must choose a command.',
                                    required=True)
-parser.add_argument('--auth', choices=['settings_yaml', 'args_user_pass', 'args_token', 'os_env'],
+parser.add_argument('-a', '--auth', choices=['settings_yaml', 'args_user_pass', 'args_token', 'os_env'],
                     help='The method for storing your credentials to pass into the CLI.')
+parser.add_argument('-d', '--debugging_logs', action='store_true',
+                    help='Print detailed logging to the console to debug CLI')
 
+# GROUP: SERVER INFORMATION
 group_server = parser.add_argument_group('server_information', 'Server Information')
 group_server.add_argument(
     '--server',
@@ -33,19 +36,23 @@ group_server.add_argument(
     default=None)
 group_server.add_argument('--api_version', help='Tableau API version', default='3.17')
 
+# GROUP: USER & PASSWORD
 group_user_password = parser.add_argument_group('user_pass', 'Authentication with username and password method')
 group_user_password.add_argument('--user', help='user name')
 group_user_password.add_argument('--password', help='password')
 
+# GROUP: PERSONAL ACCESS TOKENS
 group_token = parser.add_argument_group('token_info', 'Authentication with a Personal Access Token (PAT)')
 group_token.add_argument('--token_secret', help='Personal Access Token Secret')
 group_token.add_argument('--token_name', help='Personal Access Token Name')
 
-parser.add_argument(
-    '--settings_path',
-    help='Path to your local settings.yaml file (See sample_settings.yaml)',
-    default=None
+# GROUP: SETTINGS YAML
+group_settings_yaml = parser.add_argument_group('settings.yaml', 'Authentication with settings in a .yaml file' )
+group_settings_yaml.add_argument('--settings_path',
+                                 help='Path to your local settings.yaml file (See sample_settings.yaml)'
 )
+
+# GROUP LOCAL FOLDER
 group_local_folder = parser.add_argument_group('local_folder', 'Manage where to read/write files')
 group_local_folder.add_argument('--folder_name', default='tmp_tdsx_and_config',
                                 help='Specifies the folder to write the datasource and configs to')
