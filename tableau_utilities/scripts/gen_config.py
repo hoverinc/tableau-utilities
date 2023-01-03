@@ -1,6 +1,7 @@
 import json
 from pprint import pprint
 import pandas as pd
+from pprint import pprint
 
 from tableau_utilities.tableau_server.tableau_server import TableauServer
 from tableau_utilities.tableau_file.tableau_file import Datasource
@@ -39,19 +40,11 @@ def download_datasource(server, datasource_id):
         datasource_name: The name of the datasource to download
 
     Returns:
-        datasource: The datasource object for the datasource that was downloaded
         datasource_path: The path of the datasource that was downloaded
     """
 
     datasource_path = server.download_datasource(datasource_id, include_extract=False)
     return datasource_path
-
-    # datasource_list = [d for d in server.get_datasources()]
-    #
-    # for datasource in datasource_list:
-    #     if datasource.name == datasource_name:
-    #         datasource_path = server.download_datasource(datasource.id, include_extract=False)
-    #         # return datasource, datasource_path
 
 
 def choose_persona(role, role_type, datatype):
@@ -79,13 +72,13 @@ def choose_persona(role, role_type, datatype):
             f"There is no persona for the combination of ROLE {role}, ROLE_TYPE {role_type}, and DATATYPE {datatype}'")
 
 
-def get_metadata_record_columns(datasource_name, datasource_path):
+def get_metadata_record_columns(datasource_name, datasource_path, debugging_logs=False):
     """ Builds a column config for columns that are only in metadata records and not in column objects
 
     Args:
         datasource_name: The name of the datasource
-        # datasource: The datasoruce object
         datasource_path: The path to the of the datasource
+        debugging_logs: Prints information to consolde if true
 
     """
 
@@ -99,7 +92,7 @@ def get_metadata_record_columns(datasource_name, datasource_path):
     for m in metadata_records:
         if m['@class'] == 'column':
 
-            # I think it's low risk to assume these data typers are all dimensions
+            # I think it's low risk to assume these data types are all dimensions
             if m["local-type"] == 'string':
                 persona = 'string_dimension'
             elif m["local-type"] == 'date':
@@ -128,10 +121,16 @@ def get_metadata_record_columns(datasource_name, datasource_path):
 
             }
 
+            if debugging_logs:
+                print(m)
+                print(persona)
+                print(m['remote-name'])
+                print(metadata_record_columns[m['remote-name']])
+
     return metadata_record_columns
 
 
-def create_column_config(columns, datasource_name, folder_mapping, metadata_record_columns, definitions_mapping):
+def create_column_config(columns, datasource_name, folder_mapping, metadata_record_columns, definitions_mapping, debugging_logs):
     """ Generates a list of column configs with None for a folder
 
     Args:
@@ -168,6 +167,7 @@ def create_column_config(columns, datasource_name, folder_mapping, metadata_reco
     column_name_list = []
 
     for c in columns:
+
         column_name = c['@name'][1:-1]
 
         # Keeps a list of column names from the column object.
@@ -222,6 +222,12 @@ def create_column_config(columns, datasource_name, folder_mapping, metadata_reco
                 if '@default-format' in c:
                     calculated_column_configs[caption]['default_format'] = c['@default-format']
 
+                if debugging_logs:
+                    print('-'*30)
+                    print(c)
+                    print(caption)
+                    print(calculated_column_configs[caption])
+
             else:
 
                 column_configs[caption] = {
@@ -243,6 +249,12 @@ def create_column_config(columns, datasource_name, folder_mapping, metadata_reco
                 if '@default-format' in c:
                     column_configs[caption]['default_format'] = c['@default-format']
 
+                if debugging_logs:
+                    print('-'*30)
+                    print(c)
+                    print(caption)
+                    print(column_configs[caption])
+
     # Add column configs for metadata_record columns when there wasn't a column object already
     # This is only need for non-calulated fields
     for k, v in metadata_record_columns.items():
@@ -258,6 +270,12 @@ def create_column_config(columns, datasource_name, folder_mapping, metadata_reco
                     "persona": v['persona'],
                     "datasources": v['datasources']
                 }
+
+            if debugging_logs:
+                print('-' * 30)
+                print('METADATA RECORD COLUMN ADDED')
+                print(caption)
+                print(column_configs[caption])
 
     return column_configs, calculated_column_configs
 
@@ -293,12 +311,11 @@ def build_folder_mapping(datasource_path):
     return mappings
 
 
-def build_config(datasource_name, datasource_path, metadata_record_columns, prefix, definitions_mapping):
+def build_config(datasource_name, datasource_path, metadata_record_columns, prefix, definitions_mapping, debugging_logs=False):
     """ Builds a column config and caluclated field column config.  Writes each to individual files
 
     Args:
         datasource_name: The name of the datasource
-        # datasource: The datasoruce object
         datasource_path: The path to the of the datasource
         metadata_record_columns: The columns from the metadata records
         prefix: If true the output files are prefixed with the datasource name
@@ -318,15 +335,18 @@ def build_config(datasource_name, datasource_path, metadata_record_columns, pref
                                                                      datasource_name=datasource_name,
                                                                      folder_mapping=folder_mapping,
                                                                      metadata_record_columns=metadata_record_columns,
-                                                                     definitions_mapping=definitions_mapping)
+                                                                     definitions_mapping=definitions_mapping,
+                                                                     debugging_logs=debugging_logs)
 
-    print('-' * 20, 'COLUMN CONFIG', '-' * 20)
-    for config in column_configs:
-        pprint(config, sort_dicts=False, width=200)
 
-    print('-'*20, 'CALCULATED FIELD COLUMN CONFIG', '-'*20)
-    for config in calculated_column_configs:
-        pprint(config, sort_dicts=False, width=200)
+    if debugging_logs:
+        print('-' * 20, 'COLUMN CONFIG', '-' * 20)
+        for config in column_configs:
+            pprint(config, sort_dicts=False, width=200)
+
+        print('-'*20, 'CALCULATED FIELD COLUMN CONFIG', '-'*20)
+        for config in calculated_column_configs:
+            pprint(config, sort_dicts=False, width=200)
 
     datasource_name_snake = convert_to_snake_case(datasource_name)
     output_file_column_config = 'column_config.json'
@@ -350,15 +370,10 @@ def build_config(datasource_name, datasource_path, metadata_record_columns, pref
 def generate_config(args, server=None):
     """ Downloads a datasource and saves configs for that datasource
 
-    Args:
-        server: the tableau server authentication
-        datasource_name: The name of the datasource to generate the config for
-        prefix: If true the configs will have the datasource name as a prefix
-        definitions_csv_path: The path to a csv with column names and definitions
-
     """
 
     definitions_csv_path = args.definitions_csv
+    debugging_logs = args.debugging_logs
 
     if args.datasource_source  == 'local':
         datasource_path = args.datasource_path
@@ -379,9 +394,9 @@ def generate_config(args, server=None):
     else:
         add_prefix = False
 
-    metadata_record_columns = get_metadata_record_columns(datasource_name, datasource_path)
+    metadata_record_columns = get_metadata_record_columns(datasource_name, datasource_path, debugging_logs)
 
     definitions_mapping = None
     if definitions_csv_path is not None:
         definitions_mapping = load_csv_with_definitions(file=definitions_csv_path)
-    build_config(datasource_name, datasource_path, metadata_record_columns, add_prefix, definitions_mapping)
+    build_config(datasource_name, datasource_path, metadata_record_columns, add_prefix, definitions_mapping, debugging_logs)
