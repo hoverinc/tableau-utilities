@@ -35,7 +35,7 @@ def load_csv_with_definitions(file=None):
     definitions_mapping = {}
 
     for column in definitions:
-        definitions_mapping[column['column_name']] = column['description']
+        definitions_mapping[column['column_name']] = str(column['description'])
 
     return definitions_mapping
 
@@ -194,77 +194,83 @@ def create_column_config(columns, datasource_name, folder_mapping, metadata_reco
         else:
             persona = choose_persona(role=c['@role'], role_type=c['@type'], datatype=c['@datatype'])
 
-            # Takes the description from the csv if there is one
-            # Assumes the csv  is the source of truth if there are definitions in both
-            if definitions_mapping is not None:
-                if caption in definitions_mapping:
-                    description = definitions_mapping[caption]
+        # Takes the description from the csv if there is one
+        # Assumes the csv  is the source of truth if there are definitions in both
+        if definitions_mapping is not None:
+            if caption in definitions_mapping and definitions_mapping[caption] is not None and len(definitions_mapping[caption]) > 0:
+                description = definitions_mapping[caption]
             elif 'desc' in c:
                 description = c['desc']['formatted-text']['run']
             else:
                 description = ''
+        elif 'desc' in c:
+            description = c['desc']['formatted-text']['run']
+        else:
+            description = ''
 
-            folder_name = None
-            if column_name in folder_mapping.keys():
-                folder_name = folder_mapping[column_name]
+        folder_name = None
+        if column_name in folder_mapping.keys():
+            folder_name = folder_mapping[column_name]
 
-            # Calculations are written to a separate config in the Airflow DAG
-            if 'calculation' in c:
+        # Calculations are written to a separate config in the Airflow DAG
+        if 'calculation' in c:
 
-                calculated_column_configs[caption] = {
-                    "description": description,
-                    "calculation": c['calculation']['@formula'],
-                    "folder": folder_name,
-                    "persona": persona,
-                    "datasources": [
-                        {
-                            "name": datasource_name,
-                            "local-name": column_name,
-                            "sql_alias": column_name
-                        },
-                    ]
-                }
+            if debugging_logs:
+                print('-' * 30)
+                print('CALCULATED COLUMN CONFIG FIELD')
+                print(caption)
+                print(c)
+                print(calculated_column_configs[caption])
 
-                # Optional Properties to Add
-                if '@fiscal_year_start' in c:
-                    calculated_column_configs[caption]['fiscal_year_start'] = c['@fiscal_year_start']
-                if '@default-format' in c:
-                    calculated_column_configs[caption]['default_format'] = c['@default-format']
+            calculated_column_configs[caption] = {
+                "description": description,
+                "calculation": c['calculation']['@formula'],
+                "folder": folder_name,
+                "persona": persona,
+                "datasources": [
+                    {
+                        "name": datasource_name,
+                        "local-name": column_name,
+                        "sql_alias": column_name
+                    },
+                ]
+            }
 
-                if debugging_logs:
-                    print('-' * 30)
-                    print('CALCULATED COLUMN CONFIG FIELD')
-                    print(caption)
-                    print(c)
-                    print(calculated_column_configs[caption])
+            # Optional Properties to Add
+            if '@fiscal_year_start' in c:
+                calculated_column_configs[caption]['fiscal_year_start'] = c['@fiscal_year_start']
+            if '@default-format' in c:
+                calculated_column_configs[caption]['default_format'] = c['@default-format']
 
-            else:
+        else:
 
-                column_configs[caption] = {
-                    "description": description,
-                    "folder": folder_name,
-                    "persona": persona,
-                    "datasources": [
-                        {
-                            "name": datasource_name,
-                            "local-name": column_name,
-                            "sql_alias": column_name
-                        },
-                    ]
-                }
+            if debugging_logs:
+                print('-' * 30)
+                print('COLUMN CONFIG FIELD')
+                print(caption)
+                print(c)
+                print(column_configs[caption])
 
-                # Optional Properties to Add
-                if '@fiscal_year_start' in c:
-                    column_configs[caption]['fiscal_year_start'] = c['@fiscal_year_start']
-                if '@default-format' in c:
-                    column_configs[caption]['default_format'] = c['@default-format']
+            column_configs[caption] = {
+                "description": description,
+                "folder": folder_name,
+                "persona": persona,
+                "datasources": [
+                    {
+                        "name": datasource_name,
+                        "local-name": column_name,
+                        "sql_alias": column_name
+                    },
+                ]
+            }
 
-                if debugging_logs:
-                    print('-' * 30)
-                    print('COLUMN CONFIG FIELD')
-                    print(caption)
-                    print(c)
-                    print(column_configs[caption])
+            # Optional Properties to Add
+            if '@fiscal_year_start' in c:
+                column_configs[caption]['fiscal_year_start'] = c['@fiscal_year_start']
+            if '@default-format' in c:
+                column_configs[caption]['default_format'] = c['@default-format']
+
+
 
     # Add column configs for metadata_record columns when there wasn't a column object already
     # This is only need for non-calulated fields
