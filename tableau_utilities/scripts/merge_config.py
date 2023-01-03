@@ -79,7 +79,7 @@ def merge_2_configs(existing_config, additional_config):
                     print('CHANGING CALCULATION')
                     print('CALCULATION CURRENT:', calculation_current)
                     print('CALCULATION NEW:', calculation_new)
-                    existing_config[column_name]['description'] = calculation_new
+                    existing_config[column_name]['calculation'] = calculation_new
                     print('CALCULATION SET TO:', existing_config[column_name]['calculation'])
 
             # Replace these attributes if there are values in the new configuration
@@ -94,7 +94,7 @@ def merge_2_configs(existing_config, additional_config):
                 # print('EXITING')
                 # sys.exit(0)
 
-            if len(folder_new.strip()) > 0:
+            if folder_new is not None and len(folder_new.strip()) > 0:
                 print('CHANGING FOLDER')
                 print('FOLDER CURRENT:', folder_current)
                 print('FOLDER NEW:', folder_new)

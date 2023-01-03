@@ -98,6 +98,12 @@ tableau_utilities server_operate --help
 ```commandline
 tableau_utilities --auth args_token --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az  server_info --list_object datasource --list_format names
 ```
+
+4. Using the 1password cli with op run
+```commandline
+op run --env-file=.env -- tableau_utilities --auth os_env --list_object datasource --list_format names
+```
+
 #### Examples for each command area
 
 * `server_info`: Lists all datasources in your site ordered by ID
