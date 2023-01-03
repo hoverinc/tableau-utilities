@@ -26,6 +26,11 @@ def load_csv_with_definitions(file=None):
     df = pd.read_csv(file)
     definitions = df.to_dict('records')
 
+    # Check that the csv contains column_name and description headers
+    column_names = list(df.columns)
+    if 'column_name' not in column_names or 'description' not in column_names:
+        raise ValueError('The .csv must contain a column_name and a description column.')
+
     definitions_mapping = {}
 
     for column in definitions:
