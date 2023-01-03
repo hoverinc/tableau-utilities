@@ -1,13 +1,15 @@
 import json
+from pathlib import Path
 from pprint import pprint
-import pandas as pd
 from pprint import pprint
 
-from tableau_utilities.tableau_server.tableau_server import TableauServer
-from tableau_utilities.tableau_file.tableau_file import Datasource
-from tableau_utilities.general.funcs import convert_to_snake_case
+import pandas as pd
+
 from tableau_utilities.general.config_column_persona import personas
+from tableau_utilities.general.funcs import convert_to_snake_case
 from tableau_utilities.scripts.server_operate import get_object_list, fill_in_id_name_project
+from tableau_utilities.tableau_file.tableau_file import Datasource
+from tableau_utilities.tableau_server.tableau_server import TableauServer
 
 
 def load_csv_with_definitions(file=None):
@@ -111,15 +113,15 @@ def get_metadata_record_columns(datasource_name, datasource_path, debugging_logs
                 persona = None
 
             metadata_record_columns[m['remote-name']] = {'persona': persona,
-            "datasources": [
-                        {
-                            "name": datasource_name,
-                            "local-name": m['local-name'][1:-1],
-                            "sql_alias": m['remote-name']
-                        },
-                ]
+                                                         "datasources": [
+                                                             {
+                                                                 "name": datasource_name,
+                                                                 "local-name": m['local-name'][1:-1],
+                                                                 "sql_alias": m['remote-name']
+                                                             },
+                                                         ]
 
-            }
+                                                         }
 
             if debugging_logs:
                 print(m)
@@ -130,7 +132,8 @@ def get_metadata_record_columns(datasource_name, datasource_path, debugging_logs
     return metadata_record_columns
 
 
-def create_column_config(columns, datasource_name, folder_mapping, metadata_record_columns, definitions_mapping, debugging_logs):
+def create_column_config(columns, datasource_name, folder_mapping, metadata_record_columns, definitions_mapping,
+                         debugging_logs):
     """ Generates a list of column configs with None for a folder
 
     Args:
@@ -223,7 +226,7 @@ def create_column_config(columns, datasource_name, folder_mapping, metadata_reco
                     calculated_column_configs[caption]['default_format'] = c['@default-format']
 
                 if debugging_logs:
-                    print('-'*30)
+                    print('-' * 30)
                     print('CALCULATED COLUMN CONFIG FIELD')
                     print(caption)
                     print(c)
@@ -251,7 +254,7 @@ def create_column_config(columns, datasource_name, folder_mapping, metadata_reco
                     column_configs[caption]['default_format'] = c['@default-format']
 
                 if debugging_logs:
-                    print('-'*30)
+                    print('-' * 30)
                     print('COLUMN CONFIG FIELD')
                     print(caption)
                     print(c)
@@ -341,17 +344,19 @@ def generate_config(args, server=None):
     definitions_csv_path = args.definitions_csv
     debugging_logs = args.debugging_logs
 
-    if args.datasource_source  == 'local':
+    if args.datasource_source == 'local':
         datasource_path = args.datasource_path
+        datasource_name = Path(datasource_path).stem
+        print(f'BUILDING CONFIG FOR: {datasource_name} {datasource_path} ')
 
     elif args.datasource_source == 'online':
         datasource_id = args.datasource_id
         datasource_name = args.datasource_name
         project_name = args.datasource_project_name
         object_list = get_object_list(object_type='datasource', server=server)
-        datasource_id, datasource_name, project_name = fill_in_id_name_project(datasource_id, datasource_name, project_name, object_list)
+        datasource_id, datasource_name, project_name = fill_in_id_name_project(datasource_id, datasource_name,
+                                                                               project_name, object_list)
         datasource_path = download_datasource(server, datasource_id)
-
         print(
             f'GETTING DATASOURCE ID: {datasource_id}, NAME: {datasource_name}, PROJECT NAME: {project_name}, INCLUDE EXTRACT false')
 
