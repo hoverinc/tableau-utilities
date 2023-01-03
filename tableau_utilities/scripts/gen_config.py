@@ -24,6 +24,7 @@ def load_csv_with_definitions(file=None):
     """
 
     df = pd.read_csv(file)
+    df.columns = df.columns.str.lower()
     definitions = df.to_dict('records')
 
     # Check that the csv contains column_name and description headers
