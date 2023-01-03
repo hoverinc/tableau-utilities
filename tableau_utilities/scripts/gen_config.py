@@ -79,20 +79,20 @@ def choose_persona(role, role_type, datatype):
             f"There is no persona for the combination of ROLE {role}, ROLE_TYPE {role_type}, and DATATYPE {datatype}'")
 
 
-def get_metadata_record_columns(datasource_name, datasource, datasource_path):
+def get_metadata_record_columns(datasource_name, datasource_path):
     """ Builds a column config for columns that are only in metadata records and not in column objects
 
     Args:
         datasource_name: The name of the datasource
-        datasource: The datasoruce object
+        # datasource: The datasoruce object
         datasource_path: The path to the of the datasource
 
     """
 
     rows = dict()
     metadata_records = [c.dict() for c in Datasource(datasource_path).connection.metadata_records]
-    rows.setdefault(datasource.name, [])
-    rows[datasource.name].extend(metadata_records)
+    rows.setdefault(datasource_name, [])
+    rows[datasource_name].extend(metadata_records)
 
     metadata_record_columns = {}
 
@@ -293,12 +293,12 @@ def build_folder_mapping(datasource_path):
     return mappings
 
 
-def build_config(datasource_name, datasource, datasource_path, metadata_record_columns, prefix, definitions_mapping):
+def build_config(datasource_name, datasource_path, metadata_record_columns, prefix, definitions_mapping):
     """ Builds a column config and caluclated field column config.  Writes each to individual files
 
     Args:
         datasource_name: The name of the datasource
-        datasource: The datasoruce object
+        # datasource: The datasoruce object
         datasource_path: The path to the of the datasource
         metadata_record_columns: The columns from the metadata records
         prefix: If true the output files are prefixed with the datasource name
@@ -308,14 +308,14 @@ def build_config(datasource_name, datasource, datasource_path, metadata_record_c
 
     rows = dict()
     columns = [c.dict() for c in Datasource(datasource_path).columns]
-    rows.setdefault(datasource.name, [])
-    rows[datasource.name].extend(columns)
+    rows.setdefault(datasource_name, [])
+    rows[datasource_name].extend(columns)
 
     # Build the folder mapping
     folder_mapping = build_folder_mapping(datasource_path)
 
     column_configs, calculated_column_configs = create_column_config(columns=columns,
-                                                                     datasource_name=datasource.name,
+                                                                     datasource_name=datasource_name,
                                                                      folder_mapping=folder_mapping,
                                                                      metadata_record_columns=metadata_record_columns,
                                                                      definitions_mapping=definitions_mapping)
@@ -358,31 +358,30 @@ def generate_config(args, server=None):
 
     """
 
-    datasource_id = args.datasource_id
-    datasource_name = args.datasource_name
-    project_name = args.datasource_project_name
     definitions_csv_path = args.definitions_csv
 
-    object_list = get_object_list(object_type='datasource', server=server)
-    datasource_id, datasource_name, project_name = fill_in_id_name_project(datasource_id, datasource_name, project_name, object_list)
+    if args.datasource_source  == 'local':
+        datasource_path = args.datasource_path
 
+    elif args.datasource_source == 'online':
+        datasource_id = args.datasource_id
+        datasource_name = args.datasource_name
+        project_name = args.datasource_project_name
+        object_list = get_object_list(object_type='datasource', server=server)
+        datasource_id, datasource_name, project_name = fill_in_id_name_project(datasource_id, datasource_name, project_name, object_list)
+        datasource_path = download_datasource(server, datasource_id)
 
+        print(
+            f'GETTING DATASOURCE ID: {datasource_id}, NAME: {datasource_name}, PROJECT NAME: {project_name}, INCLUDE EXTRACT false')
 
     if args.file_prefix:
         add_prefix = True
     else:
         add_prefix = False
 
-
-
-
-    print(f'GETTING OBJECT ID: {id}, OBJECT NAME: {object_name}, PROJECT NAME: {project_name}, INCLUDE EXTRACT {args.include_extract}')
-
-
-    datasource, datasource_path = download_datasource(server, datasource_name)
-    metadata_record_columns = get_metadata_record_columns(datasource_name, datasource, datasource_path)
+    metadata_record_columns = get_metadata_record_columns(datasource_name, datasource_path)
 
     definitions_mapping = None
     if definitions_csv_path is not None:
         definitions_mapping = load_csv_with_definitions(file=definitions_csv_path)
-    build_config(datasource_name, datasource, datasource_path, metadata_record_columns, add_prefix, definitions_mapping)
+    build_config(datasource_name, datasource_path, metadata_record_columns, add_prefix, definitions_mapping)

@@ -131,13 +131,10 @@ def validate_args_generate_config(args):
     if args.datasource_source == 'online':
         if args.datasource_id:
             pass
-        elif (args.datasource_name and not args.datasource_project_name) or (args.datasource_name and not args.datasource_project_name):
+        elif (args.datasource_name and not args.datasource_project_name) or (args.datasource_project_name and not args.datasource_name):
             parser.error('--datasource_name and --datasource_project_name are required together')
-        else:
+        elif not args.datasource_id and not args.datasource_name and not args.datasource_project_name:
             parser.error('--datasource_source online requires either a --datasource_id or a --datasource_name and --datasource_project_name')
-
-
-
 
 
 def validate_auth_included(args):
