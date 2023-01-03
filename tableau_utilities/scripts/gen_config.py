@@ -35,7 +35,7 @@ def load_csv_with_definitions(file=None):
     definitions_mapping = {}
 
     for column in definitions:
-        definitions_mapping[column['column_name']] = str(column['description'])
+        definitions_mapping[column['column_name']] = column['description']
 
     return definitions_mapping
 
@@ -197,7 +197,8 @@ def create_column_config(columns, datasource_name, folder_mapping, metadata_reco
         # Takes the description from the csv if there is one
         # Assumes the csv  is the source of truth if there are definitions in both
         if definitions_mapping is not None:
-            if caption in definitions_mapping and definitions_mapping[caption] is not None and len(definitions_mapping[caption]) > 0:
+            if caption in definitions_mapping and definitions_mapping[caption] is not None and \
+                    (isinstance(definitions_mapping[caption], str) and len(definitions_mapping[caption]) > 0):
                 description = definitions_mapping[caption]
             elif 'desc' in c:
                 description = c['desc']['formatted-text']['run']
