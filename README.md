@@ -110,18 +110,20 @@ tableau_utilities --auth args_token --token_name my_token_name --token_secret 1q
 tableau_utilities --auth args_token --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az server_info server_operate --action_type download --object_type datasource --name 'My Datasource Name'  --project_name 'My Project Name'
 ```
 
-* `generate_config`: Generate a config from a datasource
+* `generate_config`: Generate a config from a datasource in online/server
 ```commandline
-tableau_utilities --auth args_token --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az server_info 
+tableau_utilities --auth args_token --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az server_info --datasource_source online --datasource_name 'My Awseome Datasource' --datasource_project_name 'My Team Project'
+
+```
+
+* `generate_config`: Generate a config from a local file and print the debugging logs to the console
+```commandline
+tableau_utilities --debugging_logs generate_config --datasource_source local --datasource_path '/Users/jayrosenthal/code/tableau-utilities/tmp_tdsx_and_config/My Awesome Datasource.tdsx'
+ 
 ```
 
 
-- Lists all datasources in your site
-  - `tableau_utilities --user <login> --password <password> --site <site name> --server <server address> --list_datasources`
-  - OR `tableau_utilities --settings_path ./settings.yaml --list_datasources`
-- Download a datasource
-  - `tableau_utilities --user <login> --password <password> --site <site name> --server <server address> --download_ds --name "Datasource Name" --project "Project Name"`
-  - OR `tableau_utilities --settings_path ./settings.yaml --download_ds --name "Datasource Name" --project "Project Name"`
+TO DO: ADD THIS FUNCTIONALITY TO THE NEW CLI
 - Add column to datasource
   - `tableau_utilities --tdsx path/to/file.tdsx --add_column --name "column_name" --folder "Folder Name" --caption "Column Alias" --desc "column description"`
 
