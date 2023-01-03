@@ -333,62 +333,6 @@ def extract_columns(datasource_name, datasource_path):
     return columns
 
 
-# def build_config(datasource_name, datasource_path, metadata_record_columns, prefix, definitions_mapping, debugging_logs=False):
-#     """ Builds a column config and caluclated field column config.  Writes each to individual files
-#
-#     Args:
-#         datasource_name: The name of the datasource
-#         datasource_path: The path to the of the datasource
-#         metadata_record_columns: The columns from the metadata records
-#         prefix: If true the output files are prefixed with the datasource name
-#         definitions_mapping: The path to a csv containing definitions
-#
-#     """
-
-    # rows = dict()
-    # columns = [c.dict() for c in Datasource(datasource_path).columns]
-    # rows.setdefault(datasource_name, [])
-    # rows[datasource_name].extend(columns)
-
-    # Build the folder mapping
-    # folder_mapping = build_folder_mapping(datasource_path)
-    #
-    # column_configs, calculated_column_configs = create_column_config(columns=columns,
-    #                                                                  datasource_name=datasource_name,
-    #                                                                  folder_mapping=folder_mapping,
-    #                                                                  metadata_record_columns=metadata_record_columns,
-    #                                                                  definitions_mapping=definitions_mapping,
-    #                                                                  debugging_logs=debugging_logs)
-
-
-    # if debugging_logs:
-    #     print('-' * 20, 'COLUMN CONFIG', '-' * 20)
-    #     for config in column_configs:
-    #         pprint(config, sort_dicts=False, width=200)
-    #
-    #     print('-'*20, 'CALCULATED FIELD COLUMN CONFIG', '-'*20)
-    #     for config in calculated_column_configs:
-    #         pprint(config, sort_dicts=False, width=200)
-
-    # datasource_name_snake = convert_to_snake_case(datasource_name)
-    # output_file_column_config = 'column_config.json'
-    # output_file_calculated_column_config = 'tableau_calc_config.json'
-    #
-    # if prefix:
-    #     output_file_column_config = f'{datasource_name_snake}__{output_file_column_config}'
-    #     output_file_calculated_column_config = f'{datasource_name_snake}__{output_file_calculated_column_config}'
-    #
-    # with open(output_file_column_config, "w") as outfile:
-    #     json.dump(column_configs, outfile)
-    #
-    # with open(output_file_calculated_column_config, "w") as outfile:
-    #     json.dump(calculated_column_configs, outfile)
-    #
-    # print('DATSOURCE PATH:', datasource_path)
-    # print('COLUMN CONFIG PATH:', datasource_path)
-    # print('CALCULATED COLUMN CONFIG PATH:', datasource_path)
-
-
 def generate_config(args, server=None):
     """ Downloads a datasource and saves configs for that datasource
 
