@@ -392,6 +392,10 @@ def generate_config(args, server=None):
                                                                      definitions_mapping=definitions_mapping,
                                                                      debugging_logs=debugging_logs)
 
+    # Sort configs
+    column_configs = dict(sorted(column_configs.items()))
+    calculated_column_configs = dict(sorted(calculated_column_configs.items()))
+
     datasource_name_snake = convert_to_snake_case(datasource_name)
     output_file_column_config = 'column_config.json'
     output_file_calculated_column_config = 'tableau_calc_config.json'

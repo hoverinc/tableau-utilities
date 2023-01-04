@@ -144,9 +144,9 @@ def merge_configs(args):
     existing_config = read_file(args.existing_config)
     additional_config = read_file(args.additional_config)
 
-    # Merge
+    # Merge & Sort
     new_config = merge_2_configs(existing_config, additional_config)
-    # print(new_config)
+    new_config = dict(sorted(calculated_column_configs.items()))
 
     # Write
     file_name = f'{args.merged_config}.json'
