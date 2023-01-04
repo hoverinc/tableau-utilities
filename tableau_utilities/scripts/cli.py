@@ -65,7 +65,7 @@ parser_server_info = subparsers.add_parser('server_info',
 parser_server_info.add_argument('--list_object', choices=['datasource', 'project', 'workbook'], required=True,
                                 help='Specify the type of object for the information.')
 parser_server_info.add_argument('--list_format', default='names',
-                                choices=['names', 'names_ids', 'ids_names', 'full_df', 'full_dictionary',
+                                choices=['names', 'names_ids', 'names_projects', 'ids_names', 'full_df', 'full_dictionary',
                                          'full_dictionary_pretty'],
                                 help='Set the fields and format for the information.')
 parser_server_info.add_argument('--list_sort_field', default='name',

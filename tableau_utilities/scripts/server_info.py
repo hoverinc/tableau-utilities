@@ -54,9 +54,11 @@ def print_info(object_list, format, sort_field='name'):
     elif format == 'ids_names':
         for record in sorted_records:
             print(record['id'], record['name'])
+    elif format == 'names_projects':
+        for record in sorted_records:
+            print(record['name'], record['project_name'])
     elif format == 'full_df':
         df = pd.DataFrame(sorted_records)
-        # df = df[['name', 'id']]
         print(tabulate(df, headers='keys', tablefmt='psql', colalign='left'))
     elif format == 'full_dictionary':
         for record in sorted_records:
