@@ -178,6 +178,9 @@ def create_column_config(columns, datasource_name, folder_mapping, metadata_reco
     for c in columns:
 
         column_name = c['@name'][1:-1]
+        # Skip internal object columns
+        if column_name.startswith('__tableau_internal_object_id__'):
+            continue
 
         # Keeps a list of column names from the column object.
         column_name_list.append(column_name)
