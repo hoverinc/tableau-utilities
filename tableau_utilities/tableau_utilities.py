@@ -96,6 +96,8 @@ class TableauServer:
             i.e. <site> in https://<server_address>.online.tableau.com/#/site/<site>
         url (str): The URL to Tableau Online
             i.e. https://<server_address>.online.tableau.com
+        token_name: The name of a personal access token
+        token_secret: The value of a personal access token
         api_version (float): The Tableau API version
     """
     def __init__(self, **kwargs):
@@ -103,16 +105,30 @@ class TableauServer:
         password = kwargs.pop('password', None)
         site = kwargs.pop('site', None)
         url = kwargs.pop('url', None)
+        token_name = kwargs.pop('token_name', None)
+        token_secret = kwargs.pop('token_secret', None)
         api_version = kwargs.pop('api_version', 3.9)
         # Connect to Tableau Online when class is initialized
-        self.server = self.__set_server(user, password, site, url, api_version)
+        self.server = self.__set_server(user, password, site, url, token_name, token_secret, api_version)
 
     @staticmethod
-    def __set_server(user, password, site, url, api_version):
+    def __set_server(user, password, site, url, token_name, token_secret, api_version):
         """ Logs in to Tableau Online and sets the server object """
-        tableau_auth = tsc.TableauAuth(user, password, site)
+
+        if user is not None and password is not None:
+            tableau_auth = tsc.TableauAuth(user, password, site)
+
+        elif token_name is not None and token_secret is not None:
+            tableau_auth = tsc.PersonalAccessTokenAuth(token_name=token_name,
+                                                       personal_access_token=token_secret,
+                                                       site_id=site
+                                                       )
+        else:
+            raise ValueError('You must provide either a username/password or a token_name/token_secret')
+
         server = tsc.Server(url, api_version)
         server.auth.sign_in(tableau_auth)
+
         return server
 
     def list_objects(self, object_type, project=None, print_info=True):
