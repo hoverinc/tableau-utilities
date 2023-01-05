@@ -666,7 +666,7 @@ class TableauServer:
             json={'connection': conn_dict}
         )
         self.__transform_tableau_object(content['connection'])
-        return tso.Job(**content['connection'])
+        return tso.Connection(**content['connection'])
 
     def embed_datasource_credentials(self, datasource_id, credentials, connection_type):
         """ Embed the given credentials for all connections of a datasource of the given connection type.
