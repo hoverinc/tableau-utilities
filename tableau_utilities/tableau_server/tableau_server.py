@@ -393,7 +393,7 @@ class TableauServer:
 
         Returns: The absolute path to the file
         """
-        res = self.session.get(url)
+        res = self.session.get(url, stream=True)
         try:
             res.raise_for_status()
         except requests.exceptions.HTTPError as err:
@@ -651,12 +651,22 @@ class TableauServer:
         return tso.Job(**content['job'])
 
     def update_datasource_connection(self, datasource_id, connection: tso.Connection):
+        conn_dict = connection.dict()
+        if 'user_name' in conn_dict:
+            conn_dict.setdefault('userName', conn_dict.pop('user_name'))
+        if 'embed_password' in conn_dict:
+            conn_dict.setdefault('embedPassword', conn_dict.pop('embed_password'))
+        if 'server_address' in conn_dict:
+            conn_dict.setdefault('serverAddress', conn_dict.pop('server_address'))
+        if 'query_tagging_enabled' in conn_dict:
+            conn_dict.setdefault('queryTaggingEnabled', conn_dict.pop('query_tagging_enabled'))
+
         content = self.put(
             f'{self.url}/datasources/{datasource_id}/connections/{connection.id}',
-            json={'connection': connection.dict()}
+            json={'connection': conn_dict}
         )
-        self.__transform_tableau_object(content['job'])
-        return tso.Job(**content['job'])
+        self.__transform_tableau_object(content['connection'])
+        return tso.Job(**content['connection'])
 
     def embed_datasource_credentials(self, datasource_id, credentials, connection_type):
         """ Embed the given credentials for all connections of a datasource of the given connection type.
