@@ -753,6 +753,7 @@ class ParentConnection(TableauFileObject):
     cols: TableauFileObjects[MappingCol] = None
     refresh: Refresh = None
     metadata_records: TableauFileObjects[MetadataRecord] = None
+    default_settings: str = None
 
     def __post_init__(self):
         if self.refresh is not None:
