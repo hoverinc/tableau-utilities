@@ -1,3 +1,5 @@
 xmltodict
 pyyaml
 requests
+pandas
+tabulate
