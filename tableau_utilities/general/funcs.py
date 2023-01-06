@@ -63,4 +63,5 @@ def transform_tableau_object(obj):
             update['class_name'] = value
         else:
             update[key] = deepcopy(value)
+        print(update)
     return update
