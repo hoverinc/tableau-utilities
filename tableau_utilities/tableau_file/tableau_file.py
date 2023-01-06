@@ -120,7 +120,6 @@ class Datasource(TableauFile):
         yield self.columns
         yield self.folders_common
         yield self.extract
-        yield self.metadata_records
 
     def __get_section(self, tag):
         """ Sets DatasourceItems for each section """
