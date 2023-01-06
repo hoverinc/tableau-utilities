@@ -723,10 +723,11 @@ class MetadataRecord(TableauFileObject):
 
 @dataclass
 class Refresh(TableauFileObject):
+    tag: str = 'refresh'
     refresh_event: dict = None
     increment_key: str = None
     incremental_updates: bool = None
-    tag: str = 'refresh'
+
 
     def dict(self):
         return {
