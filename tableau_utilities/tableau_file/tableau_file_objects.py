@@ -728,7 +728,6 @@ class Refresh(TableauFileObject):
     increment_key: str = None
     incremental_updates: bool = None
 
-
     def dict(self):
         return {
             '@refresh-event': self.refresh_event,
