@@ -62,13 +62,13 @@ group_local_folder.add_argument('--clean_up_first', action='store_true',
 # SERVER INFO
 parser_server_info = subparsers.add_parser('server_info',
                                            help='Retrieve and view information from Tableau Cloud/Server')
-parser_server_info.add_argument('--list_object', choices=['datasource', 'project', 'workbook'], required=True,
+parser_server_info.add_argument('-lo', '--list_object', choices=['datasource', 'project', 'workbook'], required=True,
                                 help='Specify the type of object for the information.')
-parser_server_info.add_argument('--list_format', default='names',
+parser_server_info.add_argument('-lp', '--list_format', default='names',
                                 choices=['names', 'names_ids', 'names_projects', 'ids_names', 'full_df', 'full_dictionary',
                                          'full_dictionary_pretty'],
                                 help='Set the fields and format for the information.')
-parser_server_info.add_argument('--list_sort_field', default='name',
+parser_server_info.add_argument('-lsf', '--list_sort_field', default='name',
                                 help='Choose the field for sorting the information.')
 parser_server_info.set_defaults(func=server_info)
 
