@@ -723,12 +723,14 @@ class MetadataRecord(TableauFileObject):
 
 @dataclass
 class Refresh(TableauFileObject):
-    increment_key: str
-    incremental_updates: bool
     tag: str = 'refresh'
+    refresh_event: dict = None
+    increment_key: str = None
+    incremental_updates: bool = None
 
     def dict(self):
         return {
+            '@refresh-event': self.refresh_event,
             '@increment-key': self.increment_key,
             '@increment-updates': str(self.incremental_updates).lower()
         }
@@ -753,6 +755,7 @@ class ParentConnection(TableauFileObject):
     cols: TableauFileObjects[MappingCol] = None
     refresh: Refresh = None
     metadata_records: TableauFileObjects[MetadataRecord] = None
+    default_settings: str = None
 
     def __post_init__(self):
         if self.refresh is not None:
@@ -761,8 +764,7 @@ class ParentConnection(TableauFileObject):
             self.relation = Relation(**transform_tableau_object(self.relation))
         if self.named_connections is not None:
             self.named_connections = TableauFileObjects(
-                self.named_connections['named-connection'], item_class=NamedConnection, tag='named-connections'
-            )
+                self.named_connections['named-connection'], item_class=NamedConnection, tag='named-connections')
         else:
             self.named_connections = TableauFileObjects(item_class=NamedConnection, tag='named-connections')
         if self.cols is not None:
