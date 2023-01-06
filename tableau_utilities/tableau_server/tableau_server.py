@@ -675,6 +675,8 @@ class TableauServer:
             conn_dict.setdefault('userName', conn_dict.pop('user_name'))
         if 'embed_password' in conn_dict:
             conn_dict.setdefault('embedPassword', conn_dict.pop('embed_password'))
+        if 'password' in conn_dict:
+            conn_dict.setdefault('password', conn_dict.pop('password'))
         if 'server_address' in conn_dict:
             conn_dict.setdefault('serverAddress', conn_dict.pop('server_address'))
         if 'query_tagging_enabled' in conn_dict:
@@ -706,4 +708,5 @@ class TableauServer:
                 c.userName = credentials['username']
                 c.password = credentials['password']
                 c.embedPassword = True
-                self.update_datasource_connection(datasource_id, c)
+                response = self.update_datasource_connection(datasource_id, c)
+                return response

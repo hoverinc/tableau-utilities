@@ -22,9 +22,12 @@ class TableauFile:
         """
         Args:
             file_path (str): Path to a Tableau file
+
         """
         self.file_path = os.path.abspath(file_path)
         self.extension = file_path.split('.')[-1]
+        self.file_path_without_extension = file_path.split('.')[0]
+        self.file_name = self.file_path_without_extension.split('/')[-1]
         ''' Set on init '''
         self._tree: ET.ElementTree
         self._root: ET.Element
@@ -74,8 +77,16 @@ class TableauFile:
                     tableau_file_path = os.path.join(file_dir, z.filename)
         return tableau_file_path
 
-    def save(self):
+    def save(self, save_raw_xml=False):
         """ Save/Update the Tableau file with the XML changes made """
+
+        if save_raw_xml:
+            xml_file_with_path = f'{self.file_name}.xml'
+            with open(xml_file_with_path, 'wb') as f:
+                self._tree.write(f, encoding='utf-8')
+
+            return xml_file_with_path
+
         if self.extension in ['tdsx', 'twbx']:
             with ZipFile(self.file_path, 'r') as zr, ZipFile(self.file_path, 'w') as zw:
                 for file in zr.filelist:

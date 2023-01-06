@@ -70,9 +70,9 @@ if __name__ == '__main__':
 
 ```
 
-### CLI Usage
+## CLI Usage
 
-#### Help
+### Help
 1. See the top level CLI arguments including the commands.
 ```commandline
 tableau_utilities --help
@@ -83,7 +83,7 @@ tableau_utilities --help
 tableau_utilities server_operate --help
 ```
 
-#### Authentication Options
+### Authentication Options
 1. Pass your credentials into the command
 ```commandline
  tableau_utilities --auth args_token --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az server_info --list_object datasource --list_format names
@@ -101,41 +101,75 @@ tableau_utilities --auth args_token --token_name my_token_name --token_secret 1q
 
 4. Using the 1password cli with op run
 ```commandline
-op run --env-file=.env -- tableau_utilities --auth os_env --list_object datasource --list_format names
+op run --env-file=.env -- tableau_utilities --auth os_env server_info list_--list_object datasource --list_format names
 ```
 
-#### Examples for each command area
+### Examples for each command area
 
-* `server_info`: Lists all datasources in your site ordered by ID
+#### server_info
+Lists all datasources in your site ordered by ID
 ```commandline
 tableau_utilities --auth args_token --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az server_info --list_object datasource --list_format ids_names --list_sort_field id
 ```
 
-* `server_operate`: Download a datasource by name
+#### server_operate
+Download a datasource by name
 ```commandline
-tableau_utilities --auth args_token --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az server_info server_operate --action_type download --object_type datasource --name 'My Datasource Name'  --project_name 'My Project Name'
+tableau_utilities --auth args_token --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az --name 'My Awesome Datasource' --project_name 'My Fabulous Project' server_operate --action_type download --object_type datasource
 ```
 
-* `generate_config`: Generate a config from a datasource in online/server
+#### connection
+Embed a username and password in a datasource in Tableau Online/Server
 ```commandline
-tableau_utilities --auth args_token --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az server_info --datasource_source online --datasource_name 'My Awseome Datasource' --datasource_project_name 'My Team Project'
+tableau_utilities --auth args_token --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az --location online --name 'My Awesome Datasource' --project_name 'My Fabulous Project' connection --connection_operation embed_user_pass  --conn args --conn_type snowflake --conn_user MY_SNOWFLAKE_USER --conn_pw '1234567abc!'
+```
+
+#### datasource
+Save the xml for a datasource from a local datasource
+```commandline
+tableau_utilities --datasource_path '/Downloads/My Awesome Datasource.tdsx'  datasource --datasource_save_xml
+```
+
+Save the xml for a datasource from an online datasource
+```commandline
+tableau_utilities --auth args_token --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az --location online --name 'My Awesome Datasource' --project_name 'My Cool Project' datasource --datasource_save_xml
+```
+
+Change the folder for a column
+```commandline
+tableau_utilities  --datasource_source local --datasource_path '/Downloads/Metadata Alter.tdsx'  datasource --column --column_name ADOPTION_STAGE_CURRENT --remote_name ADOPTION_STAGE_CURRENT --caption 'My Pretty Column Name' --desc 'The most perfect description helping users understand the data' 
 
 ```
 
-* `generate_config`: Generate a config from a local file. Add a file prefix and print the debugging logs to the console
+#### generate_config
+
+Generate a config from a datasource in online/server
 ```commandline
-tableau_utilities --debugging_logs generate_config --datasource_source local --datasource_path '/Users/jayrosenthal/code/tableau-utilities/tmp_tdsx_and_config/My Awesome Datasource.tdsx' --file_prefix
+tableau_utilities --auth args_token --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az --location online --name 'My Awseome Datasource' --project_name 'My Team Project' generate_config
 ```
 
-# `merge_config`: Merge a new config into your main config
+Generate a config from a datasource in online/server and add definitions from a csv
 ```commandline
-tableau_utilities merge_config --existing_config /Users/jayrosenthal/code/tableau-utilities/tmp_tdsx_and_config/main__column_config.json --additional_config /Users/jayrosenthal/code/tableau-utilities/tmp_tdsx_and_config/new__column_config.json
+tableau_utilities --auth args_token --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az --location online --name 'My Awseome Datasource' --project_name 'My Team Project' generate_config --definitions_csv /Desktop/new_descriptions.csv
 ```
 
+Generate a config from a local file. Add a file prefix and print the debugging logs to the console
+```commandline
+tableau_utilities --debugging_logs generate_config --datasource_source local --datasource_path '/code/tableau-utilities/tmp_tdsx_and_config/My Awesome Datasource.tdsx' --file_prefix
+```
 
-TO DO: ADD THIS FUNCTIONALITY TO THE NEW CLI
-- Add column to datasource
-  - `tableau_utilities --tdsx path/to/file.tdsx --add_column --name "column_name" --folder "Folder Name" --caption "Column Alias" --desc "column description"`
+#### csv_config
+Write the config to a csv with 1 row per field per datasource
+```commandline
+ tableau_utilities csv_config --config_list /code/airflow/dags/tableau/configs/column_config.json /code/airflow/dags/tableau/configs/tableau_calc_config.json
+```
+
+#### merge_config
+Merge a new config into your main config
+```commandline
+tableau_utilities merge_config --existing_config /code/tableau-utilities/tmp_tdsx_and_config/main__column_config.json --additional_config /code/tableau-utilities/tmp_tdsx_and_config/new__column_config.json
+```
+
 
 ### Development
 - `pip install -r requirements/dev.txt`

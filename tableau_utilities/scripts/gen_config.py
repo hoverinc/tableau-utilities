@@ -30,10 +30,12 @@ def load_csv_with_definitions(file=None):
     if 'column_name' not in column_names or 'description' not in column_names:
         raise ValueError('The .csv must contain a column_name and a description column.')
 
+    # print(definitions)
     definitions_mapping = {}
 
     for column in definitions:
-        definitions_mapping[column['column_name']] = column['description']
+        if str(column['description']) != 'nan':
+            definitions_mapping[column['column_name']] = column['description']
 
     return definitions_mapping
 
@@ -355,34 +357,40 @@ def generate_config(args, server=None):
 
     """
 
+    # Set variables from the args
     definitions_csv_path = args.definitions_csv
     debugging_logs = args.debugging_logs
+    location = args.location
+    id = args.id
+    datasource_name = args.name
+    project_name = args.project_name
+    datasource_path = args.file_path
+    file_prefix = args.file_prefix
 
-    if args.datasource_source == 'local':
-        datasource_path = args.datasource_path
+    # Get the datasource name from the path
+    if location == 'local':
         datasource_name = Path(datasource_path).stem
         print(f'BUILDING CONFIG FOR: {datasource_name} {datasource_path} ')
 
-    elif args.datasource_source == 'online':
-        datasource_id = args.datasource_id
-        datasource_name = args.datasource_name
-        project_name = args.datasource_project_name
+    # Download the datasouce and set values for
+    elif location == 'online':
         object_list = get_object_list(object_type='datasource', server=server)
-        datasource_id, datasource_name, project_name = fill_in_id_name_project(datasource_id, datasource_name,
-                                                                               project_name, object_list)
-        datasource_path = download_datasource(server, datasource_id)
+        id, datasource_name, project_name = fill_in_id_name_project(id, datasource_name, project_name, object_list)
+        datasource_path = download_datasource(server, id)
         print(
-            f'GETTING DATASOURCE ID: {datasource_id}, NAME: {datasource_name}, PROJECT NAME: {project_name}, INCLUDE EXTRACT false')
+            f'GETTING DATASOURCE ID: {id}, NAME: {datasource_name}, PROJECT NAME: {project_name}, INCLUDE EXTRACT false')
 
+    # Get column information from the metadata records
     metadata_record_columns = get_metadata_record_columns(datasource_name, datasource_path, debugging_logs)
 
+    # Get the mapping of definitions from the csv
     definitions_mapping = None
     if definitions_csv_path is not None:
         definitions_mapping = load_csv_with_definitions(file=definitions_csv_path)
 
+    # Extract the columns and folders. Build the new config
     columns = extract_columns(datasource_name, datasource_path)
     folder_mapping = build_folder_mapping(datasource_path)
-
     column_configs, calculated_column_configs = create_column_config(columns=columns,
                                                                      datasource_name=datasource_name,
                                                                      folder_mapping=folder_mapping,
@@ -398,7 +406,7 @@ def generate_config(args, server=None):
     output_file_column_config = 'column_config.json'
     output_file_calculated_column_config = 'tableau_calc_config.json'
 
-    if args.file_prefix:
+    if file_prefix:
         output_file_column_config = f'{datasource_name_snake}__{output_file_column_config}'
         output_file_calculated_column_config = f'{datasource_name_snake}__{output_file_calculated_column_config}'
 

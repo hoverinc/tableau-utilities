@@ -95,32 +95,46 @@ def server_operate(args, server):
 
     """
 
-    # Set the inputs from the args. These might be none
+    # Set the inputs from the args.
+    object_type = args.object_type
+    action_type = args.action_type
+    include_extract = args.include_extract
+
+    # These might be none
     id = args.id
     object_name = args.name
     project_name = args.project_name
 
-    object_list = get_object_list(object_type=args.object_type, server=server)
-    id, object_name, project_name = fill_in_id_name_project(id, object_name, project_name, object_list)
+    if args.all and action_type == 'download':
+        object_list = get_object_list(object_type, server)
+        # object_list = object_list_to_dicts(object_list)
+        for o in object_list:
+            print(f"DOWNLOADING {o['name']} {o['project_name']} {o['id']}")
+            response = server.download_datasource(o['id'], include_extract=include_extract)
+            print(response)
 
-    print(f'GETTING OBJECT ID: {id}, OBJECT NAME: {object_name}, PROJECT NAME: {project_name}, INCLUDE EXTRACT {args.include_extract}')
+    else:
+        object_list = get_object_list(object_type=args.object_type, server=server)
+        id, object_name, project_name = fill_in_id_name_project(id, object_name, project_name, object_list)
 
-    if args.action_type == 'download':
-        if args.object_type == 'datasource':
-            server.download_datasource(id, include_extract=args.include_extract)
-        if args.object_type == 'workbook':
-            server.download_workbook(id, include_extract=args.include_extract)
-    elif args.action_type == 'publish':
-        print(f'PUBLISHING ID: {id}, OBJECT NAME: {object_name}, PROJECT NAME: {project_name}')
-        if args.object_type == 'datasource':
-            response = server.publish_datasource(args.file_path, datasource_id=id, datasource_name=object_name, project_name=project_name)
-        if args.object_type == 'workbook':
-            response = server.publish_workbook(args.file_path, workbook_id=id, workbook_name=object_name, project_name=project_name)
-        print(f'RESPONSE {response}')
-    elif args.action_type == 'refresh':
-        print(f'REFRESHING ID: {id}, OBJECT NAME: {object_name}, PROJECT NAME: {project_name}')
-        if args.object_type == 'datasource':
-            response = server.refresh_datasouce(datasource_id=id)
-        if args.object_type == 'workbook':
-            response = server.refresh_workbook(workbook_id=id)
-        print(f'RESPONSE {response}')
+        if action_type == 'download':
+            print(
+                f'GETTING OBJECT ID: {id}, OBJECT NAME: {object_name}, PROJECT NAME: {project_name}, INCLUDE EXTRACT {include_extract}')
+            if args.object_type == 'datasource':
+                server.download_datasource(id, include_extract=include_extract)
+            if args.object_type == 'workbook':
+                server.download_workbook(id, include_extract=include_extract)
+        elif action_type == 'publish':
+            print(f'PUBLISHING ID: {id}, OBJECT NAME: {object_name}, PROJECT NAME: {project_name}')
+            if args.object_type == 'datasource':
+                response = server.publish_datasource(args.file_path, datasource_id=id, datasource_name=object_name, project_name=project_name)
+            if args.object_type == 'workbook':
+                response = server.publish_workbook(args.file_path, workbook_id=id, workbook_name=object_name, project_name=project_name)
+            print(f'RESPONSE {response}')
+        elif action_type == 'refresh':
+            print(f'REFRESHING ID: {id}, OBJECT NAME: {object_name}, PROJECT NAME: {project_name}')
+            if args.object_type == 'datasource':
+                response = server.refresh_datasource(datasource_id=id)
+            if args.object_type == 'workbook':
+                response = server.refresh_workbook(workbook_id=id)
+            print(f'RESPONSE {response}')

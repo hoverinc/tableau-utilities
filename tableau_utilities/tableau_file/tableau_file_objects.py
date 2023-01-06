@@ -1,10 +1,10 @@
+import sys
 import re
 import xml.etree.ElementTree as ET
 import xmltodict
 from dataclasses import dataclass, astuple, field
 from typing import Literal
 from tableau_utilities.general.funcs import transform_tableau_object
-
 
 @dataclass
 class TableauFileObject:
@@ -323,7 +323,7 @@ class Column(TableauFileObject):
         if self.fiscal_year_start is not None:
             output['@fiscal_year_start'] = self.fiscal_year_start
         if self.visual_totals is not None:
-            output['@visual_totals'] = self.visual_totals
+            output['@visual-totals'] = self.visual_totals
 
         return output
 
@@ -560,7 +560,10 @@ class Connection(TableauFileObject):
     warehouse: str = None
     odbc_connect_string_extras: str = None
     one_time_sql: str = None
+    query_tagging_enabled: bool = None
+    saml_idp: str = None
     server_oauth: str = None
+    server_userid: str = None
     workgroup_auth_mode: str = None
     tablename: str = None
     default_settings: str = None
@@ -591,8 +594,14 @@ class Connection(TableauFileObject):
             output['@odbc-connect-string-extras'] = self.odbc_connect_string_extras
         if self.one_time_sql is not None:
             output['@one-time-sql'] = self.one_time_sql
+        if self.query_tagging_enabled is not None:
+            output['@query-tagging-enabled'] = self.query_tagging_enabled
+        if self.saml_idp is not None:
+            output['@saml-idp'] = self.saml_idp
         if self.server_oauth is not None:
             output['@server-oauth'] = self.server_oauth
+        if self.server_userid is not None:
+            output['@server-userid'] = self.server_userid
         if self.workgroup_auth_mode is not None:
             output['@workgroup-auth-mode'] = self.workgroup_auth_mode
         if self.tablename is not None:
