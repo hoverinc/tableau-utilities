@@ -1,5 +1,3 @@
-# from tableau_utilities.scripts.main import do_args
-# from tableau_utilities.scripts.main import main
 from .tableau_file.tableau_file import TableauFileError, Datasource
 from .tableau_file import tableau_file_objects
 from .tableau_server.tableau_server import TableauConnectionError, TableauServer
