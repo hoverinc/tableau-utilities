@@ -1,38 +1,38 @@
 """
-  Updates each Tableau datasource's columns/connection/etc, according to the config files.
+Updates each Tableau datasource's columns/connection/etc, according to the config files.
 """
 
 import datetime
 import time
 import logging
-import json
+import yaml
 import os
 import shutil
 import re
 import ast
 from copy import deepcopy
-from tdscc import TDS, TableauServer, extract_tds, update_tdsx, TDSCCError
+from tableau_utilities import TableauServer, TDS, extract_tds, update_tdsx, TableauUtilitiesError
 
 from airflow import DAG, models
-from airflow.operators.python_operator import PythonOperator
-from airflow.hooks.base_hook import BaseHook
+from airflow.operators.python import PythonOperator
+from airflow.hooks.base import BaseHook
+from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 
 
 CFG_PATH = 'dags/tableau_datasource_update/configs'
-with open(os.path.join(CFG_PATH, 'column_persona_config.json')) as read_config:
-    PERSONA_CFG = json.load(read_config)
-with open(os.path.join(CFG_PATH, 'datasource_project_config.json')) as read_config:
-    DS_PROJECT_CFG = json.load(read_config)
-with open(os.path.join(CFG_PATH, 'column_config.json')) as read_config:
-    COLUMN_CFG = json.load(read_config)
-with open(os.path.join(CFG_PATH, 'tableau_calc_config.json')) as read_config:
-    CALC_CFG = json.load(read_config)
+with open(os.path.join(CFG_PATH, 'column_persona_config.yaml')) as read_config:
+    PERSONA_CFG = yaml.safe_load(read_config)
+with open(os.path.join(CFG_PATH, 'datasource_project_config.yaml')) as read_config:
+    DS_PROJECT_CFG = yaml.safe_load(read_config)
+with open(os.path.join(CFG_PATH, 'column_config.yaml')) as read_config:
+    COLUMN_CFG = yaml.safe_load(read_config)
+with open(os.path.join(CFG_PATH, 'tableau_calc_config.yaml')) as read_config:
+    CALC_CFG = yaml.safe_load(read_config)
 
 
 def invert_config(iterator, config):
     """ Helper function to invert the column config and calc config.
         Output -> {datasource: {column: info}}
-
     Args:
         iterator (dict): The iterator to append invert data to.
         config (dict): The config to invert.
@@ -55,9 +55,8 @@ COLUMN_CFG = deepcopy(temp)
 del temp
 
 
-def refresh_datasource(tasks, tableau_conn_id='tableau_default', snowflake_conn_id='snowflake_default'):
+def refresh_datasource(tasks, tableau_conn_id='tableau_default', snowflake_conn_id='gcp_snowflake_default'):
     """ Refresh a datasource extract.
-
     Args:
         tasks: A dictionary with the columns to add or modify.
         tableau_conn_id (str): The Tableau connection ID
@@ -68,101 +67,98 @@ def refresh_datasource(tasks, tableau_conn_id='tableau_default', snowflake_conn_
         tasks = ast.literal_eval(tasks)
 
     conn = BaseHook.get_connection(tableau_conn_id)
-    ts = TableauServer(user=conn.login, password=conn.password, url=conn.host,
-                       site=conn.extra_dejson['site'])
-
+    ts = TableauServer(
+        url=conn.host,
+        token_name=conn.extra_dejson['token_name'],
+        token_secret=conn.extra_dejson['token_secret'],
+        site=conn.extra_dejson['site']
+    )
     snowflake_conn = BaseHook.get_connection(snowflake_conn_id)
-    embeded_credentials_attempts = 0
-    embed_tries = 10
-    while embeded_credentials_attempts < embed_tries:
+
+    for datasource_id, ds_tasks in tasks.items():
+        embeded_credentials_attempts = 0
+        embed_tries = 10
+        while embeded_credentials_attempts < embed_tries:
+            try:
+                ts.embed_credentials(
+                    datasource_id,
+                    connection_type='snowflake',
+                    credentials={'username': snowflake_conn.login, 'password': snowflake_conn.password}
+                )
+                logging.info('Successfully embedded credentials')
+                embeded_credentials_attempts = embed_tries
+            except AttributeError as err:
+                if embeded_credentials_attempts < embed_tries - 1:
+                    embeded_credentials_attempts += 1
+                    time.sleep(10)
+                    logging.warning('Embedding credentials failed: %s', err)
+                    logging.info('Retrying embedding credentials: %s / %s attempts',
+                                 embeded_credentials_attempts, embed_tries)
+                else:
+                    raise Exception(err) from err
+
+        # All listed datasources in this variable won't be refreshed
+        # Common use-case for not refreshing a datasource, is because it has a live connection
+        no_refresh = ast.literal_eval(models.Variable.get('NO_REFRESH_DATASOURCES'))
+        if ds_tasks['datasource_name'] in no_refresh:
+            logging.info('No refresh required - skipping refresh of %s %s',
+                         datasource_id, ds_tasks['datasource_name'])
+            return None
+
         try:
-            ts.embed_credentials(tasks["dsid"], connection_type='snowflake',
-                                 credentials={'username': snowflake_conn.login,
-                                              'password': snowflake_conn.password})
-            logging.info('Successfully embedded credentials')
-            embeded_credentials_attempts = embed_tries
-        except AttributeError as err:
-            if embeded_credentials_attempts < embed_tries - 1:
-                embeded_credentials_attempts += 1
-                time.sleep(10)
-                logging.warning('Embedding credentials failed: %s', err)
-                logging.info('Retrying embedding credentials: %s / %s attempts',
-                             embeded_credentials_attempts, embed_tries)
+            ts.refresh_datasource(datasource_id)
+            logging.info('Refreshed %s %s', ds_tasks, ds_tasks['datasource_name'])
+        except Exception as error:
+            if isinstance(error, TableauUtilitiesError) or 'Not queuing a duplicate.' in str(error):
+                logging.info(error)
+                logging.info('Skipping Refresh %s %s ... Already running',
+                             datasource_id, ds_tasks['datasource_name'])
             else:
-                raise Exception(err) from err
-
-    # All listed datasources in this variable won't be refreshed
-    # Common use-case for not refreshing a datasource, is because it has a live connection
-    no_refresh = ast.literal_eval(models.Variable.get('NO_REFRESH_DATASOURCES'))
-    if tasks['datasource_name'] in no_refresh:
-        logging.info('No refresh required - skipping refresh of %s %s',
-                     tasks["dsid"], tasks['datasource_name'])
-        return None
-
-    try:
-        ts.refresh_datasource(tasks["dsid"])
-        logging.info('Refreshed %s %s', tasks["dsid"], tasks['datasource_name'])
-    except Exception as error:
-        if isinstance(error, TDSCCError) or 'Not queuing a duplicate.' in str(error):
-            logging.info(error)
-            logging.info('Skipping Refresh %s %s ... Already running',
-                         tasks["dsid"], tasks['datasource_name'])
-        else:
-            raise Exception(error) from error
+                raise Exception(error) from error
 
 
 class TableauDatasourceTasks(models.BaseOperator):
     """ Compares config files to the published datasource,
         to get a dictionary of tasks needing to be updated.
-
     Args:
         snowflake_conn_id (str): The Snowflake connection ID, used for the datasource connection info
         tableau_conn_id (str): The Tableau connection ID
         datasource_name (str): The name of the datasource
         project (str): The project of the datasource in Tableau Online
         column_cfg (dict): The config information for the datasource.
-
     Returns: A dict of tasks to be updated for the datasource.
     """
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.snowflake_conn_id = kwargs.get('snowflake_conn_id', 'snowflake_default')
-        self.tableau_conn_id = kwargs.get('tableau_conn_id', 'tableau_default')
+        self.snowflake_conn_id = kwargs.pop('snowflake_conn_id', 'gcp_snowflake_default')
+        self.tableau_conn_id = kwargs.pop('tableau_conn_id', None)
         self.actions = ['add_column', 'modify_column', 'add_folder', 'delete_folder', 'update_connection']
-        self.tasks = {a: [] for a in self.actions}
-        self.tasks['datasource_name'] = kwargs.get('datasource_name')
-        self.tasks['project'] = kwargs.get('project')
-        self.column_cfg = kwargs.get('column_cfg', {}).get(self.tasks['datasource_name'])
-        self.persona_cfg = kwargs.get('persona_cfg')
-        self.tds = None
+        self.datasource_project_cfg = kwargs.pop('datasource_project_cfg', {})
+        self.column_cfg = kwargs.pop('column_cfg', {})
+        self.persona_cfg = kwargs.pop('persona_cfg')
+        super().__init__(*args, **kwargs)
+        # Set on execution
+        self.tasks = dict()
 
     def __set_connection_attributes(self):
         """ Sets attributes of the datasource connection. """
-        snowflake_conn = BaseHook.get_connection(self.snowflake_conn_id)
-
-        # In the event that we switch to a different data warehouse,
-        # we will need to update the host specification here
-        if snowflake_conn.conn_type.lower() != 'snowflake':
-            raise Exception('Connection must be of type: Snowflake')
+        snowflake_hook = SnowflakeHook(self.snowflake_conn_id)
 
         return {
             'conn_type': 'snowflake',
-            'conn_db': snowflake_conn.extra_dejson['database'],
-            'conn_schema': snowflake_conn.extra_dejson['schema'],
-            'conn_host': f'{snowflake_conn.host}.snowflakecomputing.com',
-            'conn_role': snowflake_conn.extra_dejson['role'],
-            'conn_user': snowflake_conn.login,
-            'conn_warehouse': snowflake_conn.extra_dejson['warehouse']
+            'conn_db': snowflake_hook.database,
+            'conn_schema': snowflake_hook.schema,
+            'conn_host': f'{snowflake_hook.account}.snowflakecomputing.com',
+            'conn_role': snowflake_hook.role,
+            'conn_user': snowflake_hook.user,
+            'conn_warehouse': snowflake_hook.warehouse
         }
 
     @staticmethod
     def __set_column_attributes(caption, col_config, persona_cfg):
         """ Sets attributes as a function of caption and cfg.
-
         :param caption: The top-level key of the cfg.
         :param col_config: A dictionary of the column info from the config file
         :param persona_cfg: A dictionary of the persona config file
-
         """
         return {
             'caption': caption,
@@ -176,16 +172,14 @@ class TableauDatasourceTasks(models.BaseOperator):
             'remote_name': col_config['remote_name']
         }
 
-    def __is_column_in_folder(self, col_attributes):
+    def __is_column_in_folder(self, tds, col_attributes):
         """ Determine if the column is in the given folder.
-
         Args:
             col_attributes: Dict of column attributes.
-
         Returns: True, False, or None if the folder doesn't exist.
         """
 
-        folder = TDS(tds=self.td).get('folder', **col_attributes)
+        folder = TDS(tds).get('folder', **col_attributes)
         if not folder:
             return None
         if folder.get('folder-item') is None:
@@ -200,15 +194,14 @@ class TableauDatasourceTasks(models.BaseOperator):
                 return True
         return False
 
-    def __add_task(self, action, attributes):
+    def __add_task(self, datasource_id, action, attributes, other=None):
         """ Add a task to the dictionary of tasks:
             add_column, modify_column, add_folder, or delete_folder
-
             Sample:
                 {
                     "dsid": "abc123def456",
-                    "datasource_name": "Datasource Name Here",
-                    "project": "General",
+                    "datasource_name": "Datasource Name",
+                    "project": "Project Name",
                     "add_column": [attrib, attrib],
                     "modify_column": [attrib, attrib]
                     "add_folder": [attrib, attrib]
@@ -216,6 +209,7 @@ class TableauDatasourceTasks(models.BaseOperator):
                     "update_connection": [attrib, attrib]
                 }
         Args:
+            datasource_id (str): The ID of the datasource
             action: The name of action to do.
             attributes: Dict of attributes for the action to use.
         """
@@ -223,18 +217,21 @@ class TableauDatasourceTasks(models.BaseOperator):
             raise Exception(f'Invalid action {action}')
 
         if action:
-            self.tasks[action].append(attributes)
-            logging.info('Adding to task table action: %s dsid: %s Datasource Name: %s Attributes: %s',
-                         action, self.tasks['dsid'], self.tasks['datasource_name'], attributes)
+            self.tasks[datasource_id][action].append(attributes)
+            logging.info(
+                'Adding to task table action: %s dsid: %s Datasource Name: %s\nAttributes:\n\t%s\n\t%s',
+                action, datasource_id, self.tasks[datasource_id]['datasource_name'], attributes, other
+            )
 
-    def __append_folders_from_tds(self, folders_from_tds):
+    def __append_folders_from_tds(self, tds, datasource_id, folders_from_tds):
         """ Appends the folders_from_tds with folders found in the datasource
-
-        :param folders_from_tds: The table to append information to
-        :return: None
+        Args:
+            datasource_id (str): The ID of the datasource
+            folders_from_tds (dict): The table to append information to
+        Returns: None
         """
-        if self.tasks['dsid'] not in folders_from_tds:
-            folders = TDS(tds=self.tds).list('folder')
+        if datasource_id not in folders_from_tds:
+            folders = TDS(tds).list('folder')
             if isinstance(folders, list):
                 folders = [{'name': f['@name'],
                             'role': f['@role'][:-1] if '@role' in f else None}
@@ -244,31 +241,33 @@ class TableauDatasourceTasks(models.BaseOperator):
                             'role': folders['@role'][:-1] if '@role' in folders else None}]
             else:
                 folders = []
-            folders_from_tds[self.tasks['dsid']] = {'name': self.tasks['datasource_name'],
-                                                    'folders': folders}
+            folders_from_tds[datasource_id] = {
+                'name': self.tasks[datasource_id]['datasource_name'],
+                'folders': folders
+            }
 
-    def __append_folders_from_config(self, col_attributes, folders_from_cfg):
+    def __append_folders_from_config(self, datasource_id, col_attributes, folders_from_cfg):
         """ Appends the folders_from_cfg with folders found in the config
-
         Args:
+            datasource_id (str): The ID of the datasource
             col_attributes: Dict of attributes about the column
             folders_from_cfg: The table to append information to
         """
         folder_info = {'name': col_attributes['folder_name'], 'role': col_attributes['role']}
-        if self.tasks['dsid'] not in folders_from_cfg:
-            folders_from_cfg[self.tasks['dsid']] = {'name': self.tasks['datasource_name'],
-                                                    'folders': [folder_info]}
-        elif folder_info not in folders_from_cfg[self.tasks['dsid']]['folders']:
-            folders_from_cfg[self.tasks['dsid']]['folders'].append(folder_info)
+        if datasource_id not in folders_from_cfg:
+            folders_from_cfg[datasource_id] = {
+                'name': self.tasks[datasource_id]['datasource_name'],
+                'folders': [folder_info]
+            }
+        elif folder_info not in folders_from_cfg[datasource_id]['folders']:
+            folders_from_cfg[datasource_id]['folders'].append(folder_info)
 
     @staticmethod
     def __different_column(tds_col, attributes):
         """ Compare the column from the tds to attributes we expect.
-
         Args:
             tds_col: The OrderedDict column from the tds.
             attributes: The column attributes generated from the config file entry.
-
         Returns: bool
         """
         diff = False
@@ -291,59 +290,53 @@ class TableauDatasourceTasks(models.BaseOperator):
         return diff
 
     @staticmethod
-    def __different_connection(tds_conn, credentials):
+    def __different_connection(tds_conn, attributes):
         """ Compare the connection from the tds to attributes we expect.
-
         Args:
-            tds_conn (dict): The OrderedDict connection from the tds.
-            credentials (dict): The credentials that should be attributed to the connection
-
-        Returns: True if there is a difference between the connection in the source and the credentials provided
+            tds_conn: The OrderedDict connection from the tds.
+            attributes: The column attributes generated from the config file entry.
+        Returns: bool
         """
         diff = False
-        if not tds_conn or not credentials:
+        if not tds_conn or not attributes:
             return diff
 
-        if '@class' in tds_conn and tds_conn['@class'] != credentials.get('conn_type'):
-            diff = True
-        if '@dbname' in tds_conn and tds_conn['@dbname'] != credentials.get('conn_db'):
-            diff = True
-        if '@schema' in tds_conn and tds_conn['@schema'] != credentials.get('conn_schema'):
-            diff = True
-        if '@server' in tds_conn and tds_conn['@server'] != credentials.get('conn_host'):
-            diff = True
-        if '@service' in tds_conn and tds_conn['@service'] != credentials.get('conn_role'):
-            diff = True
-        if '@username' in tds_conn and tds_conn['@username'] != credentials.get('conn_user'):
-            diff = True
-        if '@warehouse' in tds_conn and tds_conn['@warehouse'] != credentials.get('conn_warehouse'):
-            diff = True
+        map_attrs = {
+            '@class': 'conn_type',
+            '@dbname': 'conn_db',
+            '@schema': 'conn_schema',
+            '@server': 'conn_host',
+            '@service': 'conn_role',
+            '@username': 'conn_user',
+            '@warehouse': 'conn_warehouse',
+        }
+        for tds_attr, cfg_attr in map_attrs.items():
+            if tds_attr in tds_conn and tds_conn[tds_attr].lower() != attributes[cfg_attr].lower():
+                diff = True
         return diff
 
-    def __add_folder_task_exists(self, col_attributes):
+    def __add_folder_task_exists(self, dsid, col_attributes):
         """ Checks if the add_folder task has already been added as a task for the datasource.
-
         Args:
-            col_attributes (dict): A dict of attributes about the column
-
-        Returns: True if the task exists
+            dsid (str): The ID of the datasource
+            col_attributes (dict): The column attributes containing the folder_name and role
+        Returns: A boolean; True if an add_folder task was added
         """
         try:
             add_folder_task_folder_role_exists = [
-                a for a in self.tasks['add_folder']
+                a for a in self.tasks[dsid]['add_folder']
                 if a['folder_name'] == col_attributes['folder_name'] and a['role'] == col_attributes['role']]
             return add_folder_task_folder_role_exists != []
         except KeyError:
             return False
 
-    def __compare_folders(self, folders_from_tds, folders_from_cfg):
+    def __compare_folders(self, datasource_id, folders_from_tds, folders_from_cfg):
         """ Compares folders found in the datasource and in the config.
             If there are folders in the source that are not in the config,
             a task will be added to delete the folder.
-
-        Args:
-            folders_from_tds (dict): The table of folders from the datasource's tds
-            folders_from_cfg (dict): The table of folders from the config
+        :param folders_from_tds: The table of folders from the datasource's tds
+        :param folders_from_cfg: The table of folders from the config
+        :return: None
         """
 
         def exists(tds_f, cfg_folders):
@@ -358,94 +351,112 @@ class TableauDatasourceTasks(models.BaseOperator):
                 cfg_folders = folders_from_cfg[dsid]['folders']
                 if not exists(tds_f, cfg_folders):
                     self.__add_task(
+                        datasource_id=datasource_id,
                         action='delete_folder',
-                        attributes={'folder_name': tds_f['name'], 'role': tds_f['role']}
+                        attributes={'folder_name': tds_f['name'], 'role': tds_f['role']},
+                        other=tds_f,
                     )
 
     def execute(self, context):
         """ Update Tableau datasource according to config. """
         conn = BaseHook.get_connection(self.tableau_conn_id)
-        ts = TableauServer(user=conn.login, password=conn.password, url=conn.host,
-                           site=conn.extra_dejson['site'])
+        ts = TableauServer(
+            url=conn.host,
+            token_name=conn.extra_dejson['token_name'],
+            token_secret=conn.extra_dejson['token_secret'],
+            site=conn.extra_dejson['site']
+        )
+        ds_tbl = ts.list_datasources(print_info=False)
+        for datasource, project in self.datasource_project_cfg.items():
+            dsid = ds_tbl.get((project, datasource))
+            if not dsid:
+                logging.error('COULD NOT FIND DATASOURCE: %s in %s', datasource, project)
+                continue
+            self.tasks[dsid] = {a: [] for a in self.actions}
+            self.tasks[dsid]['project'] = project
+            self.tasks[dsid]['datasource_name'] = datasource
 
-        dsid_tbl = ts.list_datasources(print_info=False)
-        self.tasks['dsid'] = dsid_tbl.get((self.tasks['project'], self.tasks['datasource_name']))
+            folders_from_tds = {}
+            folders_from_cfg = {}
+            dl_path = f"downloads/{dsid}/"
+            os.makedirs(dl_path, exist_ok=True)
+            tdsx = ts.download_datasource(dsid, filepath=dl_path, include_extract=False)
+            tds = extract_tds(tdsx)
+            # Clean up downloaded and extracted files
+            shutil.rmtree(dl_path, ignore_errors=True)
 
-        folders_from_tds = {}
-        folders_from_cfg = {}
-
-        if self.tasks['dsid'] is None:
-            logging.error('No datasource %s in %s.', self.tasks['datasource_name'], self.tasks['project'])
-            return None
-
-        dl_path = f"downloads/{self.tasks['dsid']}/"
-        os.makedirs(dl_path, exist_ok=True)
-        tdsx = ts.download_datasource(self.tasks['dsid'], filepath=dl_path, include_extract=False)
-        self.tds = extract_tds(tdsx)
-        # Clean up downloaded and extracted files
-        shutil.rmtree(dl_path, ignore_errors=True)
-
-        # Add connection task
-        conn_attribs = self.__set_connection_attributes()
-        tds_conn = TDS(tds=self.tds).list('connection')
-        if isinstance(tds_conn, list):
-            tds_conn = tds_conn[0]['connection']
-        else:
-            tds_conn = tds_conn['connection']
-        if self.__different_connection(tds_conn, conn_attribs):
-            self.__add_task(action='update_connection', attributes=conn_attribs)
-        else:
-            logging.info('No changes needed for connection in %s', self.tasks['datasource_name'])
-
-        # Add Column and Folder tasks
-        for caption, col_info in self.column_cfg.items():
-            # Replace full column names with their local-name in the calculation
-            if 'calculation' in col_info and col_info['calculation']:
-                captions = set(re.findall(r'\[.+?\]', col_info['calculation']))
-                for full_name in captions:
-                    key = re.sub(r'[\[\]]+', '', full_name)
-                    if key in self.column_cfg:
-                        col_info['calculation'] = col_info['calculation'].replace(
-                            full_name, f"[{self.column_cfg[key]['local-name']}]")
+            # Add connection task
+            conn_attribs = self.__set_connection_attributes()
+            tds_conn = TDS(tds).list('connection')
+            if isinstance(tds_conn, list):
+                tds_conn = tds_conn[0]['connection']
             else:
-                col_info['calculation'] = None
-
-            column_attribs = self.__set_column_attributes(
-                caption, col_info, self.persona_cfg[col_info['persona']])
-
-            column_from_tds = TDS(tds=self.tds).get('column', **column_attribs)
-
-            metadata_diff = False
-            if column_attribs['remote_name']:
-                metadata = TDS(tds=self.tds).get('datasource-metadata', **column_attribs)
-                metadata_local_name = re.sub(r'^\[|]$', '', metadata['local-name']) if metadata else None
-                if metadata_local_name and metadata_local_name != column_attribs['column_name']:
-                    metadata_diff = True
-
-            if column_from_tds:
-                column_from_tds = dict(column_from_tds)
-                column_from_tds['@name'] = re.sub(r'^\[|]$', '', column_from_tds['@name'])
-            folder_check = self.__is_column_in_folder(column_attribs)
-            different_column = self.__different_column(column_from_tds, column_attribs)
-            # If the folder is missing and there is not already a task to add this folder/role,
-            # then add the task
-            if folder_check is None and not self.__add_folder_task_exists(column_attribs):
-                self.__add_task(action='add_folder', attributes=column_attribs)
-            if not column_from_tds:
-                self.__add_task(action='add_column', attributes=column_attribs)
-            elif different_column or not folder_check or metadata_diff:
-                self.__add_task(action='modify_column', attributes=column_attribs)
+                tds_conn = tds_conn['connection']
+            if self.__different_connection(tds_conn, conn_attribs):
+                self.__add_task(dsid, action='update_connection', attributes=conn_attribs, other=tds_conn)
             else:
-                logging.info('No changes needed for %s in %s', caption, self.tasks['datasource_name'])
+                logging.info('No changes needed for connection in %s', datasource)
 
-            # Get the table of folders from the datasource
-            self.__append_folders_from_tds(folders_from_tds)
+            # Add Column and Folder tasks
+            for caption, col_info in self.column_cfg[datasource].items():
+                # Replace full column names with their local-name in the calculation
+                if 'calculation' in col_info and col_info['calculation']:
+                    captions = set(re.findall(r'\[.+?\]', col_info['calculation']))
+                    for full_name in captions:
+                        key = re.sub(r'[\[\]]+', '', full_name)
+                        if key in self.column_cfg[datasource]:
+                            col_info['calculation'] = col_info['calculation'].replace(
+                                full_name, f"[{self.column_cfg[datasource][key]['local-name']}]")
+                else:
+                    col_info['calculation'] = None
 
-            # Get the table of folders from the config
-            self.__append_folders_from_config(column_attribs, folders_from_cfg)
+                column_attribs = self.__set_column_attributes(
+                    caption, col_info, self.persona_cfg[col_info['persona']])
 
-        # Add tasks to delete folders that are not in the config for each datasource
-        self.__compare_folders(folders_from_tds, folders_from_cfg)
+                column_from_tds = TDS(tds).get('column', **column_attribs)
+
+                metadata_diff = False
+                if column_attribs['remote_name']:
+                    metadata = TDS(tds).get(
+                        'datasource-metadata', remote_name=column_attribs['remote_name']
+                    )
+                    metadata_local_name = re.sub(r'^\[|]$', '', metadata['local-name']) if metadata else None
+                    if metadata_local_name and metadata_local_name != column_attribs['column_name']:
+                        metadata_diff = True
+
+                if column_from_tds:
+                    column_from_tds = dict(column_from_tds)
+                    column_from_tds['@name'] = re.sub(r'^\[|]$', '', column_from_tds['@name'])
+                folder_check = self.__is_column_in_folder(tds, column_attribs)
+                different_column = self.__different_column(column_from_tds, column_attribs)
+                # If the folder is missing and there is not already a task to add this folder/role,
+                # then add the task
+                if folder_check is None and not self.__add_folder_task_exists(dsid, column_attribs):
+                    self.__add_task(dsid, action='add_folder', attributes=column_attribs)
+                if not column_from_tds:
+                    self.__add_task(dsid, action='add_column', attributes=column_attribs)
+                elif different_column or not folder_check or metadata_diff:
+                    self.__add_task(
+                        dsid,
+                        action='modify_column',
+                        attributes=column_attribs,
+                        other={
+                            'column': column_from_tds,
+                            'in_folder': folder_check,
+                            'metadata_diff': metadata_diff
+                        }
+                    )
+                else:
+                    logging.info('No changes needed for %s in %s', caption, datasource)
+
+                # Get the table of folders from the datasource
+                self.__append_folders_from_tds(tds, dsid, folders_from_tds)
+
+                # Get the table of folders from the config
+                self.__append_folders_from_config(dsid, column_attribs, folders_from_cfg)
+
+            # Add tasks to delete folders that are not in the config for each datasource
+            self.__compare_folders(dsid, folders_from_tds, folders_from_cfg)
 
         return self.tasks
 
@@ -454,42 +465,43 @@ class TableauDatasourceUpdate(models.BaseOperator):
     """ Downloads the datasource.
         Makes all necessary updates to the datasource.
         Publishes the datasource.
-
     Args:
         tasks_task_id (str): The task_id of the task that ran the TableauDatasourceTasks operator.
         snowflake_conn_id (str): The connection ID for Snowflake.
         tableau_conn_id (str): The Tableau connection ID
     """
     def __init__(self, *args, **kwargs):
+        self.tasks_task_id = kwargs.pop('tasks_task_id')
+        self.tableau_conn_id = kwargs.pop('tableau_conn_id', 'tableau_default')
+        self.snowflake_conn_id = kwargs.pop('snowflake_conn_id', 'gcp_snowflake_default')
         super().__init__(*args, **kwargs)
-        self.tasks_task_id = kwargs.get('tasks_task_id')
-        self.tableau_conn_id = kwargs.get('tableau_conn_id', 'tableau_default')
-        self.snowflake_conn_id = kwargs.get('snowflake_conn_id', 'snowflake_default')
-        # Set on execute
-        self.tasks = None
-        self.tds = None
 
-    def __has_any_task(self):
-        """ Check if there are any tasks to be done """
-        for attributes in self.tasks.values():
+    @staticmethod
+    def __has_any_task(tasks):
+        """ Check if there are any tasks to be done
+        Args:
+            tasks (dict): The tasks to be done
+        """
+        for attributes in tasks.values():
             if isinstance(attributes, list) and attributes:
                 return True
         return False
 
-    def __do_action(self, tdsx, action_name, action, item_type):
-        """ Executes all of the action items
-
+    @staticmethod
+    def __do_action(tasks, tdsx, tds, action_name, action, item_type):
+        """ Executes the action, for each item to do for that action
         Args:
-            tdsx (str): The path to the TDSX file
-            action_name (str): The name of the action to be done
-            action (str): The action to be done
-            item_type (str): The type of item
+            tdsx (str): The path to the tdsx file
+            tds (OrderedDict): The dict of generated from the datasource's XML
+            action_name (str): The name of the action
+            action (str): The TDS action to do
+            item_type (str): The type of item to do the action for
         """
-        for item in self.tasks[action_name]:
+        for item in tasks[action_name]:
             try:
-                logging.info('Going to %s %s: %s -- %s', item_type, tdsx, item)
-                TDS(tds=self.tds).__getattribute__(action)(item_type, **item)
-            except TDSCCError as err:
+                logging.info('Going to %s %s: %s -- %s', action, item_type, tdsx, item)
+                getattr(TDS(tds), action)(item_type, **item)
+            except TableauUtilitiesError as err:
                 # If a source is updated again before it has refreshed in tableau,
                 # it will not detect the folders in the source, and try to add them all again
                 if item_type == 'folder' and action == 'add':
@@ -501,104 +513,106 @@ class TableauDatasourceUpdate(models.BaseOperator):
                     logging.warning('Missing SQL metadata for column: %s', item['remote_name'])
                     temp_item = deepcopy(item)
                     del temp_item['remote_name']
-                    TDS(tds=self.tds).__getattribute__(action)(item_type, **temp_item)
+                    getattr(TDS(tds), action)(item_type, **temp_item)
 
     def execute(self, context):
-        self.tasks = context['ti'].xcom_pull(task_ids=self.tasks_task_id)
+        all_tasks = context['ti'].xcom_pull(task_ids=self.tasks_task_id)
 
         conn = BaseHook.get_connection(self.tableau_conn_id)
-        ts = TableauServer(user=conn.login, password=conn.password,
-                           url=conn.host, site=conn.extra_dejson['site'])
+        ts = TableauServer(
+            url=conn.host,
+            token_name=conn.extra_dejson['token_name'],
+            token_secret=conn.extra_dejson['token_secret'],
+            site=conn.extra_dejson['site']
+        )
 
-        dl_path = f'downloads/{self.tasks["dsid"]}/'
-        try:
-            # Skip updating these datasources until we optimize them well enough
-            # to downloaded & published without timing out
-            excluded = ast.literal_eval(models.Variable.get('EXCLUDED_DATASOURCES'))
-            if self.tasks['datasource_name'] in excluded:
-                logging.info('Marked as excluded - Skipping Updating Datasource: %s',
-                             self.tasks['datasource_name'])
-                return None
+        for dsid, tasks in all_tasks.items():
+            dl_path = f'downloads/{dsid}/'
+            try:
+                # TEMP: Skip updating these datasources until we optimize them well enough
+                # to downloaded & published without timing out
+                excluded = ast.literal_eval(models.Variable.get('EXCLUDED_DATASOURCES'))
+                if tasks['datasource_name'] in excluded:
+                    logging.info('Marked as excluded - Skipping Updating Datasource: %s',
+                                 tasks['datasource_name'])
+                    return None
 
-            if self.__has_any_task():
-                # Download
-                os.makedirs(dl_path, exist_ok=True)
-                logging.info('Downloading Datasource: %s -> %s',
-                             self.tasks['project'], self.tasks['datasource_name'])
-                tdsx = ts.download_datasource(dsid=self.tasks['dsid'], filepath=dl_path, include_extract=True)
-                # Update
-                logging.info('Extracting tds from %s -> %s: %s',
-                             self.tasks['project'], self.tasks['datasource_name'], tdsx)
-                self.tds = extract_tds(tdsx)
-                self.__do_action(tdsx, 'update_connection', 'update', 'connection')
-                self.__do_action(tdsx, 'add_folder', 'add', 'folder')
-                self.__do_action(tdsx, 'add_column', 'add', 'column')
-                self.__do_action(tdsx, 'modify_column', 'update', 'column')
-                self.__do_action(tdsx, 'delete_folder', 'delete', 'folder')
-                logging.info('Updating tdsx %s %s',
-                             self.tasks["dsid"], self.tasks['datasource_name'])
-                update_tdsx(tdsx_path=tdsx, tds=self.tds)
-                # Publish
-                logging.info('About to publish %s %s %s',
-                             self.tasks["dsid"], self.tasks['datasource_name'], tdsx)
-                ts.publish_datasource(tdsx, self.tasks["dsid"], keep_tdsx=False)
-                logging.info('Published %s %s', self.tasks["dsid"], self.tasks['datasource_name'])
-            else:
-                logging.info('No tasks to update - Skipping Updating Datasource: %s',
-                             self.tasks['datasource_name'])
+                if self.__has_any_task(tasks):
+                    # Download
+                    os.makedirs(dl_path, exist_ok=True)
+                    logging.info('Downloading Datasource: %s -> %s',
+                                 tasks['project'], tasks['datasource_name'])
+                    tdsx = ts.download_datasource(dsid, filepath=dl_path, include_extract=True)
+                    # Update
+                    logging.info('Extracting tds from %s -> %s: %s',
+                                 tasks['project'], tasks['datasource_name'], tdsx)
+                    tds = extract_tds(tdsx)
+                    self.__do_action(tasks, tdsx, tds, 'update_connection', 'update', 'connection')
+                    self.__do_action(tasks, tdsx, tds, 'add_folder', 'add', 'folder')
+                    self.__do_action(tasks, tdsx, tds, 'add_column', 'add', 'column')
+                    self.__do_action(tasks, tdsx, tds, 'modify_column', 'update', 'column')
+                    self.__do_action(tasks, tdsx, tds, 'delete_folder', 'delete', 'folder')
+                    logging.info('Updating tdsx %s %s', dsid, tasks['datasource_name'])
+                    update_tdsx(tdsx_path=tdsx, tds=tds)
+                    # Publish
+                    logging.info('About to publish %s %s %s',
+                                 dsid, tasks['datasource_name'], tdsx)
+                    ts.publish_datasource(tdsx, dsid)
+                    logging.info('Published %s %s', dsid, tasks['datasource_name'])
+                    os.remove(tdsx)
+                else:
+                    logging.info('No tasks to update - Skipping Updating Datasource: %s',
+                                 tasks['datasource_name'])
 
-        except Exception as e:
-            refresh_datasource(self.tasks, self.tableau_conn_id, self.snowflake_conn_id)
-            raise Exception(e)
-        finally:
-            # Clean up downloaded and extracted files
-            shutil.rmtree(dl_path, ignore_errors=True)
+            except Exception as e:
+                refresh_datasource(all_tasks, self.tableau_conn_id, self.snowflake_conn_id)
+                raise Exception(e)
+            finally:
+                # Clean up downloaded and extracted files
+                shutil.rmtree(dl_path, ignore_errors=True)
 
         return None
 
 
 default_dag_args = {
-    'start_date': datetime.datetime(2020, 8, 1),
-    'retries': 2
+    'start_date': datetime.datetime(2023, 1, 1),
 }
 
 dag = DAG(
     dag_id='update_tableau_datasources',
-    schedule_interval='@hourly',
+    schedule_interval='@daily',
     catchup=False,
     dagrun_timeout=datetime.timedelta(minutes=360),
     max_active_runs=1,
-    default_args=default_dag_args)
+    default_args=default_dag_args
+)
 
-for ds, project in DS_PROJECT_CFG.items():
-    task_name = re.sub(r'[^a-zA-Z0-9]+', '_', ds).lower()
-    add_tasks = TableauDatasourceTasks(
-        dag=dag,
-        task_id=f'add_tasks_{task_name}',
-        snowflake_conn_id='snowflake_tableau_datasource',
-        tableau_conn_id='tableau_default',
-        datasource_name=ds,
-        project=project,
-        column_cfg=COLUMN_CFG,
-        persona_cfg=PERSONA_CFG
-    )
+add_tasks = TableauDatasourceTasks(
+    dag=dag,
+    task_id='gather_datasource_update_tasks',
+    snowflake_conn_id='snowflake_tableau_datasource',
+    tableau_conn_id='tableau_update_datasources',
+    datasource_project_cfg=DS_PROJECT_CFG,
+    column_cfg=COLUMN_CFG,
+    persona_cfg=PERSONA_CFG
+)
 
-    update = TableauDatasourceUpdate(
-        dag=dag,
-        task_id=f'update_{task_name}',
-        snowflake_conn_id='snowflake_tableau_datasource',
-        tableau_conn_id='tableau_default',
-        tasks_task_id=f'add_tasks_{task_name}'
-    )
+update = TableauDatasourceUpdate(
+    dag=dag,
+    task_id='update_datasources',
+    snowflake_conn_id='snowflake_tableau_datasource',
+    tableau_conn_id='tableau_update_datasources',
+    tasks_task_id='gather_datasource_update_tasks'
+)
 
-    refresh = PythonOperator(
-        dag=dag,
-        task_id=f'refresh_{task_name}',
-        python_callable=refresh_datasource,
-        op_kwargs={'snowflake_conn_id': 'snowflake_tableau_datasource',
-                   'tableau_conn_id': 'tableau_default',
-                   'tasks': "{{task_instance.xcom_pull(task_ids='%s')}}" %
-                            f'add_tasks_{task_name}'}
-    )
+refresh = PythonOperator(
+    dag=dag,
+    task_id='refresh_datasources',
+    python_callable=refresh_datasource,
+    op_kwargs={'snowflake_conn_id': 'snowflake_tableau_datasource',
+               'tableau_conn_id': 'tableau_update_datasources',
+               'tasks': "{{task_instance.xcom_pull(task_ids='%s')}}" %
+                        'gather_datasource_update_tasks'}
+)
 
-    add_tasks >> update >> refresh
+add_tasks >> update >> refresh
