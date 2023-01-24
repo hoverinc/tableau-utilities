@@ -1,10 +1,10 @@
+import sys
 import re
 import xml.etree.ElementTree as ET
 import xmltodict
 from dataclasses import dataclass, astuple, field
 from typing import Literal
 from tableau_utilities.general.funcs import transform_tableau_object
-
 
 @dataclass
 class TableauFileObject:
@@ -235,6 +235,8 @@ class Column(TableauFileObject):
     aliases: list = None
     members: dict = None
     range: dict = None
+    fiscal_year_start: int = None
+    visual_totals: str = None
 
     def __post_init__(self):
         if not re.match(r'^\[.+]$', self.name):
@@ -275,6 +277,7 @@ class Column(TableauFileObject):
             '@datatype': self.datatype,
             '@role': self.role,
             '@type': self.type
+
         }
         if self.semantic_role is not None:
             output['@semantic-role'] = self.semantic_role
@@ -317,6 +320,11 @@ class Column(TableauFileObject):
         if self.aliases is not None:
             output['aliases'] = dict()
             output['aliases']['alias'] = self.aliases
+        if self.fiscal_year_start is not None:
+            output['@fiscal_year_start'] = self.fiscal_year_start
+        if self.visual_totals is not None:
+            output['@visual-totals'] = self.visual_totals
+
         return output
 
 
@@ -552,7 +560,10 @@ class Connection(TableauFileObject):
     warehouse: str = None
     odbc_connect_string_extras: str = None
     one_time_sql: str = None
+    query_tagging_enabled: bool = None
+    saml_idp: str = None
     server_oauth: str = None
+    server_userid: str = None
     workgroup_auth_mode: str = None
     tablename: str = None
     default_settings: str = None
@@ -583,8 +594,14 @@ class Connection(TableauFileObject):
             output['@odbc-connect-string-extras'] = self.odbc_connect_string_extras
         if self.one_time_sql is not None:
             output['@one-time-sql'] = self.one_time_sql
+        if self.query_tagging_enabled is not None:
+            output['@query-tagging-enabled'] = self.query_tagging_enabled
+        if self.saml_idp is not None:
+            output['@saml-idp'] = self.saml_idp
         if self.server_oauth is not None:
             output['@server-oauth'] = self.server_oauth
+        if self.server_userid is not None:
+            output['@server-userid'] = self.server_userid
         if self.workgroup_auth_mode is not None:
             output['@workgroup-auth-mode'] = self.workgroup_auth_mode
         if self.tablename is not None:
@@ -715,12 +732,14 @@ class MetadataRecord(TableauFileObject):
 
 @dataclass
 class Refresh(TableauFileObject):
-    increment_key: str
-    incremental_updates: bool
     tag: str = 'refresh'
+    refresh_event: dict = None
+    increment_key: str = None
+    incremental_updates: bool = None
 
     def dict(self):
         return {
+            '@refresh-event': self.refresh_event,
             '@increment-key': self.increment_key,
             '@increment-updates': str(self.incremental_updates).lower()
         }
@@ -745,6 +764,7 @@ class ParentConnection(TableauFileObject):
     cols: TableauFileObjects[MappingCol] = None
     refresh: Refresh = None
     metadata_records: TableauFileObjects[MetadataRecord] = None
+    default_settings: str = None
 
     def __post_init__(self):
         if self.refresh is not None:
@@ -753,8 +773,7 @@ class ParentConnection(TableauFileObject):
             self.relation = Relation(**transform_tableau_object(self.relation))
         if self.named_connections is not None:
             self.named_connections = TableauFileObjects(
-                self.named_connections['named-connection'], item_class=NamedConnection, tag='named-connections'
-            )
+                self.named_connections['named-connection'], item_class=NamedConnection, tag='named-connections')
         else:
             self.named_connections = TableauFileObjects(item_class=NamedConnection, tag='named-connections')
         if self.cols is not None:

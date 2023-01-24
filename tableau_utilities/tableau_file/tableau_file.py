@@ -22,9 +22,12 @@ class TableauFile:
         """
         Args:
             file_path (str): Path to a Tableau file
+
         """
         self.file_path = os.path.abspath(file_path)
         self.extension = file_path.split('.')[-1]
+        self.file_path_without_extension = file_path.split('.')[0]
+        self.file_name = self.file_path_without_extension.split('/')[-1]
         ''' Set on init '''
         self._tree: ET.ElementTree
         self._root: ET.Element
@@ -52,15 +55,21 @@ class TableauFile:
             self._tree = ET.parse(path)
             self._root = self._tree.getroot()
 
-    def unzip(self, unzip_all=False):
+    def unzip(self, unzip_all=False, extract_to=None):
         """ Unzips the Tableau File.
 
         Args:
             unzip_all (bool): True to unzip all zipped files
+            extract_to: Override the source file directory and save the file to another location
 
         Returns: The path to the unzipped Tableau File
         """
-        file_dir = os.path.dirname(self.file_path)
+
+        if extract_to is not None:
+            file_dir = extract_to
+        else:
+            file_dir = os.path.dirname(self.file_path)
+
         tableau_file_path = None
         with ZipFile(self.file_path) as zip_file:
             for z in zip_file.filelist:
@@ -76,6 +85,7 @@ class TableauFile:
 
     def save(self):
         """ Save/Update the Tableau file with the XML changes made """
+
         if self.extension in ['tdsx', 'twbx']:
             with ZipFile(self.file_path, 'r') as zr, ZipFile(self.file_path, 'w') as zw:
                 for file in zr.filelist:
