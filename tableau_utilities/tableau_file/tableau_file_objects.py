@@ -548,6 +548,123 @@ class FoldersCommon(TableauFileObject):
 
 
 @dataclass
+class DrillPathItem(TableauFileObject):
+    """ The DrillPathItem Tableau file object, is an Item of the drill-path list """
+    tag: str = 'field'
+
+    def __hash__(self):
+        return hash(str(astuple(self)))
+
+
+@dataclass
+class DrillPath(TableauFileObject):
+    """ The drill paths """
+    name: str
+    field: str
+    drill_path_item: TableauFileObjects[DrillPathItem] = None
+
+    def __post_init__(self):
+        if self.drill_path_item is not None:
+            self.drill_path_item = TableauFileObjects(self.drill_path_item, item_class=DrillPathItem, tag='field')
+        else:
+            self.drill_path_item = TableauFileObjects(item_class=DrillPathItem, tag='field')
+
+    def __hash__(self):
+        return hash(str(astuple(self)))
+
+    def __eq__(self, other):
+        if isinstance(other, str):
+            return self.name == other
+        else:
+            if isinstance(other, dict):
+                return self.name == other.get('name')
+        return False
+
+    def dict(self):
+        output = {'@name': self.name}
+        if self.drill_path_item:
+            output['drill-path'] = list()
+            for drill_path_item in self.drill_path_item:
+                output['drill-path'].append(drill_path_item.dict())
+        return output
+
+
+@dataclass
+class DrillPaths(TableauFileObject):
+    drill_path: TableauFileObjects[DrillPath] = None
+    tag: str = 'drill-paths'
+
+    def __post_init__(self):
+        if self.drill_path is not None:
+            self.drill_path = TableauFileObjects(self.drill_path, item_class=DrillPath, tag='drill-path')
+        else:
+            self.drill_path = TableauFileObjects(item_class=DrillPath, tag='drill-path')
+
+    def __getitem__(self, item):
+        return self.drill_path[item]
+
+    def __setitem__(self, key, value):
+        self.drill_path[key] = value
+
+    def __str__(self):
+        return str(self.drill_path)
+
+    def __repr__(self):
+        return repr(self.drill_path)
+
+    def __iter__(self):
+        return iter(self.drill_path)
+
+    def __eq__(self, other):
+        if isinstance(other, DrillPaths):
+            other = other.drill_path
+        for item in self.drill_path:
+            if item not in other:
+                return False
+        for item in other:
+            if item not in self.drill_path:
+                return False
+        return True
+
+    def get(self, drill_path):
+        """ Get the Drill Path object from DrillPaths
+
+        Args:
+            drill_path (str): The drill path to get
+
+        Returns: The Drill Path object
+        """
+        return self.drill_path.get(drill_path)
+
+    def add(self, drill_path):
+        """ Add the Drill Path object to DrillPaths
+
+        Args:
+            drill_path (str): The drill path to add
+        """
+        self.drill_path.add(drill_path)
+
+    def delete(self, drill_path):
+        """ Delete the Drill Path object from DrillPaths
+
+        Args:
+            drill_path (str): The drill path to delete
+        """
+        self.drill_path.delete(drill_path)
+
+    def update(self, drill_path):
+        """ Update the DrillPaths object
+
+        Args:
+            drill_path (str): The drill path to update
+        """
+        self.drill_path.update(drill_path)
+
+    def dict(self):
+        return {'drill_paths': [f.dict() for f in self.drill_path]}
+
+
+@dataclass
 class Connection(TableauFileObject):
     tag: str = 'connection'
     authentication: str = None
@@ -886,6 +1003,29 @@ class Aliases(TableauFileObject):
 
     def dict(self):
         return {'@enabled': 'yes' if self.enabled else 'no'}
+
+@dataclass
+class ColumnInstance(TableauFileObject):
+    column: str = None
+    derivation: str = None
+    name: str = None
+    pivot: str = None
+    type: str = None
+    tag: str = 'column-instance'
+
+    def dict(self):
+        dictionary = dict()
+        if self.column is not None:
+            dictionary['@column'] = self.column
+        if self.derivation is not None:
+            dictionary['@derivation'] = self.derivation
+        if self.name is not None:
+            dictionary['@name'] = self.name
+        if self.pivot is not None:
+            dictionary['@pivot'] = self.pivot
+        if self.type is not None:
+            dictionary['@type'] = self.type
+        return dictionary
 
 
 if __name__ == '__main__':

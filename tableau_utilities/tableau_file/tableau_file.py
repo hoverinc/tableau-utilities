@@ -120,6 +120,8 @@ class Datasource(TableauFile):
             item_class=tfo.Column,
             tag='column'
         )
+        self.column_instance: tfo.ColumnInstance = tfo.ColumnInstance(**self.__get_section('column-instance')[0])
+        self.drill_paths: tfo.DrillPaths = tfo.DrillPaths(**self.__get_section('drill-paths')[0])
         self.folders_common: tfo.FoldersCommon = tfo.FoldersCommon(**self.__get_section('folders-common')[0])
         self.extract: tfo.Extract = tfo.Extract(**self.__get_section('extract')[0])
 
@@ -128,6 +130,8 @@ class Datasource(TableauFile):
         yield self.connection
         yield self.aliases
         yield self.columns
+        yield self.column_instance
+        yield self.drill_paths
         yield self.folders_common
         yield self.extract
 

@@ -109,14 +109,11 @@ def get_metadata_record_columns(datasource_name, datasource_path, debugging_logs
                 persona = 'datetime_dimension'
             elif m["local-type"] == 'boolean':
                 persona = 'boolean_dimension'
-            # There's no good way to assume if integer & real data types are dimensions or measures
-            # Instead of making assumptions on these the config will skip adding these fields and users will
-            # need to make manual adjustments
-            # Leaving these ELIF's in case there is a better way to do this later
+            # Makes the assumption that numbers are discrete measures so that a user can't do accidental math on fields
             elif m["local-type"] == 'integer':
-                persona = None
+                persona = 'discrete_number_dimension'
             elif m["local-type"] == 'real':
-                persona = None
+                persona = 'discrete_decimal_dimension'
 
             metadata_record_columns[m['remote-name']] = {'persona': persona,
                                                          "datasources": [
@@ -126,7 +123,6 @@ def get_metadata_record_columns(datasource_name, datasource_path, debugging_logs
                                                                  "sql_alias": m['remote-name']
                                                              },
                                                          ]
-
                                                          }
 
             if debugging_logs:
@@ -273,8 +269,6 @@ def create_column_config(columns, datasource_name, folder_mapping, metadata_reco
                 column_configs[caption]['fiscal_year_start'] = c['@fiscal_year_start']
             if '@default-format' in c:
                 column_configs[caption]['default_format'] = c['@default-format']
-
-
 
     # Add column configs for metadata_record columns when there wasn't a column object already
     # This is only need for non-calulated fields
