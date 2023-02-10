@@ -1,7 +1,4 @@
-from .tableau_utilities import TableauUtilitiesError
-from .tableau_utilities import extract_tds
-from .tableau_utilities import update_tdsx
-from .tableau_utilities import TDS
-from .tableau_utilities import TableauServer
-from .tableau_utilities import do_args
-from .tableau_utilities import main
+from .tableau_file.tableau_file import TableauFileError, Datasource
+from .tableau_file import tableau_file_objects
+from .tableau_server.tableau_server import TableauConnectionError, TableauServer
+from .tableau_server import tableau_server_objects

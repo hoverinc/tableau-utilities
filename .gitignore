@@ -1,7 +1,9 @@
+settings.yaml
 client_secret.json
 sheets.googleapis.com-python.json
 .idea
 .DS_Store
+tmp_tdsx_and_config/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -17,6 +19,7 @@ build/
 develop-eggs/
 dist/
 downloads/
+tmp_downloads/
 eggs/
 .eggs/
 lib/

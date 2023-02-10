@@ -12,13 +12,19 @@ setup(
     long_description=readme,
     long_description_content_type='text/markdown',
     name="tableau_utilities",
-    version="1.0.4",
-    packages=['tableau_utilities'],
-    package_data={"tableau_utilities": ["item_types.yml"]},
+    version="2.0.0",
+    packages=[
+        'tableau_utilities',
+        'tableau_utilities.general',
+        'tableau_utilities.tableau_file',
+        'tableau_utilities.tableau_server',
+        'tableau_utilities.scripts'
+    ],
+    package_data={'tableau_utilities': ['tableau_file/*.yml']},
     include_package_data=True,
     entry_points={
         'console_scripts': [
-            'tableau_utilities = tableau_utilities:main'
+            'tableau_utilities = tableau_utilities.scripts.cli:main',
         ]
     }
 )
