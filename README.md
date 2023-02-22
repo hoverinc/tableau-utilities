@@ -73,55 +73,56 @@ if __name__ == '__main__':
 ## CLI Usage
 
 ### Help
-1. See the top level CLI arguments including the commands.
+See the top level CLI arguments including the commands.
 ```commandline
 tableau_utilities --help
 ```
 
-2. See the help for a `command`.  Each command has arguments for a different grouping of actions.
+See the help for a `command`.
+Each command has arguments for a different grouping of actions.
 ```commandline
 tableau_utilities server_operate --help
 ```
 
 ### Authentication Options
-1. Pass your credentials into the command
+Pass your credentials into the command
 ```commandline
- tableau_utilities --auth args_token --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az server_info --list_object datasource --list_format names
+tableau_utilities --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az server_info --list_object datasource --list_format names
 ```
 
-2. Use a secrets yaml file
+Use a settings YAML file
 ```commandline
- tableau_utilities --auth settings_yaml  --settings_path my_settings.yaml --list_object datasource --list_format names
+tableau_utilities  --settings_path my_settings.yaml --list_object datasource --list_format names
 ```
 
-3. Use enviroment variables. This example also uses the 1password cli for retrieving the variables and putting them in the environment
+Use environment variables
 ```commandline
-tableau_utilities --auth args_token --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az  server_info --list_object datasource --list_format names
+tableau_utilities server_info --list_object datasource --list_format names
 ```
 
-4. Using the 1password cli with op run
+Using the 1password CLI with op run
 ```commandline
-op run --env-file=.env -- tableau_utilities --auth os_env server_info list_--list_object datasource --list_format names
+op run --env-file=.env -- tableau_utilities server_info list_--list_object datasource --list_format names
 ```
 
-### Examples for each command area
+### Examples for each command
 
 #### server_info
 Lists all datasources in your site ordered by ID
 ```commandline
-tableau_utilities --auth args_token --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az server_info --list_object datasource --list_format ids_names --list_sort_field id
+tableau_utilities --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az server_info --list_object datasource --list_format ids_names --list_sort_field id
 ```
 
 #### server_operate
 Download a datasource by name
 ```commandline
-tableau_utilities --auth args_token --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az --name 'My Awesome Datasource' --project_name 'My Fabulous Project' server_operate --action_type download --object_type datasource
+tableau_utilities --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az --name 'My Awesome Datasource' --project_name 'My Fabulous Project' server_operate --action_type download --object_type datasource
 ```
 
 #### connection
 Embed a username and password in a datasource in Tableau Online/Server
 ```commandline
-tableau_utilities --auth args_token --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az --location online --name 'My Awesome Datasource' --project_name 'My Fabulous Project' connection --connection_operation embed_user_pass  --conn args --conn_type snowflake --conn_user MY_SNOWFLAKE_USER --conn_pw '1234567abc!'
+tableau_utilities --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az --location online --name 'My Awesome Datasource' --project_name 'My Fabulous Project' connection --connection_operation embed_user_pass  --conn args --conn_type snowflake --conn_user MY_SNOWFLAKE_USER --conn_pw '1234567abc!'
 ```
 
 #### datasource
@@ -132,7 +133,7 @@ tableau_utilities --datasource_path '/Downloads/My Awesome Datasource.tdsx'  dat
 
 Save the TDS for a datasource from an online datasource to view the raw XML
 ```commandline
-tableau_utilities --auth args_token --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az --location online --name 'My Awesome Datasource' --project_name 'My Cool Project' datasource --save_tds
+tableau_utilities --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az --location online --name 'My Awesome Datasource' --project_name 'My Cool Project' datasource --save_tds
 ```
 
 Change the folder for a column
@@ -145,12 +146,12 @@ tableau_utilities  --location local --file_path '/Downloads/Metadata Alter.tdsx'
 
 Generate a config from a datasource in online/server
 ```commandline
-tableau_utilities --auth args_token --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az --location online --name 'My Awseome Datasource' --project_name 'My Team Project' generate_config
+tableau_utilities --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az --location online --name 'My Awseome Datasource' --project_name 'My Team Project' generate_config
 ```
 
 Generate a config from a datasource in online/server and add definitions from a csv
 ```commandline
-tableau_utilities --auth args_token --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az --location online --name 'My Awseome Datasource' --project_name 'My Team Project' generate_config --definitions_csv /Desktop/new_descriptions.csv
+tableau_utilities --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az --location online --name 'My Awseome Datasource' --project_name 'My Team Project' generate_config --definitions_csv /Desktop/new_descriptions.csv
 ```
 
 Generate a config from a local file. Add a file prefix and print the debugging logs to the console
@@ -167,7 +168,7 @@ Write the config to a csv with 1 row per field per datasource
 #### merge_config
 Merge a new config into your main config
 ```commandline
-tableau_utilities merge_config --merge_with csv config --existing_config /code/tableau-utilities/tmp_tdsx_and_config/main__column_config.json --additional_config /code/tableau-utilities/tmp_tdsx_and_config/new__column_config.json -merged_config code/dbt-repo/tableau_datasource_configs/column_config
+tableau_utilities merge_config --merge_with config --existing_config /code/tableau-utilities/tmp_tdsx_and_config/main__column_config.json --additional_config /code/tableau-utilities/tmp_tdsx_and_config/new__column_config.json --merged_config code/dbt-repo/tableau_datasource_configs/column_config
 ```
 
 Merge data defintions from a csv into your main config

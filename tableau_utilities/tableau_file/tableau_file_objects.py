@@ -321,7 +321,7 @@ class Column(TableauFileObject):
             output['aliases'] = dict()
             output['aliases']['alias'] = self.aliases
         if self.fiscal_year_start is not None:
-            output['@fiscal_year_start'] = self.fiscal_year_start
+            output['@fiscal-year-start'] = self.fiscal_year_start
         if self.visual_totals is not None:
             output['@visual-totals'] = self.visual_totals
 
@@ -1003,6 +1003,17 @@ class Aliases(TableauFileObject):
 
     def dict(self):
         return {'@enabled': 'yes' if self.enabled else 'no'}
+
+@dataclass
+class DateOptions(TableauFileObject):
+    fiscal_year_start: str = None
+    tag: str = 'date-options'
+
+    def dict(self):
+        dictionary = dict()
+        if self.fiscal_year_start is not None:
+            dictionary['@date-options'] = self.fiscal_year_start
+        return dictionary
 
 @dataclass
 class ColumnInstance(TableauFileObject):

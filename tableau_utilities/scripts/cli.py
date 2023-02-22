@@ -4,7 +4,7 @@ import shutil
 from argparse import RawTextHelpFormatter
 import yaml
 
-from tableau_utilities.tableau_server.tableau_server import TableauServer
+import tableau_utilities.tableau_server.tableau_server as ts
 
 from tableau_utilities.scripts.gen_config import generate_config
 from tableau_utilities.scripts.merge_config import merge_configs
@@ -14,6 +14,7 @@ from tableau_utilities.scripts.connection import connection
 from tableau_utilities.scripts.datasource import datasource
 from tableau_utilities.scripts.csv_config import csv_config
 
+
 parser = argparse.ArgumentParser(prog='tableau_utilities',
                                  description='Tableau Utilities CLI:\n'
                                              '-Manage Tableau Server/Online\n'
@@ -21,8 +22,6 @@ parser = argparse.ArgumentParser(prog='tableau_utilities',
                                  formatter_class=RawTextHelpFormatter)
 subparsers = parser.add_subparsers(title="commands", dest="command", help='You must choose a command.',
                                    required=True)
-parser.add_argument('-a', '--auth', choices=['settings_yaml', 'args_user_pass', 'args_token', 'os_env'],
-                    help='The method for storing your credentials to pass into the CLI.')
 parser.add_argument('-d', '--debugging_logs', action='store_true',
                     help='Print detailed logging to the console to debug CLI')
 
@@ -97,9 +96,9 @@ parser_server_info.set_defaults(func=server_info)
 parser_server_operate = subparsers.add_parser('server_operate',
                                               help='Download, publish, and refresh objects on Tableau Cloud/Server')
 parser_server_operate.add_argument('--action_type', choices=['download', 'publish', 'refresh'], required=True,
-                                   help='List information about the Object')
+                                   help='The action to take on the object')
 parser_server_operate.add_argument('--object_type', choices=['datasource', 'workbook'], required=True,
-                                   help='List information about the Object')
+                                   help='The type of object to interact with.')
 parser_server_operate.add_argument('--all',  action='store_true', help='Download all workbooks or datasources')
 parser_server_operate.set_defaults(func=server_operate)
 
@@ -222,23 +221,6 @@ def validate_args_id_name_project(args):
                 '--location online requires either a --id or a --name and --project_name')
 
 
-def validate_auth_included(args):
-    """ Validates that auth is included for operations that need it and that the parameters are present
-
-    """
-
-    if not args.auth:
-        parser.error('These commands required --auth method and credentials to authenticate with Tableau Server/Online')
-    if args.auth == 'args_user_pass':
-        if not args.user or not args.password:
-            parser.error('You must include --user and --password for args_user_pass authentication')
-    if args.auth == 'args_token':
-        if not args.token_name or not args.token_secret:
-            parser.error('You must include --token_name and --token_secret for args_token authentication')
-    if args.auth == 'settings_yaml' and not args.settings_path:
-        parser.error('You must include --settings_path for settings_yaml authentication')
-
-
 def validate_args_command_connection(args):
     """ Validate connection args are incluedd
 
@@ -273,60 +255,68 @@ def tableau_authentication(args):
     """ Creates the Tableau server authentication from a variety of methods for passing in credentials
 
     """
+    debug = args.debugging_logs
+    yaml_path = args.settings_path
 
-    # Set the defaults from the args
-    user = args.user
-    password = args.password
-    token_name = args.token_name
-    token_secret = args.token_secret
-    site = args.site_name
-    server = args.server
-    api_version = args.api_version
+    if debug:
+        print('Credentials are prioritized by: CLI Arguments > Settings YAML > Environment Variables')
 
-    if args.auth in ['args_user_pass', 'args_token']:
-        print('Using auth from the args passed in')
-    # Override the defaults with information from a settings file
-    elif args.auth == 'settings_yaml':
-        print('Using auth from the settings yaml')
-        with open(args.settings_path, 'r') as f:
-            settings = yaml.safe_load(f)
+    # Set CLI Argument credentials
+    creds = {
+        'user': args.user,
+        'password': args.password,
+        'api_version': args.api_version,
+        'token_name': args.token_name,
+        'token_secret': args.token_secret,
+        'site': args.site_name,
+        'server': args.server
+    }
+    if debug:
+        for cred_name, cred_value in creds.items():
+            if cred_value:
+                print(f'Using CLI Argument cred: {cred_name} = {cred_value}')
 
-        site = settings['tableau_login']['site']
-        server = settings['tableau_login']['server']
-        token_name = settings['tableau_login']['token_name']
-        token_secret = settings['tableau_login']['token_secret']
-        api_version = settings['tableau_login']['api_version']
-        user = settings['tableau_login']['user']
-        password = settings['tableau_login']['password']
-    # Override the defaults with information from the OS
-    elif args.auth == 'os_env':
-        print('Using auth OS environment')
-        site = os.getenv("TABLEAU_SITENAME")
-        server = os.getenv("TABLEAU_SERVER_ADDRESS")
-        token_name = os.getenv("TABLEAU_PERSONAL_ACCESS_TOKEN_NAME")
-        token_secret = os.getenv("TABLEAU_PERSONAL_ACCESS_TOKEN_VALUE")
-        api_version = args.api_version
+    # Set Settings YAML file credentials
+    if yaml_path:
+        with open(yaml_path, 'r') as f:
+            yaml_creds = yaml.safe_load(f)
+            yaml_creds = yaml_creds['tableau_login']
+        for cred_name, cred_value in yaml_creds.items():
+            if cred_value and cred_name in creds and not creds[cred_name]:
+                creds[cred_name] = cred_value
+                if debug:
+                    print(f'Using Settings YAML cred: {cred_name} = {cred_value}')
+
+    # Set Environment Variables credentials
+    env_creds = {
+        'token_name': os.getenv("TABLEAU_PERSONAL_ACCESS_TOKEN_NAME"),
+        'token_secret': os.getenv("TABLEAU_PERSONAL_ACCESS_TOKEN_VALUE"),
+        'site': os.getenv("TABLEAU_SITENAME"),
+        'server': os.getenv("TABLEAU_SERVER_ADDRESS")
+    }
+    for cred_name, cred_value in env_creds.items():
+        if cred_value and not creds[cred_name]:
+            creds[cred_name] = cred_value
+            if debug:
+                print(f'Using Environment Variable cred: {cred_name} = {cred_value}')
 
     # Validate the combinations for authentication methods
-    if (token_secret and not token_name) or (token_name and not token_secret):
+    # If one, but not both, of token_name/token_secret or username/password are provided, throw an error
+    if (creds['token_secret'] or creds['token_name']) and not (creds['token_name'] and creds['token_secret']):
         parser.error('--token_secret and --token_name are required together')
-
-    if (user and not password) or (password and not user):
+    if (creds['user'] or creds['password']) and not (creds['password'] and creds['user']):
         parser.error('--password and --user are required together')
 
     # Create the server object and run the functions
-    host = f'https://{server}.online.tableau.com'
-    ts = TableauServer(
-        personal_access_token_name=token_name,
-        personal_access_token_secret=token_secret,
-        user=user,
-        password=password,
-        site=site,
-        host=host,
-        api_version=api_version
+    return ts.TableauServer(
+        personal_access_token_name=creds['token_name'],
+        personal_access_token_secret=creds['token_secret'],
+        user=creds['user'],
+        password=creds['password'],
+        site=creds['site'],
+        host=f'https://{creds["server"]}.online.tableau.com',
+        api_version=creds['api_version']
     )
-
-    return ts
 
 
 def main():
@@ -362,14 +352,12 @@ def main():
     )
 
     if needs_tableau_server:
-        print("Tableau Server Operations")
-        validate_auth_included(args)
-        ts = tableau_authentication(args)
-        args.func(args, ts)
-
+        print("LOCAL OR SERVER: Tableau Server Operations")
+        server = tableau_authentication(args)
+        args.func(args, server)
     # Run functions that don't need the server
     else:
-        print('Local Operations')
+        print('LOCAL OR SERVER: Local Operations')
         args.func(args)
 
 

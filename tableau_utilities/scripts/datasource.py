@@ -1,99 +1,67 @@
-import os
-
+import tableau_utilities.tableau_file.tableau_file_objects as tfo
 from tableau_utilities.tableau_file.tableau_file import Datasource
-from tableau_utilities.tableau_file.tableau_file import TableauFile
-from tableau_utilities.tableau_file.tableau_file_objects import Column
-from tableau_utilities.scripts.server_operate import fill_in_id_name_project, get_object_list
-
-
-def save_datasource(server, id, datasource_name, project_name, include_extract, debugging_logs):
-    """ Gets the id if needed and downloads the datasource
-
-    Args:
-        id: The datasource id
-        datasource_name: The name of the datasource
-        project_name: The name of the project the datasource is in
-        include_extract: True to include the extract. Downloading may take a long time
-        debugging_logs: Print information for debugging to the console
-
-
-    """
-
-    object_list = get_object_list(object_type='datasource', server=server)
-    id, datasource_name, project_name = fill_in_id_name_project(id, datasource_name,
-                                                                           project_name, object_list)
-    if debugging_logs:
-        print(
-            f'GETTING DATASOURCE ID: {id}, NAME: {datasource_name}, PROJECT NAME: {project_name}, INCLUDE EXTRACT {include_extract}')
-
-    datasource_path = server.download_datasource(id, include_extract)
-
-    if debugging_logs:
-        print(
-            f'DATASOURCE PATH: {datasource_path}')
-
-    return datasource_path
-
-
-def save_tds_file(datasource_path, extract_to_directory):
-    """ Extracts XML from a tdsx file and saves as a raw .xml file
-
-    """
-
-    # xml_path = TableauFile(datasource_path).save(save_raw_xml=True)
-    xml_path = TableauFile(datasource_path).unzip(extract_to=extract_to_directory)
-    print(f'TDS SAVED TO: {xml_path}')
+from tableau_utilities.tableau_server.tableau_server import TableauServer
 
 
 def datasource(args, server=None):
+    """ Updates a Tableau Datasource locally
 
+    Args:
+        args: An argparse args object
+        server (TableauServer): A TableauServer object; optional
+    """
     debugging_logs = args.debugging_logs
-
-    location = args.location
     datasource_path = args.file_path
-    id = args.id
     name = args.name
     project_name = args.project_name
-    include_extract = args.include_extract
-    # extract_to_directory = args.local_folder
-    extract_to_directory =  os.getcwd()
-    save_tds = args.save_tds
 
-    if location == 'online':
-        datasource_path = save_datasource(server, id, name, project_name, include_extract, debugging_logs)
+    # Downloads the datasource from Tableau Server if the datasource is not local
+    if args.location == 'online':
+        # Query Tableau Server for the ID of the datasource if it was not provided
+        if args.id:
+            datasource_id = args.id
+        elif name and project_name:
+            datasource_id = server.get_datasource(datasource_name=name, datasource_project=project_name).id
+        else:
+            raise Exception('For online datasources, id or name and project_name are required.')
+        datasource_path = server.download_datasource(datasource_id, args.include_extract)
+        if debugging_logs:
+            print(f'DATASOURCE PATH: {datasource_path}')
+
+    ds = Datasource(datasource_path)
 
     if args.save_tds:
-        save_tds_file(datasource_path, extract_to_directory)
-
-    if datasource_path is not None:
-        datasource = Datasource(datasource_path)
+        xml_path = ds.unzip(extract_to=f'{name} - BEFORE')
+        if debugging_logs:
+            print(f'BEFORE - TDS SAVED TO: {xml_path}')
 
     if args.column:
         # Column name needs to be enclosed in brackets
         column_name = f'[{args.column_name}]'
-
-        column = datasource.columns.get(args.column_name)
-        print(column)
+        column = ds.columns.get(args.column_name)
 
         if not column:
-            column = Column(name=column_name, datatype=args.datatype, role=args.role, type=args.role_type)
+            column = tfo.Column(name=column_name, datatype=args.datatype, role=args.role, type=args.role_type)
+            print(f'Creating new column for {column_name}')
+        else:
+            print(f'Updating existing column:\n\t{column}')
 
-        column.name = column_name or column.name
         column.caption = args.caption or column.caption
         column.role = args.role or column.role
         column.type = args.role_type or column.type
         column.datatype = args.datatype or column.datatype
         column.desc = args.desc or column.desc
         column.calculation = args.calculation or column.calculation
-
-
-        datasource.enforce_column(column, remote_name=args.remote_name, folder_name=args.folder_name)
-        datasource.save()
-        datasource.unzip()
+        ds.enforce_column(column, remote_name=args.remote_name, folder_name=args.folder_name)
 
     if args.folder == 'add':
-        datasource.folders_common.folder.add(tfo.Folder(name=args.folder_name))
+        ds.folders_common.folder.add(tfo.Folder(name=args.folder_name))
     if args.folder == 'delete':
-        datasource.folders_common.folder.delete(tfo.Folder(name=args.folder_name))
+        ds.folders_common.folder.delete(tfo.Folder(name=args.folder_name))
 
+    ds.save()
 
+    if args.save_tds:
+        xml_path = ds.unzip(extract_to=f'{name} - AFTER')
+        if debugging_logs:
+            print(f'AFTER - TDS SAVED TO: {xml_path}')

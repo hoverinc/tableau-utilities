@@ -1,12 +1,4 @@
-import argparse
 import json
-import os
-import shutil
-import sys
-from pprint import pprint
-
-from tableau_utilities.tableau_file.tableau_file import Datasource
-from tableau_utilities.tableau_server.tableau_server import TableauServer
 from tableau_utilities.scripts.gen_config import load_csv_with_definitions, generate_config
 
 
@@ -14,11 +6,11 @@ def read_file(file_path):
     """ Read a JSON file to a dictionary
 
     Args:
-        file_path: The path of the file to read
+        file_path (str): The path of the file to read
 
     """
     with open(file_path, "r") as infile:
-        config = json.load(infile)
+        config: dict = json.load(infile)
 
     return config
 
@@ -46,12 +38,9 @@ def add_definitions_mapping(config, definitions_mapping):
         definitions_mapping: A mapping of columns to definitions
 
     """
-
     for column, definition in definitions_mapping.items():
-
         if len(definition) > 0 and column in config:
             config[column]['description'] = definition
-
     return config
 
 
@@ -61,117 +50,46 @@ def merge_2_configs(existing_config, additional_config, debugging_logs=False):
     This assumes that the user is merging the same type of config
 
     Args:
-        existing_config: The current existing config
-        additional_config: The additional config to add
+        existing_config (dict): The current existing config
+        additional_config (dict): The additional config to add
+        debugging_logs (bool): True to print debugging logs
 
     """
-
     for column_name, column_details in additional_config.items():
-
-        if debugging_logs:
-            print(column_name)
-
         # If the column doesn't exist add it
         if column_name not in existing_config:
             if debugging_logs:
                 print("ADDING COLUMN", column_name, column_details)
             existing_config[column_name] = column_details
-
-        elif column_name in existing_config:
+        else:
             if debugging_logs:
                 print('ALTERING COLUMN:', column_name)
-                print('EXISTING COLUMN',  column_name, existing_config[column_name])
-                print('ADDITIONAL COLUMN', column_name, column_details)
+                print('\tEXISTING DETAIL:', existing_config[column_name])
+                print('\tADDITIONAL DETAIL:', column_details)
 
-            # Set the values from the dictionaries
-            description_current = existing_config[column_name]['description']
-            description_new = column_details['description']
-            folder_current = existing_config[column_name]['folder']
-            folder_new = column_details['folder']
-            persona_current = existing_config[column_name]['persona']
-            persona_new = column_details['persona']
-            datasources_current = existing_config[column_name]['datasources']
-            datasources_new = column_details['datasources']
-
-            # Only used when it's a calculation config
-            if 'calculation' in column_details:
-                calculation_current = existing_config[column_name]['calculation']
-                calculation_new = column_details['calculation']
-
-                if len(calculation_new.strip()) > 0:
+            # Replace existing config attributes
+            for attribute_name, attribute_value in column_details.items():
+                if str(attribute_value).strip() not in ['', 'None'] and attribute_name != 'datasources':
                     if debugging_logs:
-                        print('CHANGING CALCULATION')
-                        print('CALCULATION CURRENT:', calculation_current)
-                        print('CALCULATION NEW:', calculation_new)
-
-                    existing_config[column_name]['calculation'] = calculation_new
-
-                    if debugging_logs:
-                        print('CALCULATION SET TO:', existing_config[column_name]['calculation'])
-
-            # Replace these attributes if there are values in the new configuration
-
-            if (isinstance(description_new, list) and len(description_new) > 0) \
-                    or (isinstance(description_new, str) and len(description_new.strip()) > 0):
+                        print(
+                            '\tUPDATING ATTRIBUTE', attribute_name,
+                            'FROM:', existing_config[column_name][attribute_name],
+                            '-> TO:', attribute_value
+                        )
+                    existing_config[column_name][attribute_name] = attribute_value
+            # Remove the existing column datasource if it is included from the additional config
+            existing_config[column_name]['datasources'] = [
+                d for d in existing_config[column_name]['datasources']
+                if d['name'] not in [d['name'] for d in column_details['datasources']]
+            ]
+            # Add all datasources from the additional column to existing column datasources
+            for datasource in column_details['datasources']:
                 if debugging_logs:
-                    print('CHANGING DESCRIPTION')
-                    print('DESCRIPTION CURRENT:', description_current)
-                    print('DESCRIPTION NEW:', description_new)
-
-                existing_config[column_name]['description'] = description_new
-
-                if debugging_logs:
-                    print('DESCRIPTION SET TO:', existing_config[column_name]['description'])
-
-            if folder_new is not None and len(folder_new.strip()) > 0:
-                if debugging_logs:
-                    print('CHANGING FOLDER')
-                    print('FOLDER CURRENT:', folder_current)
-                    print('FOLDER NEW:', folder_new)
-
-                existing_config[column_name]['folder'] = folder_new
-
-                if debugging_logs:
-                    print('FOLDER SET TO:', existing_config[column_name]['folder'])
-
-            if len(persona_new.strip()) > 0:
-                if debugging_logs:
-                    print('CHANGING PERSONA')
-                    print('PERSONA CURRENT:', persona_current)
-                    print('PERSONA NEW:', persona_new)
-
-                existing_config[column_name]['persona'] = persona_new
-
-                if debugging_logs:
-                    print('PERSONA SET TO:', existing_config[column_name]['persona'])
-
-            datasources_list = []
+                    print('\tADDING DATASOURCE:', datasource)
+                existing_config[column_name]['datasources'].append(datasource)
 
             if debugging_logs:
-                print('CHANGING DATASOURCES')
-                print('DATASOURCES CURRENT:', datasources_current)
-                print('DATASOURCES NEW:', datasources_new)
-
-            datasources_names_current = [d['name'] for d in datasources_current]
-
-            if debugging_logs:
-                print(datasources_names_current)
-
-            # If the config has the datasource take the new one otherwise keep all datasources
-            for each_datasource in datasources_current:
-                if each_datasource['name'] == datasources_new[0]['name']:
-                    datasources_list.append(column_details['datasources'][0])
-                else:
-                    datasources_list.append(each_datasource)
-
-            # Add the new datasource if it's not in the existing things at all
-            if datasources_new[0]['name'] not in datasources_names_current:
-                datasources_list.append(column_details['datasources'][0])
-
-            existing_config[column_name]['datasources'] = datasources_list
-
-            if debugging_logs:
-                print('DATASOURCES SET TO:', existing_config[column_name]['datasources'])
+                print('\tCOLUMN ATTRIBUTES SET TO:', existing_config[column_name])
 
     return existing_config
 
@@ -216,10 +134,8 @@ def merge_configs(args, server=None):
         # Read files
         existing_config = read_file(args.existing_config)
         definitions_mapping = load_csv_with_definitions(file=definitions_csv_path)
-
         # Merge
         new_config = add_definitions_mapping(existing_config, definitions_mapping)
-
         # Sort and write the merged config
         new_config = dict(sorted(new_config.items()))
         write_file(file_name=file_name, config=new_config, debugging_logs=args.debugging_logs)

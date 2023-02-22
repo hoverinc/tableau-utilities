@@ -123,6 +123,7 @@ class Datasource(TableauFile):
         self.column_instance: tfo.ColumnInstance = tfo.ColumnInstance(**self.__get_section('column-instance')[0])
         self.drill_paths: tfo.DrillPaths = tfo.DrillPaths(**self.__get_section('drill-paths')[0])
         self.folders_common: tfo.FoldersCommon = tfo.FoldersCommon(**self.__get_section('folders-common')[0])
+        self.date_options: tfo.DateOptions = tfo.DateOptions(**self.__get_section('date-options')[0])
         self.extract: tfo.Extract = tfo.Extract(**self.__get_section('extract')[0])
 
     def sections(self):
@@ -133,6 +134,7 @@ class Datasource(TableauFile):
         yield self.column_instance
         yield self.drill_paths
         yield self.folders_common
+        yield self.date_options
         yield self.extract
 
     def __get_section(self, tag):

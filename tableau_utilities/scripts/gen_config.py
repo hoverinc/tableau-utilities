@@ -5,7 +5,6 @@ import pandas as pd
 
 from tableau_utilities.general.config_column_persona import personas
 from tableau_utilities.general.funcs import convert_to_snake_case
-from tableau_utilities.scripts.server_operate import get_object_list, fill_in_id_name_project
 from tableau_utilities.tableau_file.tableau_file import Datasource
 from tableau_utilities.tableau_server.tableau_server import TableauServer
 
@@ -21,6 +20,7 @@ def load_csv_with_definitions(file=None):
 
     """
 
+    definitions_mapping = dict()
     df = pd.read_csv(file)
     df.columns = df.columns.str.lower()
     definitions = df.to_dict('records')
@@ -30,29 +30,11 @@ def load_csv_with_definitions(file=None):
     if 'column_name' not in column_names or 'description' not in column_names:
         raise ValueError('The .csv must contain a column_name and a description column.')
 
-    # print(definitions)
-    definitions_mapping = {}
-
     for column in definitions:
         if str(column['description']) != 'nan':
             definitions_mapping[column['column_name']] = column['description']
 
     return definitions_mapping
-
-
-def download_datasource(server, datasource_id):
-    """ Downloads the specified datasources
-
-    Args:
-        server (TableauServer): A Tableau server object
-        datasource_name: The name of the datasource to download
-
-    Returns:
-        datasource_path: The path of the datasource that was downloaded
-    """
-
-    datasource_path = server.download_datasource(datasource_id, include_extract=False)
-    return datasource_path
 
 
 def choose_persona(role, role_type, datatype):
@@ -65,71 +47,60 @@ def choose_persona(role, role_type, datatype):
         datatype: string, date, datetype, real, or boolean
 
     """
+    for k, v in personas.items():
+        if role == v['role'] and role_type == v['role_type'] == role_type and datatype == v['datatype']:
+            return k
 
-    persona_name = None
-    for persona in personas:
-        for k, v in persona.items():
-            if role == v['role'] and role_type == v['role_type'] == role_type and datatype == v['datatype']:
-                persona_name = k
-                break
-
-    if persona_name is not None:
-        return persona_name
-    else:
-        raise ValueError(
-            f"There is no persona for the combination of ROLE {role}, ROLE_TYPE {role_type}, and DATATYPE {datatype}'")
+    raise ValueError(
+        f"There is no persona for the combination of ROLE {role}, ROLE_TYPE {role_type}, and DATATYPE {datatype}'"
+    )
 
 
-def get_metadata_record_columns(datasource_name, datasource_path, debugging_logs=False):
+def get_metadata_record_config(metadata_records, datasource_name, debugging_logs=False):
     """ Builds a column config for columns that are only in metadata records and not in column objects
 
     Args:
-        datasource_name: The name of the datasource
-        datasource_path: The path to the of the datasource
+        metadata_records (Datasource.connection.metadata_records): The metadata_records list from the Datasource object
+        datasource_name (str): The name of the datasource
         debugging_logs: Prints information to consolde if true
-
     """
-
-    rows = dict()
-    metadata_records = [c.dict() for c in Datasource(datasource_path).connection.metadata_records]
-    rows.setdefault(datasource_name, [])
-    rows[datasource_name].extend(metadata_records)
-
-    metadata_record_columns = {}
+    metadata_record_columns = dict()
 
     for m in metadata_records:
-        if m['@class'] == 'column':
-
+        if m.class_name == 'column':
+            local_name = m.local_name[1:-1]
+            persona = ''
             # I think it's low risk to assume these data types are all dimensions
-            if m["local-type"] == 'string':
+            if m.local_type == 'string':
                 persona = 'string_dimension'
-            elif m["local-type"] == 'date':
+            elif m.local_type == 'date':
                 persona = 'date_dimension'
-            elif m["local-type"] == 'datetime':
+            elif m.local_type == 'datetime':
                 persona = 'datetime_dimension'
-            elif m["local-type"] == 'boolean':
+            elif m.local_type == 'boolean':
                 persona = 'boolean_dimension'
             # Makes the assumption that numbers are discrete measures so that a user can't do accidental math on fields
-            elif m["local-type"] == 'integer':
+            elif m.local_type == 'integer':
                 persona = 'discrete_number_dimension'
-            elif m["local-type"] == 'real':
+            elif m.local_type == 'real':
                 persona = 'discrete_decimal_dimension'
 
-            metadata_record_columns[m['remote-name']] = {'persona': persona,
-                                                         "datasources": [
-                                                             {
-                                                                 "name": datasource_name,
-                                                                 "local-name": m['local-name'][1:-1],
-                                                                 "sql_alias": m['remote-name']
-                                                             },
-                                                         ]
-                                                         }
+            metadata_record_columns[local_name] = {
+                'persona': persona,
+                "datasources": [
+                    {
+                        "name": datasource_name,
+                        "local-name": local_name,
+                        "sql_alias": m.remote_name
+                    },
+                ]
+            }
 
             if debugging_logs:
                 print(m)
                 print(persona)
-                print(m['remote-name'])
-                print(metadata_record_columns[m['remote-name']])
+                print(local_name, ':', m.remote_name)
+                print(metadata_record_columns[local_name])
 
     return metadata_record_columns
 
@@ -139,214 +110,160 @@ def create_column_config(columns, datasource_name, folder_mapping, metadata_reco
     """ Generates a list of column configs with None for a folder
 
     Args:
-        columns: The column dictionary from the datasource
-        datasource_name: The name of the datasource
-        folder_mapping: A list of dictionaries mapping column name to folder name
-        metadata_record_columns: The configs from the metadata records to use if there is no column object
-        definitions_mapping: The mapping of definitions from a csv
-
-    ```{
-      "Salesforce Opportunity Id": {
-        "description": "The 18 digit account Id for a Salesforce opportunity",
-        "folder": Name,
-        "persona": "string_dimension",
-        "datasources": [
-          {
-            "name": "Opportunity",
-            "local-name": "SALESFORCE_OPPORTUNITY_ID",
-            "sql_alias": "SALESFORCE_OPPORTUNITY_ID"
-          }
-        ]
-      }
-      ````
+        columns (Datasource.columns): The list of Column objects from the Datasource object
+        datasource_name (str): The name of the datasource
+        folder_mapping (dict): A dict mapping column name to folder name
+        metadata_record_columns (dict): The config based on metadata records; used if there is no column object
+        definitions_mapping (dict): The mapping of definitions from a csv
+        debugging_logs (bool): True to print debugging logs
 
     Returns:
-        column_configs: A dictionary with the configs for fields that are pulled from the source database
-        calculated_column_configs: A dictionary with the configs for calculated fields added in the workbook that built
+        column_config (dict): A dict config for fields that are pulled from the source database
+        calculated_column_configs (dict): A dictionary with the configs for calculated fields added in the workbook that built
             the datasource
 
+        Sample column_config Output: {
+          "Salesforce Opportunity Id": {
+            "description": "The 18 digit account Id for a Salesforce opportunity",
+            "folder": Name,
+            "persona": "string_dimension",
+            "datasources": [
+              {
+                "name": "Opportunity",
+                "local-name": "SALESFORCE_OPPORTUNITY_ID",
+                "sql_alias": "SALESFORCE_OPPORTUNITY_ID"
+              }
+            ]
+        }
     """
 
-    column_configs = {}
-    calculated_column_configs = {}
-    column_name_list = []
+    column_config = dict()
+    calculated_column_configs = dict()
+    column_name_list = list()
 
-    for c in columns:
+    for column in columns:
+        column_name = column.name[1:-1]
 
-        column_name = c['@name'][1:-1]
         # Skip internal object columns
         if column_name.startswith('__tableau_internal_object_id__'):
+            if debugging_logs:
+                print(f'Skipping {column_name}: starts with __tableau_internal_object_id__ ')
+            continue
+        # Skip columns with the 'table' datatype for now
+        if column.datatype == 'table':
+            if debugging_logs:
+                print(f'Skipping {column_name}: column.datatype == "table" ')
             continue
 
         # Keeps a list of column names from the column object.
         column_name_list.append(column_name)
 
         # Make a title case caption from the database name if there is no caption
-        if '@caption' in c:
-            caption = c['@caption']
+        if column.caption:
+            caption = column.caption
         else:
             caption = column_name.replace('_', ' ').title()
 
-        # Skip the table datatype for now
-        if c['@datatype'] == 'table':
-            pass
-        else:
-            persona = choose_persona(role=c['@role'], role_type=c['@type'], datatype=c['@datatype'])
+        persona = choose_persona(role=column.role, role_type=column.type, datatype=column.datatype)
 
         # Takes the description from the csv if there is one
         # Assumes the csv  is the source of truth if there are definitions in both
-        if definitions_mapping is not None:
-            if caption in definitions_mapping and definitions_mapping[caption] is not None and \
-                    (isinstance(definitions_mapping[caption], str) and len(definitions_mapping[caption]) > 0):
-                description = definitions_mapping[caption]
-            elif 'desc' in c:
-                description = c['desc']['formatted-text']['run']
-            else:
-                description = ''
-        elif 'desc' in c:
-            description = c['desc']['formatted-text']['run']
+        if definitions_mapping.get(caption, '') != '':
+            description = definitions_mapping[caption]
         else:
-            description = ''
+            description = column.desc or ''
 
-        folder_name = None
-        if column_name in folder_mapping.keys():
-            folder_name = folder_mapping[column_name]
+        folder_name = folder_mapping.get(column_name)
 
+        column_dict = {
+            "description": description,
+            "folder": folder_name,
+            "persona": persona,
+            "datasources": [
+                {
+                    "name": datasource_name,
+                    "local-name": column_name
+                },
+            ]
+        }
+        # Optional Properties to Add
+        if column.fiscal_year_start:
+            column_dict['fiscal_year_start'] = column.fiscal_year_start
+        if column.default_format:
+            column_dict['default_format'] = column.default_format
+
+        if debugging_logs:
+            print('-' * 30)
+            print(caption)
+            print(column.dict())
         # Calculations are written to a separate config in the Airflow DAG
-        if 'calculation' in c:
-
+        if column.calculation:
+            calculated_column_configs[caption] = column_dict
+            calculated_column_configs[caption]["calculation"] = column.calculation
             if debugging_logs:
-                print('-' * 30)
                 print('CALCULATED COLUMN CONFIG FIELD')
-                print(caption)
-                print(c)
                 print(calculated_column_configs[caption])
-
-            calculated_column_configs[caption] = {
-                "description": description,
-                "calculation": c['calculation']['@formula'],
-                "folder": folder_name,
-                "persona": persona,
-                "datasources": [
-                    {
-                        "name": datasource_name,
-                        "local-name": column_name,
-                        "sql_alias": column_name
-                    },
-                ]
-            }
-
-            # Optional Properties to Add
-            if '@fiscal_year_start' in c:
-                calculated_column_configs[caption]['fiscal_year_start'] = c['@fiscal_year_start']
-            if '@default-format' in c:
-                calculated_column_configs[caption]['default_format'] = c['@default-format']
-
         else:
-
+            if column_name in metadata_record_columns:
+                sql_alias = metadata_record_columns[column_name]['datasources'][0]['sql_alias']
+            else:
+                sql_alias = column_name
+            column_config[caption] = column_dict
+            column_config[caption]['datasources'][0]['sql_alias'] = sql_alias
             if debugging_logs:
-                print('-' * 30)
                 print('COLUMN CONFIG FIELD')
-                print(caption)
-                print(c)
-                print(column_configs[caption])
-
-            column_configs[caption] = {
-                "description": description,
-                "folder": folder_name,
-                "persona": persona,
-                "datasources": [
-                    {
-                        "name": datasource_name,
-                        "local-name": column_name,
-                        "sql_alias": column_name
-                    },
-                ]
-            }
-
-            # Optional Properties to Add
-            if '@fiscal_year_start' in c:
-                column_configs[caption]['fiscal_year_start'] = c['@fiscal_year_start']
-            if '@default-format' in c:
-                column_configs[caption]['default_format'] = c['@default-format']
+                print(column_config[caption])
 
     # Add column configs for metadata_record columns when there wasn't a column object already
     # This is only need for non-calulated fields
     for k, v in metadata_record_columns.items():
         if k in column_name_list:
-            pass
-        else:
-            caption = k.replace('_', ' ').title()
+            continue
 
-            if v['persona'] in ['string_dimension', 'date_dimension', 'datetime_dimension', 'boolean_dimension']:
-                column_configs[caption] = {
-                    "description": '',
-                    "folder": None,
-                    "persona": v['persona'],
-                    "datasources": v['datasources']
-                }
+        caption = v['datasources'][0]['sql_alias'].replace('_', ' ').title()
+
+        if v['persona']:
+            column_config[caption] = {
+                "description": '',
+                "folder": None,
+                "persona": v['persona'],
+                "datasources": v['datasources']
+            }
 
             if debugging_logs:
                 print('-' * 30)
                 print('METADATA RECORD COLUMN ADDED')
                 print(caption)
-                print(column_configs[caption])
+                print(v['persona'])
+                print(column_config[caption])
+        else:
+            if debugging_logs:
+                print('-' * 30)
+                print('METADATA RECORD COLUMN SKIPPED - Missing persona')
+                print(caption)
+                print(k, ':', v)
 
-    return column_configs, calculated_column_configs
+    return column_config, calculated_column_configs
 
 
-def build_folder_mapping(datasource_path):
+def build_folder_mapping(folders):
     """  Builds a dictionary mapping columns to folders
 
     Args:
-      The path to the datasource
+        folders (Datasource.folders_common): List of folder objects from the Datasource object
 
-    Returns:
-        A dictionary with the mapping like
-
-        ```
-        {'column1': 'folderA',
-         'column2': 'folderA',
-         'column3': 'folderB',
-        ```
-
+    Returns: A dict of column & folder mapping; i.e. {'column1': 'folderA', 'column2': 'folderA'}
     """
-
-    folders = [c.dict() for c in Datasource(datasource_path).folders_common]
-
-    mappings = {}
-    for f in folders:
-        folder_name = f['@name']
-
-        if 'folder-item' in f:
-            for item in f['folder-item']:
-                field_name = item['@name'][1:-1]
-                mappings[field_name] = folder_name
-
+    mappings = dict()
+    for folder in folders:
+        if folder.folder_item:
+            for item in folder.folder_item:
+                field_name = item.name[1:-1]
+                mappings[field_name] = folder.name
     return mappings
 
 
-def extract_columns(datasource_name, datasource_path):
-    """ Extract the columns into a dictionary from the datasource
-
-    Args:
-        datasource_name: The name of the datasource
-        datasource_path: The path to the tdsx file
-
-    Returns:
-        A list of dictionaries with the column information
-
-    """
-
-    rows = dict()
-    columns = [c.dict() for c in Datasource(datasource_path).columns]
-    rows.setdefault(datasource_name, [])
-    rows[datasource_name].extend(columns)
-
-    return columns
-
-
-def generate_config(args, server=None):
+def generate_config(args, server: TableauServer = None):
     """ Downloads a datasource and saves configs for that datasource
 
     """
@@ -357,7 +274,6 @@ def generate_config(args, server=None):
     location = args.location
     id = args.id
     datasource_name = args.name
-    project_name = args.project_name
     datasource_path = args.file_path
 
     # Set file_prefix to false when this function is called from the merge_config namespace
@@ -370,32 +286,37 @@ def generate_config(args, server=None):
     if location == 'local':
         datasource_name = Path(datasource_path).stem
         print(f'BUILDING CONFIG FOR: {datasource_name} {datasource_path} ')
-
     # Download the datasouce and set values for
     elif location == 'online':
-        object_list = get_object_list(object_type='datasource', server=server)
-        id, datasource_name, project_name = fill_in_id_name_project(id, datasource_name, project_name, object_list)
-        datasource_path = download_datasource(server, id)
-        print(
-            f'GETTING DATASOURCE ID: {id}, NAME: {datasource_name}, PROJECT NAME: {project_name}, INCLUDE EXTRACT false')
+        obj = server.get_datasource(id, datasource_name, args.project_name)
+        id = obj.id
+        datasource_name = obj.name
+        print(f'GETTING DATASOURCE -> ID: {id}, NAME: {datasource_name}, INCLUDE EXTRACT false')
+        datasource_path = server.download_datasource(id, include_extract=False)
 
+    datasource = Datasource(datasource_path)
     # Get column information from the metadata records
-    metadata_record_columns = get_metadata_record_columns(datasource_name, datasource_path, debugging_logs)
+    metadata_record_config = get_metadata_record_config(
+        datasource.connection.metadata_records,
+        datasource_name,
+        debugging_logs
+    )
 
     # Get the mapping of definitions from the csv
-    definitions_mapping = None
+    definitions_mapping = dict()
     if definitions_csv_path is not None:
         definitions_mapping = load_csv_with_definitions(file=definitions_csv_path)
 
     # Extract the columns and folders. Build the new config
-    columns = extract_columns(datasource_name, datasource_path)
-    folder_mapping = build_folder_mapping(datasource_path)
-    column_configs, calculated_column_configs = create_column_config(columns=columns,
-                                                                     datasource_name=datasource_name,
-                                                                     folder_mapping=folder_mapping,
-                                                                     metadata_record_columns=metadata_record_columns,
-                                                                     definitions_mapping=definitions_mapping,
-                                                                     debugging_logs=debugging_logs)
+    folder_mapping = build_folder_mapping(datasource.folders_common)
+    column_configs, calculated_column_configs = create_column_config(
+        columns=datasource.columns,
+        datasource_name=datasource_name,
+        folder_mapping=folder_mapping,
+        metadata_record_columns=metadata_record_config,
+        definitions_mapping=definitions_mapping,
+        debugging_logs=debugging_logs
+    )
 
     # Sort configs
     column_configs = dict(sorted(column_configs.items()))
@@ -415,7 +336,7 @@ def generate_config(args, server=None):
     with open(output_file_calculated_column_config, "w") as outfile:
         json.dump(calculated_column_configs, outfile)
 
-    print('DATSOURCE PATH:', datasource_path)
+    print('DATASOURCE PATH:', datasource_path)
     print('COLUMN CONFIG PATH:', output_file_column_config)
     print('CALCULATED COLUMN CONFIG PATH:', output_file_calculated_column_config)
 

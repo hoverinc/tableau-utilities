@@ -196,15 +196,35 @@ class TableauServer:
                 self.__transform_tableau_object(obj_dict)
                 yield obj_dict
 
-    def get_datasource(self, datasource_id):
+    def get_datasource(self, datasource_id=None, datasource_name=None, datasource_project=None):
         """ Queries for a datasource in the site
             URI GET /api/api-version/sites/site-id/datasources/datasource_id
+
+            (Optional) Can get the datasource either by ID, or by name & project.
+
+        Args:
+              datasource_id (str): The ID of the datasource
+              datasource_name (str): The name of the datasource
+              datasource_project (str): The name of the project the datasource is in
+
         Returns: A Datasource Tableau object
         """
-        d = self.get(f'{self.url}/datasources/{datasource_id}')
-        d = d['datasource']
-        self.__transform_tableau_object(d)
-        return tso.Datasource(**d)
+        if datasource_id:
+            d = self.get(f'{self.url}/datasources/{datasource_id}')
+            d = d['datasource']
+            self.__transform_tableau_object(d)
+            return tso.Datasource(**d)
+        elif datasource_name and datasource_project:
+            for d in self.get_datasources():
+                if d.name == datasource_name and d.project_name == datasource_project:
+                    return d
+            raise TableauConnectionError(
+                f'Datasource not found:\n\tName    -> {datasource_name}\n\tProject -> {datasource_project}'
+            )
+
+        raise TableauConnectionError(
+            'Please provide either the datasource_id, or both datasource_name and datasource_project'
+        )
 
     def get_datasources(self):
         """ Queries for all datasources in the site
