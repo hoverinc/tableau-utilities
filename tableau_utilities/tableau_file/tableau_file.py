@@ -145,6 +145,8 @@ class Datasource(TableauFile):
         for element in parent:
             if element.tag.endswith(f'true...{tag}') or element.tag == tag:
                 item = xmltodict.parse(ET.tostring(element))[element.tag]
+                if not item:
+                    continue
                 item = transform_tableau_object(item)
                 section.append(item)
         if not section:
