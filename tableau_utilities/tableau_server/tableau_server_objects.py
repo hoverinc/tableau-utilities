@@ -237,6 +237,7 @@ class Connection(ServerObject):
     server_address: str = None
     server_port: int = None
     embed_password: bool = None
+    password: str = None
     query_tagging_enabled: bool = None
 
     def __hash__(self):
@@ -244,9 +245,12 @@ class Connection(ServerObject):
 
     def dict(self):
         dictionary = super().dict()
+
         del dictionary['type']
-        del dictionary['datasource_id']
-        del dictionary['datasource_name']
+        if 'datasource_id' in dictionary:
+            del dictionary['datasource_id']
+        if 'datasource_name' in dictionary:
+            del dictionary['datasource_name']
         return dictionary
 
 
@@ -413,6 +417,9 @@ class Job(ServerObject):
     updated_at: datetime = None
     completed_at: datetime = None
     finish_code: int = None
+    extract_refresh_job_datasource_id: str = None
+    extract_refresh_job_datasource_name: str = None
+    id: str = None
     extract_refresh_job_notes_datasource_id: str = None
     extract_refresh_job_notes_datasource_name: str = None
     extract_refresh_job_notes_workbook_id: str = None
