@@ -128,7 +128,7 @@ tableau_utilities --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o -
 #### datasource
 Save the TDS for a datasource from a local datasource to view the raw XML
 ```commandline
-tableau_utilities --datasource_path '/Downloads/My Awesome Datasource.tdsx'  datasource --save_tds
+tableau_utilities --location local --file_path '/Downloads/My Awesome Datasource.tdsx'  datasource --save_tds
 ```
 
 Save the TDS for a datasource from an online datasource to view the raw XML
