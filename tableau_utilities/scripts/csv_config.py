@@ -18,22 +18,14 @@ def csv_config(args):
             folder = details['folder']
             persona = details['persona']
 
-            calculation = None
-            if 'calculation' in details:
-                calculation = details['calculation']
-
-            fiscal_year_start = None
-            if 'fiscal_year_start' in details:
-                fiscal_year_start = details['fiscal_year_start']
-
-            default_format = None
-            if 'default_format' in details:
-                default_format = details['default_format']
+            calculation = details.get('calculation')
+            fiscal_year_start = details.get('fiscal_year_start')
+            default_format = details.get('default_format')
 
             for datasource in details['datasources']:
                 datasource_name = datasource['name']
                 local_name = datasource['local-name']
-                sql_alias = datasource['sql_alias']
+                sql_alias = datasource.get('sql_alias')
 
                 each_column = {'column_name': column_name,
                                'description': description,
