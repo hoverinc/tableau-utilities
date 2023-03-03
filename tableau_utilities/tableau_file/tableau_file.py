@@ -155,7 +155,7 @@ class Datasource(TableauFile):
         elif len(section) == 1:
             return section[0]
         elif enforce_list:
-            return tfo.TableauFileObjects([], item_class=obj, tag=obj.tag)
+            return tfo.TableauFileObjects(item_class=obj, tag=obj.tag)
         return None
 
     def enforce_column(self, column, folder_name=None, remote_name=None):
