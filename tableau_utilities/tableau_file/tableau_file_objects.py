@@ -1,8 +1,9 @@
+import logging
 import sys
 import re
 import xml.etree.ElementTree as ET
 import xmltodict
-from dataclasses import dataclass, astuple, field
+from dataclasses import dataclass, astuple, fields
 from typing import Literal
 from tableau_utilities.general.funcs import transform_tableau_object
 
@@ -19,6 +20,9 @@ class TableauFileObject:
         The data types of attributes from child class will be converted to the appropriate type,
         if it is provided as a string instead.
     """
+
+    def __bool__(self):
+        return len([v for v in self.__dict__.values() if v]) == 0
 
     def __existing_str_attr(self, attr: str):
         """ Returns: True if the attribute exists and is a string """
@@ -120,7 +124,7 @@ class TableauFileObjects(list):
                 print(_item)
                 raise TypeError(err) from err
         elif not isinstance(item, self._item_class):
-            raise TypeError(f'Item must be of type {self._item_class} or {dict}')
+            raise TypeError(f'Item must be of type {self._item_class.__name__} or dict, not {item.__class__.__name__}')
         return item
 
     def _to_dict(self):
@@ -237,6 +241,8 @@ class Column(TableauFileObject):
     range: dict = None
     fiscal_year_start: int = None
     visual_totals: str = None
+    ns0_auto_column: str = None
+    xmlns_ns0: str = None
 
     def __post_init__(self):
         if not re.match(r'^\[.+]$', self.name):
@@ -283,8 +289,10 @@ class Column(TableauFileObject):
             output['@semantic-role'] = self.semantic_role
         if self.auto_column is not None:
             output['@ns0:auto-column'] = self.auto_column
-        if self.xmlns is not None:
-            output['@xmlns:ns0'] = self.xmlns
+        if (self.xmlns or self.xmlns_ns0) is not None:
+            output['@xmlns:ns0'] = self.xmlns or self.xmlns_ns0
+        if self.ns0_auto_column is not None:
+            output['@ns0:auto-column'] = self.ns0_auto_column
         if self.default_format is not None:
             output['@default-format'] = self.default_format
         if self.caption is not None:

@@ -148,15 +148,18 @@ class Datasource(TableauFile):
                 item = xmltodict.parse(ET.tostring(element))[element.tag]
                 if not item:
                     continue
-                item = transform_tableau_object(item)
-                section.append(obj(**item))
+                new_item = transform_tableau_object(item)
+                try:
+                    section.append(obj(**new_item))
+                except TypeError as err:
+                    raise TableauFileError(f'{err}\n\nPre-transform {obj.tag} attributes: {item}') from err
         if len(section) > 1 or len(section) == 1 and enforce_list:
             return tfo.TableauFileObjects(section, item_class=obj, tag=obj.tag)
         elif len(section) == 1:
             return section[0]
         elif enforce_list:
             return tfo.TableauFileObjects(item_class=obj, tag=obj.tag)
-        return None
+        return obj()
 
     def enforce_column(self, column, folder_name=None, remote_name=None):
         """
