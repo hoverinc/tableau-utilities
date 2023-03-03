@@ -267,7 +267,7 @@ def tableau_authentication(args):
                 print(f'Using CLI Argument cred: {cred_name} = {cred_value}')
 
     # Set Settings YAML file credentials
-    if yaml_path:
+    if yaml_path and os.path.exists(yaml_path):
         with open(yaml_path, 'r') as f:
             yaml_creds = yaml.safe_load(f)
             yaml_creds = yaml_creds['tableau_login']

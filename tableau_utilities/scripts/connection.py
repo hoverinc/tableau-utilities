@@ -38,7 +38,7 @@ def connection_settings(args, debugging_logs, settings_path=None):
                 print(f'Using CLI Argument cred: {name} = {value}')
 
     # Set Settings YAML credentials
-    if settings_path:
+    if settings_path and os.path.exists(settings_path):
         with open(settings_path, 'r') as f:
             yaml_creds = yaml.safe_load(f)
             yaml_creds = yaml_creds['embed_connection']
