@@ -937,14 +937,17 @@ class ParentConnection(TableauFileObject):
             self.named_connections[item.class_name].connection = item
 
     def dict(self):
-        dictionary = {
-            '@class': self.class_name,
-            'relation': self.relation.dict(),
-            'cols': {'map': [c.dict() for c in self.cols]},
-            'metadata-records': {'metadata-record': [m.dict() for m in self.metadata_records]}
-        }
+        dictionary = {'@class': self.class_name}
         if self.named_connections is not None:
             dictionary['named-connections'] = {'named-connection': [nc.dict() for nc in self.named_connections]}
+        if self.relation is not None:
+            dictionary['relation'] = self.relation.dict()
+        if self.cols is not None:
+            dictionary['cols'] = {'map': [c.dict() for c in self.cols]}
+        if self.refresh is not None:
+            dictionary['refresh'] = self.refresh.dict()
+        if self.metadata_records is not None:
+            dictionary['metadata-records'] = {'metadata-record': [m.dict() for m in self.metadata_records]}
         if self.authentication is not None:
             dictionary['@authentication'] = self.authentication
         if self.access_mode is not None:
