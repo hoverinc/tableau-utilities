@@ -50,37 +50,35 @@ group_token.add_argument('-tn', '--token_name', help='Personal Access Token Name
 
 # GROUP: SETTINGS YAML
 group_settings_yaml = parser.add_argument_group('settings.yaml', 'Authentication with settings in a .yaml file')
-group_settings_yaml.add_argument('--settings_path',
-                                 help='Path to your local settings.yaml file (See sample_settings.yaml)'
-                                 )
+group_settings_yaml.add_argument('--settings_path', default='settings.yaml', help='Path to your local settings.yaml '
+                                                                                  'file (See sample_settings.yaml)')
 
 # GROUP: LOCAL FOLDER
 group_local_folder = parser.add_argument_group('local_folder', 'Manage where to read/write files')
-group_local_folder.add_argument('--local_folder', default='tmp_tdsx_and_config',
-                                help='Specifies the folder to write the datasource and configs to')
-group_local_folder.add_argument('--clean_up_first', action='store_true',
-                                help='Deletes the directory and files before running')
+group_local_folder.add_argument('--local_folder', default='tmp_tdsx_and_config', help='Specifies the folder to write '
+                                                                                      'the datasource and configs to')
+group_local_folder.add_argument('--clean_up_first', action='store_true', help='Deletes the directory and files '
+                                                                              'before running')
 
 # GROUP: File Information
-group_file = parser.add_argument_group('file',
-                                             'Information for datasource operations such as generate_config and update_connection')
-group_file.add_argument('-l', '--location', choices=['local', 'online'],
-                               help='Specify the location of the datasource or workbook')
+group_file = parser.add_argument_group('file', 'Information for datasource operations such as generate_config and update_connection')
+group_file.add_argument('-l', '--location', choices=['local', 'online'], help='Specify the location of the datasource '
+                                                                              'or workbook')
 group_file.add_argument('-i', '--id', help='The ID for the object on Tableau Cloud/Server')
-group_file.add_argument('-n', '--name', help='The datasource or workbook name in Tableau Cloud/Server Use with --project_name.')
-group_file.add_argument('-pn', '--project_name',
-                                   help='The project name for the datasource or workbook in Tableau Cloud/Server Use with --name.')
+group_file.add_argument('-n', '--name', help='The datasource or workbook name in Tableau Cloud/Server '
+                                             'Use with --project_name.')
+group_file.add_argument('-pn', '--project_name', help='The project name for the datasource or workbook in '
+                                                      'Tableau Cloud/Server Use with --name.')
 group_file.add_argument('-f', '--file_path', help='The path to the file to publish or interact with')
-group_file.add_argument('--definitions_csv',
-                        help='Add data defintions from a csv to the config. It may be easier to bulk '
-                                    'populate definitions in a spreadsheet than in the config.')
-group_file.add_argument('--include_extract', action='store_true',
-                                   help='Includes the extract in the download if specified. '
-                                        'This will make downloads take a long time for large extracts.')
+group_file.add_argument('--definitions_csv', help='Add data defintions from a csv to the config. '
+                                                  'It may be easier to bulk populate definitions in a spreadsheet '
+                                                  'than in the config.')
+group_file.add_argument('--include_extract', action='store_true', help='Includes the extract in the download if '
+                                                                       'specified. This will make downloads take a '
+                                                                       'long time for large extracts.')
 
 # SERVER INFO
-parser_server_info = subparsers.add_parser('server_info',
-                                           help='Retrieve and view information from Tableau Cloud/Server')
+parser_server_info = subparsers.add_parser('server_info', help='Retrieve and view information from Tableau Cloud/Server')
 parser_server_info.add_argument('-lo', '--list_object', choices=['datasource', 'project', 'workbook'], required=True,
                                 help='Specify the type of object for the information.')
 parser_server_info.add_argument('-lf', '--list_format', default='names',
@@ -222,19 +220,13 @@ def validate_args_id_name_project(args):
 
 
 def validate_args_command_connection(args):
-    """ Validate connection args are incluedd
-
-    """
-
+    """ Validate connection args are included """
     if args.conn is None:
         parser.error(f'{args.command} requires --conn')
 
 
 def validate_args_command_datasource(args):
-    """ Validates args for the datasource command
-
-    """
-
+    """ Validates args for the datasource command """
     if args.column:
         if args.file_path is None:
             parser.error(f'{args.command} --column requires --file_path')
@@ -252,9 +244,7 @@ def validate_args_command_merge_config(args):
 
 
 def tableau_authentication(args):
-    """ Creates the Tableau server authentication from a variety of methods for passing in credentials
-
-    """
+    """ Creates the Tableau server authentication from a variety of methods for passing in credentials """
     debug = args.debugging_logs
     yaml_path = args.settings_path
 
@@ -343,12 +333,12 @@ def main():
     os.chdir(tmp_folder)
 
     needs_tableau_server = (
-            (args.command == 'generate_config' and args.location == 'online')
-            or (args.command == 'merge_config' and args.location == 'online')
-            or (args.command == 'datasource' and args.location == 'online')
-            or (args.command == 'connection' and args.connection_operation == 'embed_user_pass')
-            or args.command == 'server_info'
-            or args.command == 'server_operate'
+        (args.command == 'generate_config' and args.location == 'online')
+        or (args.command == 'merge_config' and args.location == 'online')
+        or (args.command == 'datasource' and args.location == 'online')
+        or (args.command == 'connection' and args.connection_operation == 'embed_user_pass')
+        or args.command == 'server_info'
+        or args.command == 'server_operate'
     )
 
     if needs_tableau_server:
