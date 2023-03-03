@@ -113,18 +113,14 @@ class Datasource(TableauFile):
         if self.extension not in ['tds', 'tdsx']:
             raise TableauFileError('File must be TDS or TDSX')
 
-        self.connection: tfo.ParentConnection = tfo.ParentConnection(**self.__get_section('connection')[0])
-        self.aliases: tfo.Aliases = tfo.Aliases(**self.__get_section('aliases')[0])
-        self.columns: tfo.TableauFileObjects[tfo.Column] = tfo.TableauFileObjects(
-            self.__get_section('column'),
-            item_class=tfo.Column,
-            tag='column'
-        )
-        self.column_instance: tfo.ColumnInstance = tfo.ColumnInstance(**self.__get_section('column-instance')[0])
-        self.drill_paths: tfo.DrillPaths = tfo.DrillPaths(**self.__get_section('drill-paths')[0])
-        self.folders_common: tfo.FoldersCommon = tfo.FoldersCommon(**self.__get_section('folders-common')[0])
-        self.date_options: tfo.DateOptions = tfo.DateOptions(**self.__get_section('date-options')[0])
-        self.extract: tfo.Extract = tfo.Extract(**self.__get_section('extract')[0])
+        self.connection: tfo.ParentConnection = self.__get_section(tfo.ParentConnection)
+        self.aliases: tfo.Aliases = self.__get_section(tfo.Aliases)
+        self.columns: tfo.TableauFileObjects[tfo.Column] = self.__get_section(tfo.Column, enforce_list=True)
+        self.column_instance: tfo.ColumnInstance = self.__get_section(tfo.ColumnInstance)
+        self.drill_paths: tfo.DrillPaths = self.__get_section(tfo.DrillPaths)
+        self.folders_common: tfo.FoldersCommon = self.__get_section(tfo.FoldersCommon)
+        self.date_options: tfo.DateOptions = self.__get_section(tfo.DateOptions)
+        self.extract: tfo.Extract = self.__get_section(tfo.Extract)
 
     def sections(self):
         """ Yields each section defined in the class, for iteration """
@@ -137,21 +133,30 @@ class Datasource(TableauFile):
         yield self.date_options
         yield self.extract
 
-    def __get_section(self, tag):
-        """ Sets DatasourceItems for each section """
+    def __get_section(self, obj, enforce_list=False):
+        """ Sets DatasourceItems for each section
+
+        Args:
+            obj (tfo.TableauFileObject): A Tableau File Object; ParentConnection, Column, etc
+            enforce_list (bool): True if the section should be a TableauFileObjects list
+        """
         parent = self._root.find('.')
         # Gets elements within the parent element, with the appropriate section.tag
-        section = list()
+        section: list[dict] = list()
         for element in parent:
-            if element.tag.endswith(f'true...{tag}') or element.tag == tag:
+            if element.tag.endswith(f'true...{obj.tag}') or element.tag == obj.tag:
                 item = xmltodict.parse(ET.tostring(element))[element.tag]
                 if not item:
                     continue
                 item = transform_tableau_object(item)
-                section.append(item)
-        if not section:
-            return [{}]
-        return section
+                section.append(obj(**item))
+        if len(section) > 1 or len(section) == 1 and enforce_list:
+            return tfo.TableauFileObjects(section, item_class=obj, tag=obj.tag)
+        elif len(section) == 1:
+            return section[0]
+        elif enforce_list:
+            return tfo.TableauFileObjects([], item_class=obj, tag=obj.tag)
+        return None
 
     def enforce_column(self, column, folder_name=None, remote_name=None):
         """
@@ -209,6 +214,8 @@ class Datasource(TableauFile):
         parent = self._root.find('.')
         ending_index = -1
         for section in self.sections():
+            if not section:
+                continue
             # Find all elements within the parent element, and the index of those elements
             elements = [(idx, element)
                         for idx, element in enumerate(parent)
