@@ -122,23 +122,23 @@ tableau_utilities --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o -
 #### connection
 Embed a username and password in a datasource in Tableau Online/Server
 ```commandline
-tableau_utilities --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az --location online --name 'My Awesome Datasource' --project_name 'My Fabulous Project' connection --connection_operation embed_user_pass  --conn args --conn_type snowflake --conn_user MY_SNOWFLAKE_USER --conn_pw '1234567abc!'
+tableau_utilities --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az --location online --name 'My Awesome Datasource' --project_name 'My Fabulous Project' --save_tds connection --connection_operation embed_user_pass  --conn args --conn_type snowflake --conn_user MY_SNOWFLAKE_USER --conn_pw '1234567abc!'
 ```
 
 #### datasource
 Save the TDS for a datasource from a local datasource to view the raw XML
 ```commandline
-tableau_utilities --location local --file_path '/Downloads/My Awesome Datasource.tdsx'  datasource --save_tds
+tableau_utilities --location local --file_path '/Downloads/My Awesome Datasource.tdsx' --save_tds  datasource
 ```
 
 Save the TDS for a datasource from an online datasource to view the raw XML
 ```commandline
-tableau_utilities --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az --location online --name 'My Awesome Datasource' --project_name 'My Cool Project' datasource --save_tds
+tableau_utilities --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az --location online --name 'My Awesome Datasource' --project_name 'My Cool Project' --save_tds datasource
 ```
 
 Change the folder for a column
 ```commandline
-tableau_utilities  --location local --file_path '/Downloads/Metadata Alter.tdsx'  datasource --column --column_name COLUIMN_IN_SNOWFLAKE --remote_name COLUIMN_IN_SNOWFLAKE --caption 'My Pretty Column Name' --desc 'The most perfect description helping users understand the data' 
+tableau_utilities  --location local --file_path '/Downloads/Metadata Alter.tdsx' datasource --column --column_name COLUIMN_IN_SNOWFLAKE --remote_name COLUIMN_IN_SNOWFLAKE --caption 'My Pretty Column Name' --desc 'The most perfect description helping users understand the data' 
 
 ```
 
