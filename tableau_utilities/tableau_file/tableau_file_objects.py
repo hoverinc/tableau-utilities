@@ -22,7 +22,7 @@ class TableauFileObject:
     """
 
     def __bool__(self):
-        return len([v for v in self.__dict__.values() if v]) == 0
+        return len([v for k, v in self.__dict__.items() if v and k != 'tag']) > 0
 
     def __existing_str_attr(self, attr: str):
         """ Returns: True if the attribute exists and is a string """

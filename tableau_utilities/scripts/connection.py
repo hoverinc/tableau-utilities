@@ -148,7 +148,15 @@ def connection(args, server=None):
     if connection_operation == 'update_local_connection':
         print('Local Datasource, Updating Connection')
         datasource = Datasource(datasource_path)
+        if args.save_tds:
+            xml_path = datasource.unzip(extract_to=f'{os.path.basename(datasource_path)} - BEFORE')
+            if debugging_logs:
+                print(f'BEFORE - TDS SAVED TO: {xml_path}')
         update_connection(datasource, conn_settings, debugging_logs)
+        if args.save_tds:
+            xml_path = datasource.unzip(extract_to=f'{os.path.basename(datasource_path)} - AFTER')
+            if debugging_logs:
+                print(f'AFTER - TDS SAVED TO: {xml_path}')
 
     elif connection_operation == 'embed_user_pass':
         print('Online Datasource, Updating Embedded Username and Password')
