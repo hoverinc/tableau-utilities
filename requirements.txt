@@ -1,1 +1,7 @@
--r requirements/prod.txt
+xmltodict
+pyyaml
+requests
+pandas
+tabulate
+pytest
+
