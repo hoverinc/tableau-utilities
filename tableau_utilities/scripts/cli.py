@@ -312,6 +312,10 @@ def tableau_authentication(args):
 def main():
     args = parser.parse_args()
 
+    # Set absolute path of the settings_path, if it exists and is not already absolute
+    if not os.path.isabs(args.settings_path) and os.path.exists(args.settings_path):
+        args.settings_path = os.path.abspath(args.settings_path)
+
     # Validate the arguments
     if args.command == 'server_operate':
         validate_args_server_operate(args)
