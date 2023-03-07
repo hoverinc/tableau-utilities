@@ -866,7 +866,7 @@ class Refresh(TableauFileObject):
         return {
             '@refresh-event': self.refresh_event,
             '@increment-key': self.increment_key,
-            '@increment-updates': str(self.incremental_updates).lower()
+            '@incremental-updates': str(self.incremental_updates).lower()
         }
 
 

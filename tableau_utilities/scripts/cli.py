@@ -6,6 +6,7 @@ import yaml
 
 import tableau_utilities.tableau_server.tableau_server as ts
 
+from tableau_utilities.general.config_column_persona import personas
 from tableau_utilities.scripts.gen_config import generate_config
 from tableau_utilities.scripts.merge_config import merge_configs
 from tableau_utilities.scripts.server_info import server_info
@@ -130,21 +131,17 @@ parser_datasource.add_argument(
     default=None,
     help='The name of the folder. See --add_column, --modify_column, --add_folder and --delete_folder'
 )
-parser_datasource.add_argument('--column', choices=['add', 'modify'],
+parser_datasource.add_argument('--column',  action='store_true',
                                help='Add or modify a column in the downloaded datasource')
 parser_datasource.add_argument('--column_name', help='The local name of the column. Required.')
 parser_datasource.add_argument('--remote_name', help='The remote (SQL) name of the column.')
 parser_datasource.add_argument('--caption', help='Short name/Alias for the column')
 parser_datasource.add_argument('--title_case_caption', default=False, action='store_true',
                                help='Converts caption to title case. Applied after --caption')
-parser_datasource.add_argument('--role', default=None, choices=['measure', 'dimension'],
-                               help='required for adding a new column')
+parser_datasource.add_argument('--persona', default=None, choices=list(personas.keys()),
+                               help='The datatype persona of the column. Required for adding a new column')
 parser_datasource.add_argument('--desc', help='A Tableau column description')
 parser_datasource.add_argument('--calculation', help='A Tableau calculation')
-parser_datasource.add_argument('--datatype', default=None, choices=['date', 'datetime', 'integer', 'real', 'string'],
-                               help='required for adding a new column')
-parser_datasource.add_argument('--role_type', default=None, choices=['nominal', 'ordinal', 'quantitative'],
-                               help='required for adding a new column')
 parser_datasource.set_defaults(func=datasource)
 
 # GENERATE CONFIG

@@ -1,4 +1,7 @@
+import os
+
 import tableau_utilities.tableau_file.tableau_file_objects as tfo
+from tableau_utilities.general.config_column_persona import personas
 from tableau_utilities.tableau_file.tableau_file import Datasource
 from tableau_utilities.tableau_server.tableau_server import TableauServer
 
@@ -28,10 +31,11 @@ def datasource(args, server=None):
         if debugging_logs:
             print(f'DATASOURCE PATH: {datasource_path}')
 
+    datasource_file_name = os.path.basename(datasource_path)
     ds = Datasource(datasource_path)
 
     if args.save_tds:
-        xml_path = ds.unzip(extract_to=f'{name} - BEFORE')
+        xml_path = ds.unzip(extract_to=f'{datasource_file_name} - BEFORE')
         if debugging_logs:
             print(f'BEFORE - TDS SAVED TO: {xml_path}')
 
@@ -39,17 +43,31 @@ def datasource(args, server=None):
         # Column name needs to be enclosed in brackets
         column_name = f'[{args.column_name}]'
         column = ds.columns.get(args.column_name)
+        persona = dict()
+        if args.persona:
+            persona = personas.get(args.persona.lower(), {})
 
         if not column:
-            column = tfo.Column(name=column_name, datatype=args.datatype, role=args.role, type=args.role_type)
-            print(f'Creating new column for {column_name}')
+            if not args.persona and args.column_name:
+                raise Exception('Column does not exist, and more args are need to add a new column.\n'
+                                'Minimum required args: --column_name --persona')
+            if not persona:
+                raise Exception(f'No persona: {args.persona}\n'
+                                f'Provide one of: {personas.keys()}')
+            column = tfo.Column(
+                name=column_name,
+                role=persona['role'],
+                datatype=persona['datatype'],
+                type=persona['role_type'],
+            )
+            print(f'Creating new column for {column_name}: {column.dict()}')
         else:
-            print(f'Updating existing column:\n\t{column}')
+            print(f'Updating existing column:\n\t{column.dict()}')
 
         column.caption = args.caption or column.caption
-        column.role = args.role or column.role
-        column.type = args.role_type or column.type
-        column.datatype = args.datatype or column.datatype
+        column.role = persona.get('role') or column.role
+        column.type = persona.get('role_type') or column.type
+        column.datatype = persona.get('datatype') or column.datatype
         column.desc = args.desc or column.desc
         column.calculation = args.calculation or column.calculation
         ds.enforce_column(column, remote_name=args.remote_name, folder_name=args.folder_name)
@@ -62,6 +80,6 @@ def datasource(args, server=None):
     ds.save()
 
     if args.save_tds:
-        xml_path = ds.unzip(extract_to=f'{name} - AFTER')
+        xml_path = ds.unzip(extract_to=f'{datasource_file_name} - AFTER')
         if debugging_logs:
             print(f'AFTER - TDS SAVED TO: {xml_path}')
