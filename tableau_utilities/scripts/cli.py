@@ -21,67 +21,70 @@ parser = argparse.ArgumentParser(prog='tableau_utilities',
                                              '-Manage Tableau Server/Online\n'
                                              '-Manage configurations to edit datasource metadata',
                                  formatter_class=RawTextHelpFormatter)
-subparsers = parser.add_subparsers(title="commands", dest="command", help='You must choose a command.',
-                                   required=True)
+subparsers = parser.add_subparsers(title="commands", dest="command", help='You must choose a command.', required=True)
 parser.add_argument('-d', '--debugging_logs', action='store_true',
                     help='Print detailed logging to the console to debug CLI')
 
-# GROUP: SERVER INFORMATION
-group_server = parser.add_argument_group('server_information', 'Server Information')
-group_server.add_argument(
-    '-s', '--server',
-    help='Tableau Server URL. i.e. <server_address> in https://<server_address>.online.tableau.com',
-    default=None
+# GROUP: Tableau Server Authentication
+group_server_auth = parser.add_argument_group(
+    'server_auth',
+    'Authentication used when interacting with Tableau Server'
 )
-group_server.add_argument(
+group_server_auth.add_argument(
+    '-s', '--server',
+    help='Tableau Server URL. i.e. <server_address> in https://<server_address>.online.tableau.com'
+)
+group_server_auth.add_argument(
     '-sn', '--site_name',
-    help='Site name. i.e. <site> in https://<server_address>.online.tableau.com/#/site/<site>',
-    default=None)
-group_server.add_argument('--api_version', help='Tableau API version', default='3.17')
-
-# GROUP: USER & PASSWORD
-group_user_password = parser.add_argument_group('user_pass', 'Authentication with username and password method')
-group_user_password.add_argument('-u', '--user', help='user name')
-group_user_password.add_argument('-p', '--password', help='password')
-
-# GROUP: PERSONAL ACCESS TOKENS
-group_token = parser.add_argument_group('token_info', 'Authentication with a Personal Access Token (PAT)')
-group_token.add_argument('-ts', '--token_secret', help='Personal Access Token Secret')
-group_token.add_argument('-tn', '--token_name', help='Personal Access Token Name')
+    help='Site name. i.e. <site> in https://<server_address>.online.tableau.com/#/site/<site>'
+)
+group_server_auth.add_argument('--api_version', help='Tableau API version', default='3.17')
+group_server_auth.add_argument('-u', '--user', help='The Tableau Server Username. Must pair with --password')
+group_server_auth.add_argument('-p', '--password', help='The Tableau Server Password. Must pair with --user')
+group_server_auth.add_argument('-ts', '--token_secret',
+                               help='The Tableau Server Personal Access Token Secret. Must pair with --token_name')
+group_server_auth.add_argument('-tn', '--token_name',
+                               help='The Tableau Server Personal Access Token Name. Must pair with --token_secret')
 
 # GROUP: SETTINGS YAML
 group_settings_yaml = parser.add_argument_group('settings.yaml', 'Authentication with settings in a .yaml file')
-group_settings_yaml.add_argument('--settings_path', default='settings.yaml', help='Path to your local settings.yaml '
-                                                                                  'file (See sample_settings.yaml)')
+group_settings_yaml.add_argument('--settings_path', default='settings.yaml',
+                                 help='Path to your local settings.yaml file (See sample_settings.yaml)')
 
 # GROUP: LOCAL FOLDER
 group_local_folder = parser.add_argument_group('local_folder', 'Manage where to read/write files')
-group_local_folder.add_argument('--local_folder', default='tmp_tdsx_and_config', help='Specifies the folder to write '
-                                                                                      'the datasource and configs to')
-group_local_folder.add_argument('--clean_up_first', action='store_true', help='Deletes the directory and files '
-                                                                              'before running')
+group_local_folder.add_argument('--local_folder', default='tmp_tdsx_and_config',
+                                help='Specifies the folder to write the datasource and configs to')
+group_local_folder.add_argument('--clean_up_first', action='store_true',
+                                help='Deletes the directory and files before running')
 
 # GROUP: File Information
-group_file = parser.add_argument_group('file', 'Information for datasource operations such as generate_config and update_connection')
-group_file.add_argument('-l', '--location', choices=['local', 'online'], help='Specify the location of the datasource '
-                                                                              'or workbook')
+group_file = parser.add_argument_group(
+    'file',
+    'Information for datasource operations such as generate_config and update_connection'
+)
+group_file.add_argument('-l', '--location', choices=['local', 'online'],
+                        help='Specify the location of the datasource or workbook')
 group_file.add_argument('-i', '--id', help='The ID for the object on Tableau Cloud/Server')
-group_file.add_argument('-n', '--name', help='The datasource or workbook name in Tableau Cloud/Server '
-                                             'Use with --project_name.')
-group_file.add_argument('-pn', '--project_name', help='The project name for the datasource or workbook in '
-                                                      'Tableau Cloud/Server Use with --name.')
+group_file.add_argument('-n', '--name',
+                        help='The datasource or workbook name in Tableau Cloud/Server Use with --project_name.')
+group_file.add_argument('-pn', '--project_name',
+                        help='The project name for the datasource or workbook in Tableau Cloud/Server Use with --name.')
 group_file.add_argument('-f', '--file_path', help='The path to the file to publish or interact with')
-group_file.add_argument('--definitions_csv', help='Add data defintions from a csv to the config. '
-                                                  'It may be easier to bulk populate definitions in a spreadsheet '
-                                                  'than in the config.')
-group_file.add_argument('--include_extract', action='store_true', help='Includes the extract in the download if '
-                                                                       'specified. This will make downloads take a '
-                                                                       'long time for large extracts.')
+group_file.add_argument('--definitions_csv',
+                        help='Add data definitions from a csv to the config. '
+                             'It may be easier to bulk populate definitions in a spreadsheet than in the config.')
+group_file.add_argument('--include_extract', action='store_true',
+                        help='Includes the extract in the download if specified. '
+                             'This will make downloads take a long time for large extracts.')
 group_file.add_argument('-tds', '--save_tds', action='store_true',
                         help='Saves the TDS for the datasource to view the raw xml')
 
 # SERVER INFO
-parser_server_info = subparsers.add_parser('server_info', help='Retrieve and view information from Tableau Cloud/Server')
+parser_server_info = subparsers.add_parser(
+    'server_info',
+    help='Retrieve and view information from Tableau Cloud/Server'
+)
 parser_server_info.add_argument('-lo', '--list_object', choices=['datasource', 'project', 'workbook'], required=True,
                                 help='Specify the type of object for the information.')
 parser_server_info.add_argument('-lf', '--list_format', default='names',
