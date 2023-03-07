@@ -185,6 +185,12 @@ class Datasource(TableauFile):
             self.columns.update(column)
         # Add Folder / FolderItem for the column, if folder_name was provided
         if folder_name:
+            # Remove the column's folder-item for preview folder, if it will be moved to a new folder
+            current_folder = [f for f in self.folders_common.folder if f.folder_item.get(column.name)]
+            if current_folder and current_folder[0].name != folder_name:
+                current_folder[0].folder_item.delete(column.name)
+                self.folders_common.folder.update(current_folder[0])
+            # Add column to the specified folder
             folder = self.folders_common.folder.get(folder_name)
             folder_item = tfo.FolderItem(name=column.name)
             if folder and folder_item not in folder.folder_item:
