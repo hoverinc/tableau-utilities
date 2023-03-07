@@ -51,9 +51,6 @@ def datasource(args, server=None):
             if not args.persona:
                 raise Exception('Column does not exist, and more args are need to add a new column.\n'
                                 'Minimum required args: --column_name --persona')
-            if not persona:
-                raise Exception(f'No persona: {args.persona}\n'
-                                f'Provide one of: {personas.keys()}')
             column = tfo.Column(
                 name=column_name,
                 role=persona['role'],
