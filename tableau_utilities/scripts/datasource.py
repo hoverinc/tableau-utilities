@@ -39,7 +39,7 @@ def datasource(args, server=None):
         if debugging_logs:
             print(f'BEFORE - TDS SAVED TO: {xml_path}')
 
-    if args.column:
+    if args.column_name and not args.delete:
         # Column name needs to be enclosed in brackets
         column_name = f'[{args.column_name}]'
         column = ds.columns.get(args.column_name)
@@ -48,7 +48,7 @@ def datasource(args, server=None):
             persona = personas.get(args.persona.lower(), {})
 
         if not column:
-            if not args.persona and args.column_name:
+            if not args.persona:
                 raise Exception('Column does not exist, and more args are need to add a new column.\n'
                                 'Minimum required args: --column_name --persona')
             if not persona:
@@ -72,10 +72,14 @@ def datasource(args, server=None):
         column.calculation = args.calculation or column.calculation
         ds.enforce_column(column, remote_name=args.remote_name, folder_name=args.folder_name)
 
-    if args.folder == 'add':
-        ds.folders_common.folder.add(tfo.Folder(name=args.folder_name))
-    if args.folder == 'delete':
-        ds.folders_common.folder.delete(tfo.Folder(name=args.folder_name))
+    if args.folder_name and not ds.folders_common.get(args.folder_name) and not args.delete:
+        ds.folders_common.add(tfo.Folder(name=args.folder_name))
+
+    if args.delete == 'column':
+        ds.columns.delete(args.column_name)
+
+    if args.delete == 'folder':
+        ds.folders_common.folder.delete(args.folder_name)
 
     ds.save()
 

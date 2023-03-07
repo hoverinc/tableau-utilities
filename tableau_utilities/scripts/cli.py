@@ -109,8 +109,6 @@ parser_connection = subparsers.add_parser('connection',
                                                'Requires datasource arguments.')
 parser_connection.add_argument('--connection_operation', choices=['update_local_connection', 'embed_user_pass'], required=True,
                                help='Specify the location of the datasource.')
-parser_connection.add_argument('-c', '--conn', choices=['settings_yaml', 'args', 'os_env'],
-                               help='The method for storing the connection credentials to pass into the cli.')
 parser_connection.add_argument('--conn_user', default=None, help='Username for embed credentials. See --embed_creds.')
 parser_connection.add_argument('--conn_pw', default=None, help='Password for embed credentials. See --embed_creds')
 parser_connection.add_argument('--conn_type', default='snowflake',
@@ -124,21 +122,16 @@ parser_connection.set_defaults(func=connection)
 
 # DATASOURCE
 parser_datasource = subparsers.add_parser('datasource', help='View and edit metadata about the datasource')
-parser_datasource.add_argument('--folder', choices=['add', 'delete'],
-                               help='Add or delete a folder in the downloaded datasource')
-parser_datasource.add_argument(
-    '--folder_name',
-    default=None,
-    help='The name of the folder. See --add_column, --modify_column, --add_folder and --delete_folder'
-)
-parser_datasource.add_argument('--column',  action='store_true',
-                               help='Add or modify a column in the downloaded datasource')
+parser_datasource.add_argument('--delete', choices=['folder', 'column'],
+                               help='Deletes the specified object. The name of the object must be specified; '
+                                    '--folder_name --column_name')
+parser_datasource.add_argument('--folder_name', help='The name of the folder. Required for --delete folder')
 parser_datasource.add_argument('--column_name', help='The local name of the column. Required.')
 parser_datasource.add_argument('--remote_name', help='The remote (SQL) name of the column.')
 parser_datasource.add_argument('--caption', help='Short name/Alias for the column')
 parser_datasource.add_argument('--title_case_caption', default=False, action='store_true',
                                help='Converts caption to title case. Applied after --caption')
-parser_datasource.add_argument('--persona', default=None, choices=list(personas.keys()),
+parser_datasource.add_argument('--persona', choices=list(personas.keys()),
                                help='The datatype persona of the column. Required for adding a new column')
 parser_datasource.add_argument('--desc', help='A Tableau column description')
 parser_datasource.add_argument('--calculation', help='A Tableau calculation')
@@ -216,17 +209,13 @@ def validate_args_id_name_project(args):
                 '--location online requires either a --id or a --name and --project_name')
 
 
-def validate_args_command_connection(args):
-    """ Validate connection args are included """
-    if args.conn is None:
-        parser.error(f'{args.command} requires --conn')
-
-
 def validate_args_command_datasource(args):
     """ Validates args for the datasource command """
-    if args.column:
-        if args.file_path is None:
-            parser.error(f'{args.command} --column requires --file_path')
+    if args.delete == 'folder' and not args.folder_name:
+        parser.error(f'{args.command} --delete folder requires --folder_name')
+
+    if args.delete == 'column' and not args.column_name:
+        parser.error(f'{args.command} --delete column requires --column_name')
 
 
 def validate_args_command_merge_config(args):
@@ -314,12 +303,12 @@ def main():
         args.settings_path = os.path.abspath(args.settings_path)
 
     # Validate the arguments
+    if args.location == 'local' and args.file_path is None:
+        parser.error('--location local requires --file_path')
     if args.command == 'server_operate':
         validate_args_server_operate(args)
     if args.command in ['generate_config', 'connection']:
         validate_args_id_name_project(args)
-    if args.command == 'connection':
-        validate_args_command_connection(args)
     if args.command == 'datasource':
         validate_args_command_datasource(args)
     if args.command == 'merge_config':
