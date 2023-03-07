@@ -51,17 +51,20 @@ group_settings_yaml = parser.add_argument_group('settings.yaml', 'Authentication
 group_settings_yaml.add_argument('--settings_path', default='settings.yaml',
                                  help='Path to your local settings.yaml file (See sample_settings.yaml)')
 
-# GROUP: LOCAL FOLDER
-group_local_folder = parser.add_argument_group('local_folder', 'Manage where to read/write files')
-group_local_folder.add_argument('--local_folder', default='tmp_tdsx_and_config',
-                                help='Specifies the folder to write the datasource and configs to')
-group_local_folder.add_argument('--clean_up_first', action='store_true',
-                                help='Deletes the directory and files before running')
+# GROUP: Output Directory
+group_output_dir = parser.add_argument_group(
+    'output_dir',
+    'Manage the local directory where files will read from and write to'
+)
+group_output_dir.add_argument('-o', '--output_dir', default='tmp_tdsx_and_config',
+                              help='Specifies the folder to write the datasource and configs to')
+group_output_dir.add_argument('-c', '--clean_dir', action='store_true',
+                              help='Deletes the directory, and all files within, before running')
 
 # GROUP: File Information
 group_file = parser.add_argument_group(
     'file',
-    'Information for datasource operations such as generate_config and update_connection'
+    'Information for Tableau File operations such as generate_config and update_connection'
 )
 group_file.add_argument('-l', '--location', choices=['local', 'online'],
                         help='Specify the location of the datasource or workbook')
@@ -318,8 +321,8 @@ def main():
         validate_args_command_merge_config(args)
 
     # Set/Reset the directory
-    tmp_folder = args.local_folder
-    if args.clean_up_first:
+    tmp_folder = args.output_dir
+    if args.clean_dir:
         shutil.rmtree(tmp_folder, ignore_errors=True)
 
     os.makedirs(tmp_folder, exist_ok=True)
