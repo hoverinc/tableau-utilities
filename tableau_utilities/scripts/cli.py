@@ -7,6 +7,7 @@ import yaml
 import tableau_utilities.tableau_server.tableau_server as ts
 
 from tableau_utilities.general.config_column_persona import personas
+from tableau_utilities.general.cli_styling import Color, Symbol, color_print
 from tableau_utilities.scripts.gen_config import generate_config
 from tableau_utilities.scripts.merge_config import merge_configs
 from tableau_utilities.scripts.server_info import server_info
@@ -14,7 +15,6 @@ from tableau_utilities.scripts.server_operate import server_operate
 from tableau_utilities.scripts.connection import connection
 from tableau_utilities.scripts.datasource import datasource
 from tableau_utilities.scripts.csv_config import csv_config
-
 
 parser = argparse.ArgumentParser(prog='tableau_utilities',
                                  description='Tableau Utilities CLI:\n'
@@ -38,7 +38,7 @@ group_server_auth.add_argument(
     '-sn', '--site_name',
     help='Site name. i.e. <site> in https://<server_address>.online.tableau.com/#/site/<site>'
 )
-group_server_auth.add_argument('--api_version', help='Tableau API version', default='3.17')
+group_server_auth.add_argument('--api_version', help='Tableau API version')
 group_server_auth.add_argument('-u', '--user', help='The Tableau Server Username. Must pair with --password')
 group_server_auth.add_argument('-p', '--password', help='The Tableau Server Password. Must pair with --user')
 group_server_auth.add_argument('-ts', '--token_secret',
@@ -131,6 +131,8 @@ parser_datasource = subparsers.add_parser('datasource', help='View and edit meta
 parser_datasource.add_argument('--delete', choices=['folder', 'column'],
                                help='Deletes the specified object. The name of the object must be specified; '
                                     '--folder_name --column_name')
+parser_datasource.add_argument('--list', choices=['folders', 'columns', 'metadata', 'connections'],
+                               help='Lists the specified objects.')
 parser_datasource.add_argument('--folder_name', help='The name of the folder. Required for --delete folder')
 parser_datasource.add_argument('--column_name', help='The local name of the column. Required.')
 parser_datasource.add_argument('--remote_name', help='The remote (SQL) name of the column.')
@@ -239,9 +241,15 @@ def tableau_authentication(args):
     """ Creates the Tableau server authentication from a variety of methods for passing in credentials """
     debug = args.debugging_logs
     yaml_path = args.settings_path
+    color = Color()
+    symbol = Symbol()
 
     if debug:
-        print('Credentials are prioritized by: CLI Arguments > Settings YAML > Environment Variables')
+        title = f'{symbol.line * 29} Connecting to Tableau Server {symbol.line * 29}'
+        sub_title = ' Credentials are prioritized by: CLI Arguments > Settings YAML > Environment Variables '
+        title_color = {'fg': 'green'}
+        color_print(title, **title_color)
+        print(f'{color.fg_black}{color.bg_yellow}{sub_title}{color.reset}')
 
     # Set CLI Argument credentials
     creds = {
@@ -256,7 +264,8 @@ def tableau_authentication(args):
     if debug:
         for cred_name, cred_value in creds.items():
             if cred_value:
-                print(f'Using CLI Argument cred: {cred_name} = {cred_value}')
+                print(f'\t{symbol.arrow_r} Using CLI Argument cred: '
+                      f'{cred_name} = {color.fg_cyan}{cred_value}{color.reset}')
 
     # Set Settings YAML file credentials
     if yaml_path and os.path.exists(yaml_path):
@@ -267,7 +276,8 @@ def tableau_authentication(args):
             if cred_value and cred_name in creds and not creds[cred_name]:
                 creds[cred_name] = cred_value
                 if debug:
-                    print(f'Using Settings YAML cred: {cred_name} = {cred_value}')
+                    print(f'\t{symbol.arrow_r} Using Settings YAML cred: '
+                          f'{cred_name} = {color.fg_cyan}{cred_value}{color.reset}')
 
     # Set Environment Variables credentials
     env_creds = {
@@ -280,7 +290,8 @@ def tableau_authentication(args):
         if cred_value and not creds[cred_name]:
             creds[cred_name] = cred_value
             if debug:
-                print(f'Using Environment Variable cred: {cred_name} = {cred_value}')
+                print(f'\t{symbol.arrow_r} Using Environment Variable cred: '
+                      f'{cred_name} = {color.fg_cyan}{cred_value}{color.reset}')
 
     # Validate the combinations for authentication methods
     # If one, but not both, of token_name/token_secret or username/password are provided, throw an error
@@ -288,6 +299,12 @@ def tableau_authentication(args):
         parser.error('--token_secret and --token_name are required together')
     if (creds['user'] or creds['password']) and not (creds['password'] and creds['user']):
         parser.error('--password and --user are required together')
+
+    if debug:
+        color_print(symbol.success, ' Connected', **title_color)
+        # Prints ending lines based on the title and title color printed above
+        color_print(symbol.line * len(title), **title_color)
+        print()  # new line
 
     # Create the server object and run the functions
     return ts.TableauServer(
@@ -338,12 +355,10 @@ def main():
     )
 
     if needs_tableau_server:
-        print("LOCAL OR SERVER: Tableau Server Operations")
         server = tableau_authentication(args)
         args.func(args, server)
     # Run functions that don't need the server
     else:
-        print('LOCAL OR SERVER: Local Operations')
         args.func(args)
 
 
