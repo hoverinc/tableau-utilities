@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from tableau_utilities.general.cli_styling import Color, Symbol
 from tableau_utilities.general.config_column_persona import get_persona_by_attribs, get_persona_by_metadata_local_type
 from tableau_utilities.general.funcs import convert_to_snake_case
 from tableau_utilities.tableau_file.tableau_file import Datasource
@@ -264,6 +265,9 @@ def generate_config(args, server: TableauServer = None):
     id = args.id
     datasource_name = args.name
     datasource_path = args.file_path
+    # Print Styling
+    color = Color()
+    symbol = Symbol()
 
     # Set file_prefix to false when this function is called from the merge_config namespace
     try:
@@ -274,15 +278,19 @@ def generate_config(args, server: TableauServer = None):
     # Get the datasource name from the path
     if location == 'local':
         datasource_name = Path(datasource_path).stem
-        print(f'BUILDING CONFIG FOR: {datasource_name} {datasource_path} ')
     # Download the datasouce and set values for
     elif location == 'online':
         obj = server.get_datasource(id, datasource_name, args.project_name)
         id = obj.id
         datasource_name = obj.name
-        print(f'GETTING DATASOURCE -> ID: {id}, NAME: {datasource_name}, INCLUDE EXTRACT false')
+        print(f'{color.fg_yellow}GETTING DATASOURCE {symbol.arrow_r} '
+              f'{color.fg_grey}ID: {id} {symbol.sep} '
+              f'NAME: {datasource_name} {symbol.sep} '
+              f'INCLUDE EXTRACT: false{color.reset}')
         datasource_path = server.download_datasource(id, include_extract=False)
 
+    print(f'{color.fg_yellow}BUILDING CONFIG {symbol.arrow_r} '
+          f'{color.fg_grey}{datasource_name} {symbol.sep} {datasource_path}{color.reset}')
     datasource = Datasource(datasource_path)
     # Get column information from the metadata records
     metadata_record_config = get_metadata_record_config(
@@ -325,8 +333,9 @@ def generate_config(args, server: TableauServer = None):
     with open(output_file_calculated_column_config, "w") as outfile:
         json.dump(calculated_column_configs, outfile)
 
-    print('DATASOURCE PATH:', datasource_path)
-    print('COLUMN CONFIG PATH:', output_file_column_config)
-    print('CALCULATED COLUMN CONFIG PATH:', output_file_calculated_column_config)
+    print(f'{color.fg_green}{symbol.success}  COLUMN CONFIG {symbol.arrow_r} '
+          f'{color.fg_grey}{output_file_column_config}{color.reset}')
+    print(f'{color.fg_green}{symbol.success}  CALCULATED COLUMN CONFIG {symbol.arrow_r} '
+          f'{color.fg_grey}{output_file_calculated_column_config}{color.reset}')
 
     return output_file_column_config, output_file_calculated_column_config
