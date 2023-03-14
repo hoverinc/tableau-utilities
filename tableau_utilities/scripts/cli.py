@@ -245,7 +245,7 @@ def tableau_authentication(args):
     symbol = Symbol()
 
     if debug:
-        title = f'{symbol.line * 29} Connecting to Tableau Server {symbol.line * 29}'
+        title = f'{symbol.line * 29} Tableau Server Authentication {symbol.line * 29}'
         sub_title = ' Credentials are prioritized by: CLI Arguments > Settings YAML > Environment Variables '
         title_color = {'fg': 'green'}
         color_print(title, **title_color)
@@ -264,7 +264,7 @@ def tableau_authentication(args):
     if debug:
         for cred_name, cred_value in creds.items():
             if cred_value:
-                print(f'\t{symbol.arrow_r} Using CLI Argument cred: '
+                print(f'  {symbol.arrow_r} Using CLI Argument cred: '
                       f'{cred_name} = {color.fg_cyan}{cred_value}{color.reset}')
 
     # Set Settings YAML file credentials
@@ -276,7 +276,7 @@ def tableau_authentication(args):
             if cred_value and cred_name in creds and not creds[cred_name]:
                 creds[cred_name] = cred_value
                 if debug:
-                    print(f'\t{symbol.arrow_r} Using Settings YAML cred: '
+                    print(f'  {symbol.arrow_r} Using Settings YAML cred: '
                           f'{cred_name} = {color.fg_cyan}{cred_value}{color.reset}')
 
     # Set Environment Variables credentials
@@ -290,7 +290,7 @@ def tableau_authentication(args):
         if cred_value and not creds[cred_name]:
             creds[cred_name] = cred_value
             if debug:
-                print(f'\t{symbol.arrow_r} Using Environment Variable cred: '
+                print(f'  {symbol.arrow_r} Using Environment Variable cred: '
                       f'{cred_name} = {color.fg_cyan}{cred_value}{color.reset}')
 
     # Validate the combinations for authentication methods
@@ -301,13 +301,12 @@ def tableau_authentication(args):
         parser.error('--password and --user are required together')
 
     if debug:
-        color_print(symbol.success, ' Connected', **title_color)
         # Prints ending lines based on the title and title color printed above
         color_print(symbol.line * len(title), **title_color)
         print()  # new line
 
     # Create the server object and run the functions
-    return ts.TableauServer(
+    t = ts.TableauServer(
         personal_access_token_name=creds['token_name'],
         personal_access_token_secret=creds['token_secret'],
         user=creds['user'],
@@ -316,6 +315,8 @@ def tableau_authentication(args):
         host=f'https://{creds["server"]}.online.tableau.com',
         api_version=creds['api_version']
     )
+    color_print(symbol.success, ' Connected to Tableau Server', **title_color)
+    return t
 
 
 def main():
