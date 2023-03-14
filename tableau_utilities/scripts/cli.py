@@ -102,10 +102,12 @@ parser_server_info.set_defaults(func=server_info)
 # SERVER OPERATE
 parser_server_operate = subparsers.add_parser('server_operate',
                                               help='Download, publish, and refresh objects on Tableau Cloud/Server')
-parser_server_operate.add_argument('--action_type', choices=['download', 'publish', 'refresh'], required=True,
-                                   help='The action to take on the object')
-parser_server_operate.add_argument('--object_type', choices=['datasource', 'workbook'], required=True,
-                                   help='The type of object to interact with.')
+parser_server_operate.add_argument('--download', choices=['datasource', 'workbook'],
+                                   help='Specify to download a Tableau object')
+parser_server_operate.add_argument('--publish', choices=['datasource', 'workbook'],
+                                   help='Specify to publish a Tableau object')
+parser_server_operate.add_argument('--refresh', choices=['datasource', 'workbook'],
+                                   help='Specify to refresh a Tableau object')
 parser_server_operate.add_argument('--all',  action='store_true', help='Download all workbooks or datasources')
 parser_server_operate.set_defaults(func=server_operate)
 
@@ -191,8 +193,14 @@ def validate_args_server_operate(args):
     if (args.name and not args.project_name) or (args.project_name and not args.name):
         parser.error('--name and --project_name are required together')
 
-    if args.action_type == 'publish' and (args.name is None or args.project_name is None or args.file_path is None):
-        parser.error('publish requires a --name, --project_name, and --file_path ')
+    if args.publish and (args.name is None or args.project_name is None or args.file_path is None):
+        parser.error('--publish requires a --name, --project_name, and --file_path ')
+
+    if not (args.download or args.publish or args.refresh):
+        parser.error('server_operate must be called with one of: --download --publish --refresh')
+
+    if len([i for i in [args.download, args.publish, args.refresh] if i]) > 1:
+        parser.error('server_operate cannot be called with more than one of: --download --publish --refresh')
 
 
 def validate_args_id_name_project(args):

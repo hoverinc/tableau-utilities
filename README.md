@@ -116,7 +116,7 @@ tableau_utilities --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o -
 #### server_operate
 Download a datasource by name
 ```commandline
-tableau_utilities --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az --name 'My Awesome Datasource' --project_name 'My Fabulous Project' server_operate --action_type download --object_type datasource
+tableau_utilities --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az --name 'My Awesome Datasource' --project_name 'My Fabulous Project' server_operate --download datasource
 ```
 
 #### connection

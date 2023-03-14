@@ -10,9 +10,8 @@ def server_operate(args, server):
         server (TableauServer): the Tableau Server authentication object
 
     """
-    # Required -> Cannot be None
-    object_type = args.object_type.lower()
-    action_type = args.action_type
+    # Required -> One must be provided
+    object_type = args.download or args.publish or args.refresh
     # Optional -> Might be None
     include_extract = args.include_extract
     object_id = args.id
@@ -24,7 +23,7 @@ def server_operate(args, server):
     symbol = Symbol()
 
     # Download all objects, and return early if all objects have been downloaded
-    if all_objects and action_type == 'download':
+    if all_objects and args.download:
         object_list = [o for o in getattr(server, f'get_{object_type}s')()]
         for o in object_list:
             print(
@@ -44,7 +43,7 @@ def server_operate(args, server):
     object_name = obj.name or object_name
     project_name = obj.project_name or project_name
 
-    if action_type == 'download':
+    if args.download:
         print(
             f'{color.fg_yellow}DOWNLOADING {object_type.upper()} {symbol.arrow_r} {color.fg_grey}'
             f'ID: {object_id} {symbol.sep} '
@@ -54,7 +53,7 @@ def server_operate(args, server):
         )
         response = getattr(server, f'download_{object_type}')(object_id, include_extract=include_extract)
         print(f'{color.fg_green}{symbol.success}  {response}{color.reset}')
-    elif action_type == 'publish':
+    elif args.publish:
         print(
             f'{color.fg_yellow}PUBLISHING {object_type.upper()} {symbol.arrow_r} {color.fg_grey}'
             f'ID: {object_id} {symbol.sep} '
@@ -63,7 +62,7 @@ def server_operate(args, server):
         )
         response = getattr(server, f'publish_{object_type}')(args.file_path, object_id, object_name, project_name)
         print(f'{color.fg_green}{symbol.success}  {response}{color.reset}')
-    elif action_type == 'refresh':
+    elif args.refresh:
         print(
             f'{color.fg_yellow}REFRESHING {object_type.upper()} {symbol.arrow_r} {color.fg_grey}'
             f'ID: {object_id} {symbol.sep} '
