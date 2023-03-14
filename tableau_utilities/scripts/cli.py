@@ -261,6 +261,7 @@ def tableau_authentication(args):
         'site': args.site_name,
         'server': args.server
     }
+
     if debug:
         for cred_name, cred_value in creds.items():
             if cred_value:
@@ -315,7 +316,9 @@ def tableau_authentication(args):
         host=f'https://{creds["server"]}.online.tableau.com',
         api_version=creds['api_version']
     )
-    color_print(symbol.success, ' Connected to Tableau Server', **title_color)
+    if debug:
+        color_print(symbol.success, ' Connected to Tableau Server', **title_color)
+
     return t
 
 
