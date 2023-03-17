@@ -1,10 +1,10 @@
 import os
 from pprint import pprint
-
 import yaml
 
 from tableau_utilities.tableau_file.tableau_file import Datasource
 from tableau_utilities.tableau_server.tableau_server import TableauServer
+from tableau_utilities.general.cli_styling import Color, Symbol
 
 
 def connection_settings(args, debugging_logs, settings_path=None):
@@ -126,6 +126,8 @@ def embed_credential_online(datasource_id, conn_settings, server, debugging_logs
     if debugging_logs:
         print(f'SERVER RESPONSE {response}')
 
+    return response
+
 
 def connection(args, server=None):
     """ Updates a Datasource's connection in the file locally
@@ -135,12 +137,19 @@ def connection(args, server=None):
         server (TableauServer): The TableauServer object
     """
 
-    # Set Args
-    datasource_id = args.id
+    # Set variables from args
+    save_tds = args.save_tds
+    object_id = args.id
+    object_name = args.name
+    project_name = args.project_name
     debugging_logs = args.debugging_logs
     datasource_path = args.file_path
     settings_yaml = args.settings_path
     connection_operation = args.connection_operation
+
+    # Print Styling
+    color = Color()
+    symbol = Symbol()
 
     # Set the connection settings dictionary
     conn_settings = connection_settings(args, debugging_logs, settings_yaml)
@@ -148,26 +157,36 @@ def connection(args, server=None):
     if connection_operation == 'update_local_connection':
         print('Local Datasource, Updating Connection')
         datasource = Datasource(datasource_path)
-        if args.save_tds:
+        if save_tds:
             xml_path = datasource.unzip(extract_to=f'{os.path.basename(datasource_path)} - BEFORE')
             if debugging_logs:
                 print(f'BEFORE - TDS SAVED TO: {xml_path}')
         update_connection(datasource, conn_settings, debugging_logs)
-        if args.save_tds:
+        if save_tds:
             xml_path = datasource.unzip(extract_to=f'{os.path.basename(datasource_path)} - AFTER')
             if debugging_logs:
                 print(f'AFTER - TDS SAVED TO: {xml_path}')
 
     elif connection_operation == 'embed_user_pass':
+        # This is hardcoded to datasource for now.
+        # Later this could be refactored to work on get_workbook as well
+
         print('Online Datasource, Updating Embedded Username and Password')
 
         if debugging_logs:
             print(f'EMBEDDING CREDS FOR DATASOURCE ID: {datasource_id}')
 
-        if datasource_id is None:
-            datasource_id = server.get_datasource(datasource_name=args.name, datasource_project=args.project_name).id
+        if object_id is None:
+            obj = server.get_datasource(datasource_name=args.name, datasource_project=args.project_name)
+            object_id = obj.id
+            object_name = obj.name
+            project_name = obj.project_name
 
-        embed_credential_online(datasource_id, conn_settings, server, debugging_logs)
+        print(f'Updating credentials for {object_id} {object_name} {project_name}')
+
+        response = embed_credential_online(object_id, conn_settings, server, debugging_logs)
+        print(f'{color.fg_green}{symbol.success}  {response}{color.reset}')
+        print(f'{color.fg_yellow}{symbol.warning} It takes Tableau Online roughly 2-3 minutes to process credentials before an extract refresh will suceed{color.reset}')
 
 
 

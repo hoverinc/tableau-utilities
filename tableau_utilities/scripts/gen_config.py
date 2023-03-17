@@ -265,6 +265,8 @@ def generate_config(args, server: TableauServer = None):
     id = args.id
     datasource_name = args.name
     datasource_path = args.file_path
+    project_name = args.project_name
+
     # Print Styling
     color = Color()
     symbol = Symbol()
@@ -280,7 +282,7 @@ def generate_config(args, server: TableauServer = None):
         datasource_name = Path(datasource_path).stem
     # Download the datasouce and set values for
     elif location == 'online':
-        obj = server.get_datasource(id, datasource_name, args.project_name)
+        obj = server.get_datasource(id, datasource_name, project_name)
         id = obj.id
         datasource_name = obj.name
         print(f'{color.fg_yellow}GETTING DATASOURCE {symbol.arrow_r} '

@@ -341,12 +341,13 @@ def main():
         parser.error('--location local requires --file_path')
     if args.command == 'server_operate':
         validate_args_server_operate(args)
-    if args.command in ['generate_config', 'connection']:
+    if args.command in ['generate_config', 'connection', 'datasource']:
         validate_args_id_name_project(args)
     if args.command == 'datasource':
         validate_args_command_datasource(args)
     if args.command == 'merge_config':
         validate_args_command_merge_config(args)
+
 
     # Set/Reset the directory
     tmp_folder = args.output_dir

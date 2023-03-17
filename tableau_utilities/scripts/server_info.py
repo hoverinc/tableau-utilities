@@ -14,35 +14,39 @@ def server_info(args, server):
         server (TableauServer): the Tableau Server authentication object
 
     """
+
+    # Set variables from args
     format = args.list_format
     sort_field = args.list_sort_field
+    list_object = args.list_object
+
     # Print Styling
     color = Color()
     symbol = Symbol()
 
-    if args.list_object:
-        print(f'{color.fg_cyan}{args.list_object.title()}s:{color.reset}')
+    if list_object:
+        print(f'{color.fg_cyan}{list_object.title()}s:{color.reset}')
         # Get server objects, and convert them to dict
-        object_list = [o.__dict__ for o in getattr(server, f'get_{args.list_object.lower()}s')()]
+        object_list = [o.__dict__ for o in getattr(server, f'get_{list_object.lower()}s')()]
         sorted_records = sorted(object_list, key=lambda d: d[sort_field])
         if format == 'names':
             for record in sorted_records:
-                print(f'  {symbol.arrow_r}', f"{color.fg_yellow}{record['name']}{color.reset}")
+                print(record['name'])
         elif format == 'names_ids':
             for record in sorted_records:
-                print(f'  {symbol.arrow_r}', f"{color.fg_yellow}{record['name']} {record['id']}{color.reset}")
+                print(record['name'], record['id'])
         elif format == 'ids_names':
             for record in sorted_records:
-                print(f'  {symbol.arrow_r}', f"{color.fg_yellow}{record['id']} {record['name']}{color.reset}")
+                print(record['id'], record['name'])
         elif format == 'names_projects':
             for record in sorted_records:
-                print(f'  {symbol.arrow_r}', f"{color.fg_yellow}{record['name']} {record['project_name']}{color.reset}")
+                print(record['name'], record['project_name'])
         elif format == 'full_df':
             df = pd.DataFrame(sorted_records)
             print(tabulate(df, headers='keys', tablefmt='psql', colalign='left'))
         elif format == 'full_dictionary':
             for record in sorted_records:
-                print(f'  {symbol.arrow_r}', f'{color.fg_yellow}{record}{color.reset}')
+                print(record)
         elif format == 'full_dictionary_pretty':
             for record in sorted_records:
                 pprint(record)
