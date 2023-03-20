@@ -174,7 +174,7 @@ def connection(args, server=None):
         print('Online Datasource, Updating Embedded Username and Password')
 
         if debugging_logs:
-            print(f'EMBEDDING CREDS FOR DATASOURCE ID: {datasource_id}')
+            print(f'EMBEDDING CREDS FOR DATASOURCE ID: {object_id}')
 
         if object_id is None:
             obj = server.get_datasource(datasource_name=args.name, datasource_project=args.project_name)
