@@ -572,10 +572,10 @@ class DrillPath(TableauFileObject):
     field: TableauFileObjects[DrillPathItem] = None
 
     def __post_init__(self):
-        if self.drill_path_item is not None:
-            self.drill_path_item = TableauFileObjects(self.drill_path_item, item_class=DrillPathItem, tag='field')
+        if self.field is not None:
+            self.field = TableauFileObjects(self.field, item_class=DrillPathItem, tag='field')
         else:
-            self.drill_path_item = TableauFileObjects(item_class=DrillPathItem, tag='field')
+            self.field = TableauFileObjects(item_class=DrillPathItem, tag='field')
 
     def __hash__(self):
         return hash(str(astuple(self)))
@@ -590,7 +590,7 @@ class DrillPath(TableauFileObject):
 
     def dict(self):
         output = {'@name': self.name}
-        if self.drill_path_item:
+        if self.field:
             output['drill-path'] = list()
             for drill_path_item in self.drill_path_item:
                 output['drill-path'].append(drill_path_item.dict())
