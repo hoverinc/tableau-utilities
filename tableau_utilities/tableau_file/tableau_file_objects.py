@@ -1018,12 +1018,15 @@ class Aliases(TableauFileObject):
 @dataclass
 class DateOptions(TableauFileObject):
     fiscal_year_start: str = None
+    start_of_week: str = None
     tag: str = 'date-options'
 
     def dict(self):
         dictionary = dict()
         if self.fiscal_year_start is not None:
-            dictionary['@date-options'] = self.fiscal_year_start
+            dictionary['@fiscal-year-start'] = self.fiscal_year_start
+        if self.fiscal_year_start is not None:
+            dictionary['@start-of-week'] = self.start_of_week
         return dictionary
 
 @dataclass

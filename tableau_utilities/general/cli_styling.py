@@ -39,7 +39,7 @@ class Symbol:
     arrow_l: str = '←'
     line: str = '━'
     success: str = '✅'
-    warning: str = '⚠'
+    warning: str = '⚠️'
     fail: str = '🚫'
     sep: str = '║'
 

@@ -720,6 +720,7 @@ class TableauServer:
             f'{self.url}/datasources/{datasource_id}/connections/{connection.id}',
             json={'connection': conn_dict}
         )
+
         self.__transform_tableau_object(content['connection'])
         return tso.Connection(**content['connection'])
 
@@ -739,8 +740,8 @@ class TableauServer:
 
         for c in self.get_datasource_connections(datasource_id):
             if c.type.lower() == connection_type.lower():
-                c.userName = credentials['username']
+                c.user_name = credentials['username']
                 c.password = credentials['password']
-                c.embedPassword = True
+                c.embed_password = True
                 response = self.update_datasource_connection(datasource_id, c)
                 return response

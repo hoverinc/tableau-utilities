@@ -155,7 +155,7 @@ def merge_configs(args, server=None):
 
     """
 
-    # Set Arguments
+    # Set variables from args
     existing_config_path = args.existing_config
     additional_config_path = args.additional_config
     definitions_csv_path = args.definitions_csv
@@ -163,6 +163,8 @@ def merge_configs(args, server=None):
     file_name = f'{args.merged_config}.json'
     target_directory = args.target_directory
     debugging_logs = args.debugging_logs
+    existing_config = args.existing_config
+
     # Print Styling
     color = Color()
     symbol = Symbol()
@@ -174,7 +176,7 @@ def merge_configs(args, server=None):
     # Merge a config with a definitions csv
     elif merge_with == 'csv':
         # Read files
-        existing_config = read_file(args.existing_config)
+        existing_config = read_file(existing_config)
         definitions_mapping = load_csv_with_definitions(file=definitions_csv_path)
         # Merge
         new_config = add_definitions_mapping(existing_config, definitions_mapping)
