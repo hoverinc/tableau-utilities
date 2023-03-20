@@ -568,8 +568,8 @@ class DrillPathItem(TableauFileObject):
 class DrillPath(TableauFileObject):
     """ The drill paths """
     name: str
-    field: str
-    drill_path_item: TableauFileObjects[DrillPathItem] = None
+    tag: str = 'drill-path'
+    field: TableauFileObjects[DrillPathItem] = None
 
     def __post_init__(self):
         if self.drill_path_item is not None:
