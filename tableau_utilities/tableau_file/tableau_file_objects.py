@@ -556,26 +556,11 @@ class FoldersCommon(TableauFileObject):
 
 
 @dataclass
-class DrillPathItem(TableauFileObject):
-    """ The DrillPathItem Tableau file object, is an Item of the drill-path list """
-    tag: str = 'field'
-
-    def __hash__(self):
-        return hash(str(astuple(self)))
-
-
-@dataclass
 class DrillPath(TableauFileObject):
     """ The drill paths """
     name: str
-    field: str
-    drill_path_item: TableauFileObjects[DrillPathItem] = None
-
-    def __post_init__(self):
-        if self.drill_path_item is not None:
-            self.drill_path_item = TableauFileObjects(self.drill_path_item, item_class=DrillPathItem, tag='field')
-        else:
-            self.drill_path_item = TableauFileObjects(item_class=DrillPathItem, tag='field')
+    field: list[str] = None
+    tag: str = 'drill-path'
 
     def __hash__(self):
         return hash(str(astuple(self)))
@@ -590,10 +575,8 @@ class DrillPath(TableauFileObject):
 
     def dict(self):
         output = {'@name': self.name}
-        if self.drill_path_item:
-            output['drill-path'] = list()
-            for drill_path_item in self.drill_path_item:
-                output['drill-path'].append(drill_path_item.dict())
+        if self.field:
+            output['field'] = self.field
         return output
 
 
@@ -669,7 +652,7 @@ class DrillPaths(TableauFileObject):
         self.drill_path.update(drill_path)
 
     def dict(self):
-        return {'drill_paths': [f.dict() for f in self.drill_path]}
+        return {'drill-path': [f.dict() for f in self.drill_path]}
 
 
 @dataclass
