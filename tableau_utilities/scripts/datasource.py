@@ -1,4 +1,5 @@
 import os
+import shutil
 
 import tableau_utilities.tableau_file.tableau_file_objects as tfo
 from tableau_utilities.general.config_column_persona import personas, get_persona_by_attribs, \
@@ -55,7 +56,13 @@ def datasource(args, server=None):
     ds = Datasource(datasource_path)
 
     if save_tds:
-        xml_path = ds.unzip(extract_to=f'{datasource_file_name} - BEFORE')
+        save_folder = f'{datasource_file_name} - BEFORE'
+        os.makedirs(save_folder, exist_ok=True)
+        if ds.extension == 'tds':
+            xml_path = os.path.join(save_folder, datasource_file_name)
+            shutil.copy(datasource_path, xml_path)
+        else:
+            xml_path = ds.unzip(extract_to=save_folder)
         if debugging_logs:
             print(f'{color.fg_green}{symbol.success}  BEFORE - TDS SAVED TO: {color.fg_yellow}{xml_path}{color.reset}')
 
@@ -132,6 +139,12 @@ def datasource(args, server=None):
         print(f'{color.fg_green}{symbol.success}  Saved changes to: {color.fg_yellow}{datasource_path}{color.reset}')
 
     if save_tds:
-        xml_path = ds.unzip(extract_to=f'{datasource_file_name} - AFTER')
+        save_folder = f'{datasource_file_name} - AFTER'
+        os.makedirs(save_folder, exist_ok=True)
+        if ds.extension == 'tds':
+            xml_path = os.path.join(save_folder, datasource_file_name)
+            shutil.copy(datasource_path, xml_path)
+        else:
+            xml_path = ds.unzip(extract_to=save_folder)
         if debugging_logs:
             print(f'{color.fg_green}{symbol.success}  AFTER - TDS SAVED TO: {color.fg_yellow}{xml_path}{color.reset}')
