@@ -58,6 +58,7 @@ class TableauFileObject:
         self.__to_bool('enabled')
         self.__to_bool('hidden')
         self.__to_bool('incremental_updates')
+        self.__to_bool('user_specific')
         # Convert to Integer
         self.__to_int('approx_count')
         self.__to_int('collation_flag')
