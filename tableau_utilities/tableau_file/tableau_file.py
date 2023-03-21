@@ -149,7 +149,9 @@ class Datasource(TableauFile):
                 if not item:
                     continue
                 new_item = transform_tableau_object(item)
+                print(f'152 {new_item}')
                 try:
+                    print(f'154 {new_item}')
                     section.append(obj(**new_item))
                 except TypeError as err:
                     raise TableauFileError(f'{err}\n\nPre-transform {obj.tag} attributes: {item}') from err

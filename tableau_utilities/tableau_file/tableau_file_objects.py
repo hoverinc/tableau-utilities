@@ -683,8 +683,10 @@ class Connection(TableauFileObject):
     service: str = None
     username: str = None
     warehouse: str = None
+    instanceurl: str = None
     odbc_connect_string_extras: str = None
     one_time_sql: str = None
+    role: str = None
     query_tagging_enabled: bool = None
     saml_idp: str = None
     server_oauth: str = None
@@ -715,10 +717,14 @@ class Connection(TableauFileObject):
             output['@username'] = self.username
         if self.warehouse is not None:
             output['@warehouse'] = self.warehouse
+        if self.instanceurl is not None:
+            output['@instanceurl'] = self.instanceurl
         if self.odbc_connect_string_extras is not None:
             output['@odbc-connect-string-extras'] = self.odbc_connect_string_extras
         if self.one_time_sql is not None:
             output['@one-time-sql'] = self.one_time_sql
+        if self.role is not None:
+            output['@role'] = self.role
         if self.query_tagging_enabled is not None:
             output['@query-tagging-enabled'] = self.query_tagging_enabled
         if self.saml_idp is not None:
@@ -982,6 +988,7 @@ class ParentConnection(TableauFileObject):
 @dataclass
 class Extract(TableauFileObject):
     object_id: str = None
+    user_specific: bool = None
     count: int = None
     enabled: bool = None
     units: str = None
@@ -996,6 +1003,8 @@ class Extract(TableauFileObject):
         dictionary = dict()
         if self.object_id is not None:
             dictionary['@object-id'] = self.object_id
+        if self.user_specific is not None:
+            dictionary['@user-specific'] = str(self.user_specific).lower()
         if self.count is not None:
             dictionary['@count'] = self.count
         if self.enabled is not None:
