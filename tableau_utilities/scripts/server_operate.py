@@ -1,5 +1,8 @@
-from tableau_utilities.general.cli_styling import Color, Symbol
+import webbrowser
+
+from tableau_utilities.general.cli_styling import Color, Symbol, color_print
 from tableau_utilities.tableau_server.tableau_server import TableauServer
+from tableau_utilities.tableau_server.tableau_server_objects import Datasource, Workbook, Job, Connection
 
 
 def server_operate(args, server):
@@ -14,6 +17,8 @@ def server_operate(args, server):
     # Set variables from args
     # Required -> One must be provided
     object_type = args.download or args.publish or args.refresh
+    if args.embed_connection:
+        object_type = 'datasource'
     # Optional -> Might be None
     include_extract = args.include_extract
     object_id = args.id
@@ -22,8 +27,12 @@ def server_operate(args, server):
     all_objects = args.all
     download = args.download
     publish = args.publish
+    embed_connection = args.embed_connection
     refresh = args.refresh
     file_path = args.file_path
+    connection = None
+    if object_type == 'datasource' and args.conn_user and args.conn_pw:
+        connection = {'username': args.conn_user, 'password': args.conn_pw}
 
     # Print Styling
     color = Color()
@@ -40,8 +49,8 @@ def server_operate(args, server):
                 f'PROJECT: {o.project_name} {symbol.sep} '
                 f'INCLUDE EXTRACT: {include_extract}{color.reset}'
             )
-            response = getattr(server, f'download_{object_type}')(o.id, include_extract=include_extract)
-            print(f'{color.fg_green}{symbol.success}  {response}{color.reset}')
+            res = getattr(server, f'download_{object_type}')(o.id, include_extract=include_extract)
+            color_print(f'{symbol.success}  {res}', fg='green')
         return f'Successfully downloaded all {object_type}s'
 
     # Gets the ID, name, and project from the object in Tableau Server
@@ -58,8 +67,8 @@ def server_operate(args, server):
             f'PROJECT: {project_name} {symbol.sep} '
             f'INCLUDE EXTRACT: {include_extract}{color.reset}'
         )
-        response = getattr(server, f'download_{object_type}')(object_id, include_extract=include_extract)
-        print(f'{color.fg_green}{symbol.success}  {response}{color.reset}')
+        res: str = getattr(server, f'download_{object_type}')(object_id, include_extract=include_extract)
+        color_print(f'{symbol.success}  {res}', fg='green')
     elif publish:
         print(
             f'{color.fg_yellow}PUBLISHING {object_type.upper()} {symbol.arrow_r} {color.fg_grey}'
@@ -67,8 +76,23 @@ def server_operate(args, server):
             f'NAME: {object_name} {symbol.sep} '
             f'PROJECT NAME: {project_name}{color.reset}'
         )
-        response = getattr(server, f'publish_{object_type}')(file_path, object_id, object_name, project_name)
-        print(f'{color.fg_green}{symbol.success}  {response}{color.reset}')
+        res: Datasource | Workbook = getattr(server, f'publish_{object_type}')(
+            file_path, object_id, object_name, project_name,
+            connection=connection
+        )
+        color_print(f'{symbol.success}  {project_name} / {object_name}:', fg='green')
+        color_print(f'  {symbol.arrow_r} {res.webpage_url}', fg='cyan')
+        # Open URL to the published datasource in the browser
+        webbrowser.open(res.webpage_url)
+    elif embed_connection:
+        print(
+            f'{color.fg_yellow}EMBEDDING DATASOURCE CONNECTION CREDS {symbol.arrow_r} {color.fg_grey}'
+            f'ID: {object_id} {symbol.sep} '
+            f'NAME: {object_name} {symbol.sep} '
+            f'PROJECT NAME: {project_name}{color.reset}'
+        )
+        res: Connection = server.embed_datasource_credentials(object_id, connection, args.conn_type)
+        color_print(f'{symbol.success}  {res}', fg='green')
     elif refresh:
         print(
             f'{color.fg_yellow}REFRESHING {object_type.upper()} {symbol.arrow_r} {color.fg_grey}'
@@ -76,5 +100,5 @@ def server_operate(args, server):
             f'NAME: {object_name} {symbol.sep} '
             f'PROJECT NAME: {project_name}{color.reset}'
         )
-        response = getattr(server, f'refresh_{object_type}')(object_id)
-        print(f'{color.fg_green}{symbol.success}  {response}{color.reset}')
+        res: Job = getattr(server, f'refresh_{object_type}')(object_id)
+        color_print(f'{symbol.success}  {res}', fg='green')

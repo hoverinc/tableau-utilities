@@ -3,6 +3,7 @@ import os
 import shutil
 from argparse import RawTextHelpFormatter
 import yaml
+import pkg_resources
 
 import tableau_utilities.tableau_server.tableau_server as ts
 
@@ -12,23 +13,27 @@ from tableau_utilities.scripts.gen_config import generate_config
 from tableau_utilities.scripts.merge_config import merge_configs
 from tableau_utilities.scripts.server_info import server_info
 from tableau_utilities.scripts.server_operate import server_operate
-from tableau_utilities.scripts.connection import connection
 from tableau_utilities.scripts.datasource import datasource
 from tableau_utilities.scripts.csv_config import csv_config
 
-parser = argparse.ArgumentParser(prog='tableau_utilities',
-                                 description='Tableau Utilities CLI:\n'
-                                             '-Manage Tableau Server/Online\n'
-                                             '-Manage configurations to edit datasource metadata',
-                                 formatter_class=RawTextHelpFormatter)
-subparsers = parser.add_subparsers(title="commands", dest="command", help='You must choose a command.', required=True)
+__version__ = pkg_resources.require("tableau_utilities")[0].version
+
+parser = argparse.ArgumentParser(
+    prog='tableau_utilities',
+    description='Tableau Utilities CLI:\n'
+                '-Manage Tableau Server/Online\n'
+                '-Manage configurations to edit datasource metadata',
+    formatter_class=RawTextHelpFormatter
+)
+parser.add_argument('--version', action='version', version=f'%(prog)s {__version__}',
+                    help='Print the current version of the CLI')
 parser.add_argument('-d', '--debugging_logs', action='store_true',
                     help='Print detailed logging to the console to debug CLI')
+subparsers = parser.add_subparsers(title="commands", dest="command", help='You must choose a command.', required=True)
 
 # GROUP: Tableau Server Authentication
 group_server_auth = parser.add_argument_group(
-    'server_auth',
-    'Authentication used when interacting with Tableau Server'
+    'server_auth', 'Authentication used when interacting with Tableau Server'
 )
 group_server_auth.add_argument(
     '-s', '--server',
@@ -63,25 +68,38 @@ group_output_dir.add_argument('-c', '--clean_dir', action='store_true',
 
 # GROUP: File Information
 group_file = parser.add_argument_group(
-    'file',
-    'Information for Tableau File operations such as generate_config and update_connection'
+    'file', 'Args for commands that require specific information for a Tableau File; '
+            'i.e. datasource, generate_config, or merge_config'
 )
 group_file.add_argument('-l', '--location', choices=['local', 'online'],
-                        help='Specify the location of the datasource or workbook')
-group_file.add_argument('-i', '--id', help='The ID for the object on Tableau Cloud/Server')
+                        help='Specify the location of the Tableau File Object.')
+group_file.add_argument('-i', '--id', help='The ID for the Tableau File Object in Cloud/Server.')
 group_file.add_argument('-n', '--name',
-                        help='The datasource or workbook name in Tableau Cloud/Server Use with --project_name.')
+                        help='The name of the Tableau File Object in Cloud/Server; Use with --project_name.')
 group_file.add_argument('-pn', '--project_name',
-                        help='The project name for the datasource or workbook in Tableau Cloud/Server Use with --name.')
-group_file.add_argument('-f', '--file_path', help='The path to the file to publish or interact with')
+                        help='The project name for the Tableau File Object in Cloud/Server; Use with --name.')
+group_file.add_argument('-f', '--file_path', help='The path to the local Tableau File.')
 group_file.add_argument('--definitions_csv',
-                        help='Add data definitions from a csv to the config. '
-                             'It may be easier to bulk populate definitions in a spreadsheet than in the config.')
+                        help='Path to a CSV of datasource column definitions, to be added to a config. '
+                             'Use with generate_config or merge_config')
 group_file.add_argument('--include_extract', action='store_true',
                         help='Includes the extract in the download if specified. '
                              'This will make downloads take a long time for large extracts.')
 group_file.add_argument('-tds', '--save_tds', action='store_true',
                         help='Saves the TDS for the datasource to view the raw xml')
+
+# GROUP: CONNECTION
+group_connection = parser.add_argument_group(
+    'connection', 'Args which provide information for a Tableau Datasource connection.'
+)
+group_connection.add_argument('--conn_user', help='Connection Username')
+group_connection.add_argument('--conn_pw', help='Connection Password')
+group_connection.add_argument('--conn_type', help='Connection type; e.g. snowflake')
+group_connection.add_argument('--conn_db', help='Connection Database')
+group_connection.add_argument('--conn_schema', help='Connection Schema')
+group_connection.add_argument('--conn_host', help='Connection Host (URL)')
+group_connection.add_argument('--conn_role', help='Connection Role')
+group_connection.add_argument('--conn_warehouse', help='Connection Warehouse')
 
 # SERVER INFO
 parser_server_info = subparsers.add_parser(
@@ -100,36 +118,30 @@ parser_server_info.add_argument('-lsf', '--list_sort_field', default='name',
 parser_server_info.set_defaults(func=server_info)
 
 # SERVER OPERATE
-parser_server_operate = subparsers.add_parser('server_operate',
-                                              help='Download, publish, and refresh objects on Tableau Cloud/Server')
+parser_server_operate = subparsers.add_parser(
+    'server_operate', help='Download, publish, and refresh objects on Tableau Cloud/Server'
+)
+parser_server_operate.add_argument('--embed_connection', action='store_true',
+                                   help='Specify to embed credentials for a Tableau Datasource Connection.'
+                                        ' --conn_user and --conn_pw are required')
 parser_server_operate.add_argument('--download', choices=['datasource', 'workbook'],
                                    help='Specify to download a Tableau object')
-parser_server_operate.add_argument('--publish', choices=['datasource', 'workbook'],
-                                   help='Specify to publish a Tableau object')
+parser_server_operate.add_argument(
+    '--publish', choices=['datasource', 'workbook'],
+    help='Specify to publish a Tableau object. '
+         '(Optional) Include --conn_user and --conn_pw to embed creds for the connection.'
+)
 parser_server_operate.add_argument('--refresh', choices=['datasource', 'workbook'],
                                    help='Specify to refresh a Tableau object')
 parser_server_operate.add_argument('--all',  action='store_true', help='Download all workbooks or datasources')
 parser_server_operate.set_defaults(func=server_operate)
 
-# UPDATE CONNECTION
-parser_connection = subparsers.add_parser('connection',
-                                          help='Update connection for a datasource or embed a username and password.\n'
-                                               'Requires datasource arguments.')
-parser_connection.add_argument('--connection_operation', choices=['update_local_connection', 'embed_user_pass'],
-                               required=True, help='Specify the location of the datasource.')
-parser_connection.add_argument('--conn_user', help='Username for embed credentials. See --embed_creds.')
-parser_connection.add_argument('--conn_pw', help='Password for embed credentials. See --embed_creds')
-parser_connection.add_argument('--conn_type', default='snowflake',
-                               help='Connection type for embed credentials. See --embed_creds')
-parser_connection.add_argument('--conn_db', help='Connection Database')
-parser_connection.add_argument('--conn_schema', help='Connection Schema')
-parser_connection.add_argument('--conn_host', help='Connection Host (URL)')
-parser_connection.add_argument('--conn_role', help='Connection Role')
-parser_connection.add_argument('--conn_warehouse', help='Connection Warehouse')
-parser_connection.set_defaults(func=connection)
-
 # DATASOURCE
 parser_datasource = subparsers.add_parser('datasource', help='View and edit metadata about the datasource')
+parser_datasource.add_argument(
+    '--enforce_connection', action='store_true',
+    help='Provide to enforce the Datasource Connection attributes; See connection CLI group.'
+)
 parser_datasource.add_argument('--delete', choices=['folder', 'column'],
                                help='Deletes the specified object. The name of the object must be specified; '
                                     '--folder_name --column_name')
@@ -148,42 +160,38 @@ parser_datasource.add_argument('--calculation', help='A Tableau calculation')
 parser_datasource.set_defaults(func=datasource)
 
 # GENERATE CONFIG
-parser_config_gen = subparsers.add_parser('generate_config',
-                                          help='Generate configs to programatically manage metdatadata in Tableau '
-                                               'datasources via Airflow.\nRequires datasource arguments.\n')
+parser_config_gen = subparsers.add_parser(
+    'generate_config', help='Generate configs to programmatically manage metadata in Tableau '
+                            'datasources via Airflow.\nRequires File arguments.\n')
 parser_config_gen.add_argument('--file_prefix', action='store_true',
-                               help='Adds a prefix of the datasource name to the output file names.')
+                               help='Adds a prefix of the --name File arg to the output configs names.')
 parser_config_gen.set_defaults(func=generate_config)
 
 # CONFIG TO CSV
-parser_config_csv = subparsers.add_parser('csv_config',
-                                          help='Write a config to a csv with 1 row per column per datasource')
+parser_config_csv = subparsers.add_parser(
+    'csv_config', help='Write a config to a csv with 1 row per column per datasource')
 parser_config_csv.add_argument('-cl', '--config_list', nargs='+', help='The list of paths to the configs')
 parser_config_csv.set_defaults(func=csv_config)
 
 
 # MERGE CONFIG
-parser_config_merge = subparsers.add_parser('merge_config',
-                                            help='Merge a new config into the existing master config',
-                                            formatter_class=RawTextHelpFormatter)
-parser_config_merge.add_argument('-mw', '--merge_with', choices=['config', 'csv', 'generate_merge_all'],
-                                 help='config: merge an existing config with a new config\n'
-                                      'csv: merge an existing config with a csv containing data definitions\n'
-                                      'generate_merge_all: Runs generate_config to create a column_config and a calc config from a datasource. '
-                                      'Merges both with existing configs in a target directory')
-parser_config_merge.add_argument('-e', '--existing_config',
-                                 help='The path to the current configuration. The current configuration may have '
-                                      'more than 1 datasource.')
+parser_config_merge = subparsers.add_parser(
+    'merge_config', help='Merge a new config into the existing master config', formatter_class=RawTextHelpFormatter)
+parser_config_merge.add_argument(
+    '-mw', '--merge_with', choices=['config', 'csv', 'generate_merge_all'],
+    help='config: merge an existing config with a new config\n'
+         'csv: merge an existing config with a csv containing datasource column definitions\n'
+         'generate_merge_all: Runs generate_config to create a column_config and a calc_config from a datasource. '
+         'Merges both with existing configs in a target directory')
+parser_config_merge.add_argument('-e', '--existing_config', help='The path to the base configuration file.')
 parser_config_merge.add_argument('-a', '--additional_config',
-                                 help='The path to the configuration to add. This code ASSUMES that the additional '
-                                      'config is for a single datasource ')
+                                 help='The path to the configuration to add to --existing_config.')
 parser_config_merge.add_argument('-m', '--merged_config', default='merged_config',
-                                 help='The path of the file to write the merged JSON config file. '
-                                      'Ex: filename "my_config.json" '
-                                      'argument is "my_config" Do not enter the .json extension.')
+                                 help='Name of the file to write the merged configuration file to. '
+                                      'i.e. "my_config" will output to "my_config.json".')
 parser_config_merge.add_argument('-td', '--target_directory', default='merged_config',
-                                 help='The path containing the existing configs. Use with --merge_with generate_merge_all')
-
+                                 help='The path containing the existing configs. '
+                                      'Use with --merge_with generate_merge_all')
 parser_config_merge.set_defaults(func=merge_configs)
 
 
@@ -195,11 +203,16 @@ def validate_args_server_operate(args):
     if args.publish and (args.name is None or args.project_name is None or args.file_path is None):
         parser.error('--publish requires: --name --project_name and --file_path ')
 
-    if not (args.download or args.publish or args.refresh):
-        parser.error('server_operate must be called with one of: --download --publish --refresh')
+    if not (args.download or args.publish or args.refresh or args.embed_connection):
+        parser.error('server_operate must be called with one of: '
+                     '--download --publish --refresh --embed_connection')
 
-    if len([i for i in [args.download, args.publish, args.refresh] if i]) > 1:
-        parser.error('server_operate cannot be called with more than one of: --download --publish --refresh')
+    if len([i for i in [args.download, args.publish, args.refresh, args.embed_connection] if i]) > 1:
+        parser.error('server_operate cannot be called with more than one of: '
+                     '--download --publish --refresh --embed_connection')
+
+    if args.embed_connection and (args.conn_user is None or args.conn_pw is None):
+        parser.error('Both --conn_user and --conn_pw must be provided with --embed_connection')
 
 
 def validate_args_id_name_project(args):
@@ -278,8 +291,9 @@ def tableau_authentication(args):
     # Set Settings YAML file credentials
     if yaml_path and os.path.exists(yaml_path):
         with open(yaml_path, 'r') as f:
-            yaml_creds = yaml.safe_load(f)
-            yaml_creds = yaml_creds['tableau_login']
+            yaml_creds = yaml.safe_load(f).get('tableau_login', {})
+        if debug and not yaml_creds:
+            color_print('YAML detected, but "tableau_login" is not defined', fg='yellow')
         for cred_name, cred_value in yaml_creds.items():
             if cred_value and cred_name in creds and not creds[cred_name]:
                 creds[cred_name] = cred_value
@@ -329,6 +343,81 @@ def tableau_authentication(args):
     return t
 
 
+def set_datasource_connection_args(args):
+    """ Updates the connection group args, using a settings YAML file, and/or Environment Variables """
+    debug = args.debugging_logs
+    yaml_path = args.settings_path
+    color = Color()
+    symbol = Symbol()
+
+    if debug:
+        title = f'{symbol.line * 15} Setting Connection Group Arguments {symbol.line * 15}'
+        sub_title = ' Credentials are prioritized by: CLI Arguments > Settings YAML > Environment Variables '
+        title_color = {'fg': 'green'}
+        color_print(title, **title_color)
+        print(f'{color.fg_black}{color.bg_yellow}{sub_title}{color.reset}')
+
+    # Set CLI Argument credentials
+    creds = {
+        'conn_user': args.conn_user,
+        'conn_pw': args.conn_pw,
+        'conn_type': args.conn_type,
+        'conn_db': args.conn_db,
+        'conn_schema': args.conn_schema,
+        'conn_host': args.conn_host,
+        'conn_role': args.conn_role,
+        'conn_warehouse': args.conn_warehouse
+    }
+    if debug:
+        for cred_name, cred_value in creds.items():
+            if cred_value:
+                print(f'  {symbol.arrow_r} Using CLI Argument cred: '
+                      f'{cred_name} = {color.fg_cyan}{cred_value}{color.reset}')
+
+    # Set Settings YAML file credentials
+    if yaml_path and os.path.exists(yaml_path):
+        with open(yaml_path, 'r') as f:
+            yaml_creds = yaml.safe_load(f).get('datasource_connection', {})
+        if debug and not yaml_creds:
+            color_print('YAML detected, but "datasource_connection" is not defined', fg='yellow')
+        for cred_name, cred_value in yaml_creds.items():
+            if cred_value and cred_name in creds and not creds[cred_name]:
+                creds[cred_name] = cred_value
+                if debug:
+                    print(f'  {symbol.arrow_r} Using Settings YAML cred: '
+                          f'{cred_name} = {color.fg_cyan}{cred_value}{color.reset}')
+
+    # Set Environment Variables credentials
+    env_creds = {
+        'conn_type': os.getenv('CONN_TYPE'),
+        'conn_host': os.getenv('CONN_HOST'),
+        'conn_user': os.getenv('CONN_USERNAME'),
+        'conn_pw': os.getenv('CONN_PASSWORD'),
+        'conn_db': os.getenv('CONN_DB'),
+        'conn_schema': os.getenv('CONN_SCHEMA'),
+        'conn_role': os.getenv('CONN_ROLE'),
+        'conn_warehouse': os.getenv('CONN_WAREHOUSE')
+    }
+    for cred_name, cred_value in env_creds.items():
+        if cred_value and not creds[cred_name]:
+            creds[cred_name] = cred_value
+            if debug:
+                print(f'  {symbol.arrow_r} Using Environment Variable cred: '
+                      f'{cred_name} = {color.fg_cyan}{cred_value}{color.reset}')
+
+    if debug:
+        # Prints ending lines based on the title and title color printed above
+        color_print(symbol.line * len(title), **title_color)
+        print()  # new line
+
+    # Update Datasource Connection Group Args
+    for arg, value in creds.items():
+        setattr(args, arg, value)
+
+    if debug:
+        color_print(symbol.success, ' Set Datasource Connection Group Args', **title_color)
+
+
 def main():
     args = parser.parse_args()
 
@@ -336,18 +425,20 @@ def main():
     if not os.path.isabs(args.settings_path) and os.path.exists(args.settings_path):
         args.settings_path = os.path.abspath(args.settings_path)
 
+    # Set args from connection group, from settings YAML / Environment Variables, when not provided in the command
+    set_datasource_connection_args(args)
+
     # Validate the arguments
     if args.location == 'local' and args.file_path is None:
         parser.error('--location local requires --file_path')
     if args.command == 'server_operate':
         validate_args_server_operate(args)
-    if args.command in ['generate_config', 'connection', 'datasource']:
+    if args.command in ['generate_config', 'datasource']:
         validate_args_id_name_project(args)
     if args.command == 'datasource':
         validate_args_command_datasource(args)
     if args.command == 'merge_config':
         validate_args_command_merge_config(args)
-
 
     # Set/Reset the directory
     tmp_folder = args.output_dir
