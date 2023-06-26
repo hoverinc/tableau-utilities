@@ -18,17 +18,22 @@ class TableauConnectionError(Exception):
 class TableauServer:
     """ Connects and interacts with Tableau Online/Server, via the REST API. """
 
-    def __init__(self, user, password, host, site, api_version=3.16):
-        """
+    def __init__(self, host, site, user=None, password=None, personal_access_token_secret=None, personal_access_token_name=None, api_version=3.16):
+        """ To sign in to Tableau a user needs either a username & password or token secret & token name
+
         Args:
             host (str): Tableau server address
             user (str): The username to sign in to Tableau Online with
             password (str): The password to sign in to Tableau Online with
+            personal_access_token_name (str): The name of the personal access token used
+            personal_access_token_secret (str): The secret of the personal access token used
             site (str): The Tableau Online site id
             api_version (float): The Tableau REST API version
         """
         self.user = user
         self.__pw = password
+        self.personal_access_token_secret = personal_access_token_secret
+        self.personal_access_token_name = personal_access_token_name
         self.host = host
         self.site = site
         self.api = api_version
@@ -51,12 +56,25 @@ class TableauServer:
 
     def __sign_in(self):
         """
+            To sign in to Tableau a user needs either a username & password or token secret & token name
             Signs in to the server with credentials from the specified connection.
             Sets the auth_token, site_id, and url common prefix
+
         """
 
         url = f"{self.host}/api/{self.api}/auth/signin"
-        body = {"credentials": {"name": self.user, "password": self.__pw, "site": {"contentUrl": self.site}}}
+
+        if self.personal_access_token_secret and self.personal_access_token_name:
+            body = {"credentials": {"personalAccessTokenSecret": self.personal_access_token_secret,
+                                    "personalAccessTokenName": self.personal_access_token_name,
+                                    "site": {"contentUrl": self.site}}}
+        elif self.user and self.__pw:
+            body = {"credentials": {"name": self.user, "password": self.__pw, "site": {"contentUrl": self.site}}}
+        else:
+            raise TableauConnectionError(
+                'Please provide either user and password, or token_secret and token_name'
+            )
+
         res = self.post(url, json=body).get('credentials', {})
         # Set auth token and site ID attributes on sign in
         self.session.headers.update({'x-tableau-auth': res.get('token')})
@@ -178,15 +196,35 @@ class TableauServer:
                 self.__transform_tableau_object(obj_dict)
                 yield obj_dict
 
-    def get_datasource(self, datasource_id):
+    def get_datasource(self, datasource_id=None, datasource_name=None, datasource_project=None):
         """ Queries for a datasource in the site
             URI GET /api/api-version/sites/site-id/datasources/datasource_id
+
+            (Optional) Can get the datasource either by ID, or by name & project.
+
+        Args:
+              datasource_id (str): The ID of the datasource
+              datasource_name (str): The name of the datasource
+              datasource_project (str): The name of the project the datasource is in
+
         Returns: A Datasource Tableau object
         """
-        d = self.get(f'{self.url}/datasources/{datasource_id}')
-        d = d['datasource']
-        self.__transform_tableau_object(d)
-        return tso.Datasource(**d)
+        if datasource_id:
+            d = self.get(f'{self.url}/datasources/{datasource_id}')
+            d = d['datasource']
+            self.__transform_tableau_object(d)
+            return tso.Datasource(**d)
+        elif datasource_name and datasource_project:
+            for d in self.get_datasources():
+                if d.name == datasource_name and d.project_name == datasource_project:
+                    return d
+            raise TableauConnectionError(
+                f'Datasource not found:\n\tName    -> {datasource_name}\n\tProject -> {datasource_project}'
+            )
+
+        raise TableauConnectionError(
+            'Please provide either the datasource_id, or both datasource_name and datasource_project'
+        )
 
     def get_datasources(self):
         """ Queries for all datasources in the site
@@ -201,6 +239,7 @@ class TableauServer:
               f",hasExtracts" \
               f",isPublished" \
               f",serverName"
+
         for d in self.__get_objects_pager(url, 'datasource'):
             yield tso.Datasource(**d)
 
@@ -656,6 +695,8 @@ class TableauServer:
             conn_dict.setdefault('userName', conn_dict.pop('user_name'))
         if 'embed_password' in conn_dict:
             conn_dict.setdefault('embedPassword', conn_dict.pop('embed_password'))
+        if 'password' in conn_dict:
+            conn_dict.setdefault('password', conn_dict.pop('password'))
         if 'server_address' in conn_dict:
             conn_dict.setdefault('serverAddress', conn_dict.pop('server_address'))
         if 'query_tagging_enabled' in conn_dict:
@@ -687,4 +728,5 @@ class TableauServer:
                 c.userName = credentials['username']
                 c.password = credentials['password']
                 c.embedPassword = True
-                self.update_datasource_connection(datasource_id, c)
+                response = self.update_datasource_connection(datasource_id, c)
+                return response
