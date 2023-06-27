@@ -18,18 +18,24 @@ def datasource(args, server=None):
     """
     debugging_logs = args.debugging_logs
     datasource_path = args.file_path
+    name = args.name
+    project_name = args.project_name
     list_objects = args.list.title() if args.list else None
     color = Color()
     symbol = Symbol()
 
     # Downloads the datasource from Tableau Server if the datasource is not local
     if args.location == 'online':
-        # Query Tableau Server for the datasource, use name/project if id was not provided
-        if not (args.id or args.name is not None and args.project_name is not None):
-            raise Exception('Cannot find datasource. Make sure --id or --name and --project_name are provided.')
-        d = server.get_datasource(args.id, args.name, args.project_name)
-        datasource_path = server.download_datasource(d.id, args.include_extract)
-        print(f'{color.fg_green}{symbol.success}  Downloaded Datasource:', f'{color.fg_yellow}{datasource_path}{color.reset}', '\n')
+        # Query Tableau Server for the ID of the datasource if it was not provided
+        if args.id:
+            datasource_id = args.id
+        elif name and project_name:
+            datasource_id = server.get_datasource(datasource_name=name, datasource_project=project_name).id
+        else:
+            raise Exception('For online datasources, id or name and project_name are required.')
+        datasource_path = server.download_datasource(datasource_id, args.include_extract)
+        if debugging_logs:
+            print(f'{color.fg_green}Downloaded Datasource:', f'{color.fg_yellow}{datasource_path}{color.reset}', '\n')
 
     datasource_file_name = os.path.basename(datasource_path)
     ds = Datasource(datasource_path)
@@ -37,7 +43,7 @@ def datasource(args, server=None):
     if args.save_tds:
         xml_path = ds.unzip(extract_to=f'{datasource_file_name} - BEFORE')
         if debugging_logs:
-            print(f'{color.fg_green}{symbol.success}  BEFORE - TDS SAVED TO: {color.fg_yellow}{xml_path}{color.reset}')
+            print(f'BEFORE - TDS SAVED TO: {xml_path}')
 
     # List each of the objects specified to list
     if list_objects:
@@ -74,16 +80,16 @@ def datasource(args, server=None):
         if not column:
             if not args.persona:
                 raise Exception('Column does not exist, and more args are need to add a new column.\n'
-                                f'Minimum required args: {color.fg_yellow}--column_name --persona{color.reset}')
+                                'Minimum required args: --column_name --persona')
             column = tfo.Column(
                 name=column_name,
                 role=persona['role'],
                 datatype=persona['datatype'],
                 type=persona['role_type'],
             )
-            print(f'{color.fg_cyan}Creating new column for {column_name}:{color.reset} {column.dict()}')
+            print(f'Creating new column for {column_name}: {column.dict()}')
         else:
-            print(f'{color.fg_cyan}Updating existing column:{color.reset}\n  {column.dict()}')
+            print(f'Updating existing column:\n\t{column.dict()}')
 
         column.caption = args.caption or column.caption
         column.role = persona.get('role') or column.role
@@ -96,7 +102,7 @@ def datasource(args, server=None):
     # Add a folder if it was specified and does not exist already
     if args.folder_name and not ds.folders_common.get(args.folder_name) and not args.delete:
         if debugging_logs:
-            print(f'Going to add folder: {color.fg_cyan}{args.folder_name}{color.reset}')
+            print('Going to add folder:', args.folder_name)
         ds.folders_common.add(tfo.Folder(name=args.folder_name))
 
     # Delete specified object
@@ -107,10 +113,10 @@ def datasource(args, server=None):
 
     # Save the datasource if an edit may have happened
     if args.column_name or args.folder_name or args.delete:
+        print('Saved changes to:', datasource_path)
         ds.save()
-        print(f'{color.fg_green}{symbol.success}  Saved changes to: {color.fg_yellow}{datasource_path}{color.reset}')
 
     if args.save_tds:
         xml_path = ds.unzip(extract_to=f'{datasource_file_name} - AFTER')
         if debugging_logs:
-            print(f'{color.fg_green}{symbol.success}  AFTER - TDS SAVED TO: {color.fg_yellow}{xml_path}{color.reset}')
+            print(f'AFTER - TDS SAVED TO: {xml_path}')
