@@ -122,7 +122,7 @@ tableau_utilities --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o -
 #### connection
 Embed a username and password in a datasource in Tableau Online/Server
 ```commandline
-tableau_utilities --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az --location online --name 'My Awesome Datasource' --project_name 'My Fabulous Project' --save_tds connection --connection_operation embed_user_pass  --conn args --conn_type snowflake --conn_user MY_SNOWFLAKE_USER --conn_pw '1234567abc!'
+tableau_utilities --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az --location online --name 'My Awesome Datasource' --project_name 'My Fabulous Project' --save_tds connection --connection_operation embed_user_pass --conn_type snowflake --conn_user MY_SNOWFLAKE_USER --conn_pw '1234567abc!'
 ```
 
 #### datasource
@@ -138,8 +138,17 @@ tableau_utilities --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o -
 
 Change the folder for a column
 ```commandline
-tableau_utilities  --location local --file_path '/Downloads/Metadata Alter.tdsx' datasource --column --column_name COLUIMN_IN_SNOWFLAKE --remote_name COLUIMN_IN_SNOWFLAKE --caption 'My Pretty Column Name' --desc 'The most perfect description helping users understand the data' 
+tableau_utilities  --location local --file_path '/Downloads/Metadata Alter.tdsx' datasource --column_name COLUMN_NAME --folder_name 'Folder Name'
+```
 
+Update/Add attributes for a column
+```commandline
+tableau_utilities  --location local --file_path '/Downloads/Metadata Alter.tdsx' datasource --column_name COLUMN_NAME --remote_name COLUMN_NAME_FROM_CONNECTION --caption 'My Pretty Column Name' --persona string_dimension --desc 'A help description for Tableau users to understand the data' 
+```
+
+Delete folder
+```commandline
+tableau_utilities  --location local --file_path '/Downloads/Metadata Alter.tdsx' datasource --folder_name 'Folder Name' --delete folder
 ```
 
 #### generate_config

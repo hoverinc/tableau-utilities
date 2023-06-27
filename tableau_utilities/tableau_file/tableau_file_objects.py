@@ -3,7 +3,7 @@ import sys
 import re
 import xml.etree.ElementTree as ET
 import xmltodict
-from dataclasses import dataclass, astuple, fields
+from dataclasses import dataclass, astuple
 from typing import Literal
 from tableau_utilities.general.funcs import transform_tableau_object
 
@@ -866,7 +866,7 @@ class Refresh(TableauFileObject):
         return {
             '@refresh-event': self.refresh_event,
             '@increment-key': self.increment_key,
-            '@increment-updates': str(self.incremental_updates).lower()
+            '@incremental-updates': str(self.incremental_updates).lower()
         }
 
 

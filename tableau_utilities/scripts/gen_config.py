@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from tableau_utilities.general.config_column_persona import personas
+from tableau_utilities.general.config_column_persona import get_persona_by_attribs, get_persona_by_metadata_local_type
 from tableau_utilities.general.funcs import convert_to_snake_case
 from tableau_utilities.tableau_file.tableau_file import Datasource
 from tableau_utilities.tableau_server.tableau_server import TableauServer
@@ -45,12 +45,12 @@ def choose_persona(role, role_type, datatype, caption):
         role: dimension or measure
         role_type: nominal, ordinal, or quantitative
         datatype: string, date, datetype, real, or boolean
-        caption: The name of the column for the persona. Used in error messagfe
+        caption: The name of the column for the persona. Used in error message
 
     """
-    for k, v in personas.items():
-        if role == v['role'] and role_type == v['role_type'] == role_type and datatype == v['datatype']:
-            return k
+    p = get_persona_by_attribs(role, role_type, datatype)
+    if p:
+        return p
 
     raise ValueError(
         f"There is no persona for the combination of ROLE {role}, ROLE_TYPE {role_type}, and DATATYPE {datatype}."
@@ -71,21 +71,7 @@ def get_metadata_record_config(metadata_records, datasource_name, debugging_logs
     for m in metadata_records:
         if m.class_name == 'column':
             local_name = m.local_name[1:-1]
-            persona = ''
-            # I think it's low risk to assume these data types are all dimensions
-            if m.local_type == 'string':
-                persona = 'string_dimension'
-            elif m.local_type == 'date':
-                persona = 'date_dimension'
-            elif m.local_type == 'datetime':
-                persona = 'datetime_dimension'
-            elif m.local_type == 'boolean':
-                persona = 'boolean_dimension'
-            # Makes the assumption that numbers are discrete measures so that a user can't do accidental math on fields
-            elif m.local_type == 'integer':
-                persona = 'discrete_number_dimension'
-            elif m.local_type == 'real':
-                persona = 'discrete_decimal_dimension'
+            persona = get_persona_by_metadata_local_type(m.local_type) or ''
 
             metadata_record_columns[local_name] = {
                 'persona': persona,
