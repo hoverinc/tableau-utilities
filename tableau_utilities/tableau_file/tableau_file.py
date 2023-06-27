@@ -137,7 +137,7 @@ class Datasource(TableauFile):
         """ Sets DatasourceItems for each section
 
         Args:
-            obj (tfo.TableauFileObject): A Tableau File Object; ParentConnection, Column, etc
+            obj (type[tfo.TableauFileObject]): A Tableau File Object; ParentConnection, Column, etc
             enforce_list (bool): True if the section should be a TableauFileObjects list
         """
         parent = self._root.find('.')
