@@ -6,6 +6,8 @@ import yaml
 
 import tableau_utilities.tableau_server.tableau_server as ts
 
+from tableau_utilities.general.config_column_persona import personas
+from tableau_utilities.general.cli_styling import Color, Symbol, color_print
 from tableau_utilities.scripts.gen_config import generate_config
 from tableau_utilities.scripts.merge_config import merge_configs
 from tableau_utilities.scripts.server_info import server_info
@@ -14,73 +16,78 @@ from tableau_utilities.scripts.connection import connection
 from tableau_utilities.scripts.datasource import datasource
 from tableau_utilities.scripts.csv_config import csv_config
 
-
 parser = argparse.ArgumentParser(prog='tableau_utilities',
                                  description='Tableau Utilities CLI:\n'
                                              '-Manage Tableau Server/Online\n'
                                              '-Manage configurations to edit datasource metadata',
                                  formatter_class=RawTextHelpFormatter)
-subparsers = parser.add_subparsers(title="commands", dest="command", help='You must choose a command.',
-                                   required=True)
+subparsers = parser.add_subparsers(title="commands", dest="command", help='You must choose a command.', required=True)
 parser.add_argument('-d', '--debugging_logs', action='store_true',
                     help='Print detailed logging to the console to debug CLI')
 
-# GROUP: SERVER INFORMATION
-group_server = parser.add_argument_group('server_information', 'Server Information')
-group_server.add_argument(
-    '-s', '--server',
-    help='Tableau Server URL. i.e. <server_address> in https://<server_address>.online.tableau.com',
-    default=None
+# GROUP: Tableau Server Authentication
+group_server_auth = parser.add_argument_group(
+    'server_auth',
+    'Authentication used when interacting with Tableau Server'
 )
-group_server.add_argument(
+group_server_auth.add_argument(
+    '-s', '--server',
+    help='Tableau Server URL. i.e. <server_address> in https://<server_address>.online.tableau.com'
+)
+group_server_auth.add_argument(
     '-sn', '--site_name',
-    help='Site name. i.e. <site> in https://<server_address>.online.tableau.com/#/site/<site>',
-    default=None)
-group_server.add_argument('--api_version', help='Tableau API version', default='3.17')
-
-# GROUP: USER & PASSWORD
-group_user_password = parser.add_argument_group('user_pass', 'Authentication with username and password method')
-group_user_password.add_argument('-u', '--user', help='user name')
-group_user_password.add_argument('-p', '--password', help='password')
-
-# GROUP: PERSONAL ACCESS TOKENS
-group_token = parser.add_argument_group('token_info', 'Authentication with a Personal Access Token (PAT)')
-group_token.add_argument('-ts', '--token_secret', help='Personal Access Token Secret')
-group_token.add_argument('-tn', '--token_name', help='Personal Access Token Name')
+    help='Site name. i.e. <site> in https://<server_address>.online.tableau.com/#/site/<site>'
+)
+group_server_auth.add_argument('--api_version', help='Tableau API version')
+group_server_auth.add_argument('-u', '--user', help='The Tableau Server Username. Must pair with --password')
+group_server_auth.add_argument('-p', '--password', help='The Tableau Server Password. Must pair with --user')
+group_server_auth.add_argument('-ts', '--token_secret',
+                               help='The Tableau Server Personal Access Token Secret. Must pair with --token_name')
+group_server_auth.add_argument('-tn', '--token_name',
+                               help='The Tableau Server Personal Access Token Name. Must pair with --token_secret')
 
 # GROUP: SETTINGS YAML
 group_settings_yaml = parser.add_argument_group('settings.yaml', 'Authentication with settings in a .yaml file')
-group_settings_yaml.add_argument('--settings_path', default='settings.yaml', help='Path to your local settings.yaml '
-                                                                                  'file (See sample_settings.yaml)')
+group_settings_yaml.add_argument('--settings_path', default='settings.yaml',
+                                 help='Path to your local settings.yaml file (See sample_settings.yaml)')
 
-# GROUP: LOCAL FOLDER
-group_local_folder = parser.add_argument_group('local_folder', 'Manage where to read/write files')
-group_local_folder.add_argument('--local_folder', default='tmp_tdsx_and_config', help='Specifies the folder to write '
-                                                                                      'the datasource and configs to')
-group_local_folder.add_argument('--clean_up_first', action='store_true', help='Deletes the directory and files '
-                                                                              'before running')
+# GROUP: Output Directory
+group_output_dir = parser.add_argument_group(
+    'output_dir',
+    'Manage the local directory where files will read from and write to'
+)
+group_output_dir.add_argument('-o', '--output_dir', default='tmp_tdsx_and_config',
+                              help='Specifies the folder to write the datasource and configs to')
+group_output_dir.add_argument('-c', '--clean_dir', action='store_true',
+                              help='Deletes the directory, and all files within, before running')
 
 # GROUP: File Information
-group_file = parser.add_argument_group('file', 'Information for datasource operations such as generate_config and update_connection')
-group_file.add_argument('-l', '--location', choices=['local', 'online'], help='Specify the location of the datasource '
-                                                                              'or workbook')
+group_file = parser.add_argument_group(
+    'file',
+    'Information for Tableau File operations such as generate_config and update_connection'
+)
+group_file.add_argument('-l', '--location', choices=['local', 'online'],
+                        help='Specify the location of the datasource or workbook')
 group_file.add_argument('-i', '--id', help='The ID for the object on Tableau Cloud/Server')
-group_file.add_argument('-n', '--name', help='The datasource or workbook name in Tableau Cloud/Server '
-                                             'Use with --project_name.')
-group_file.add_argument('-pn', '--project_name', help='The project name for the datasource or workbook in '
-                                                      'Tableau Cloud/Server Use with --name.')
+group_file.add_argument('-n', '--name',
+                        help='The datasource or workbook name in Tableau Cloud/Server Use with --project_name.')
+group_file.add_argument('-pn', '--project_name',
+                        help='The project name for the datasource or workbook in Tableau Cloud/Server Use with --name.')
 group_file.add_argument('-f', '--file_path', help='The path to the file to publish or interact with')
-group_file.add_argument('--definitions_csv', help='Add data defintions from a csv to the config. '
-                                                  'It may be easier to bulk populate definitions in a spreadsheet '
-                                                  'than in the config.')
-group_file.add_argument('--include_extract', action='store_true', help='Includes the extract in the download if '
-                                                                       'specified. This will make downloads take a '
-                                                                       'long time for large extracts.')
+group_file.add_argument('--definitions_csv',
+                        help='Add data definitions from a csv to the config. '
+                             'It may be easier to bulk populate definitions in a spreadsheet than in the config.')
+group_file.add_argument('--include_extract', action='store_true',
+                        help='Includes the extract in the download if specified. '
+                             'This will make downloads take a long time for large extracts.')
 group_file.add_argument('-tds', '--save_tds', action='store_true',
                         help='Saves the TDS for the datasource to view the raw xml')
 
 # SERVER INFO
-parser_server_info = subparsers.add_parser('server_info', help='Retrieve and view information from Tableau Cloud/Server')
+parser_server_info = subparsers.add_parser(
+    'server_info',
+    help='Retrieve and view information from Tableau Cloud/Server'
+)
 parser_server_info.add_argument('-lo', '--list_object', choices=['datasource', 'project', 'workbook'], required=True,
                                 help='Specify the type of object for the information.')
 parser_server_info.add_argument('-lf', '--list_format', default='names',
@@ -108,8 +115,6 @@ parser_connection = subparsers.add_parser('connection',
                                                'Requires datasource arguments.')
 parser_connection.add_argument('--connection_operation', choices=['update_local_connection', 'embed_user_pass'], required=True,
                                help='Specify the location of the datasource.')
-parser_connection.add_argument('-c', '--conn', choices=['settings_yaml', 'args', 'os_env'],
-                               help='The method for storing the connection credentials to pass into the cli.')
 parser_connection.add_argument('--conn_user', default=None, help='Username for embed credentials. See --embed_creds.')
 parser_connection.add_argument('--conn_pw', default=None, help='Password for embed credentials. See --embed_creds')
 parser_connection.add_argument('--conn_type', default='snowflake',
@@ -123,28 +128,21 @@ parser_connection.set_defaults(func=connection)
 
 # DATASOURCE
 parser_datasource = subparsers.add_parser('datasource', help='View and edit metadata about the datasource')
-parser_datasource.add_argument('--folder', choices=['add', 'delete'],
-                               help='Add or delete a folder in the downloaded datasource')
-parser_datasource.add_argument(
-    '--folder_name',
-    default=None,
-    help='The name of the folder. See --add_column, --modify_column, --add_folder and --delete_folder'
-)
-parser_datasource.add_argument('--column', choices=['add', 'modify'],
-                               help='Add or modify a column in the downloaded datasource')
+parser_datasource.add_argument('--delete', choices=['folder', 'column'],
+                               help='Deletes the specified object. The name of the object must be specified; '
+                                    '--folder_name --column_name')
+parser_datasource.add_argument('--list', choices=['folders', 'columns', 'metadata', 'connections'],
+                               help='Lists the specified objects.')
+parser_datasource.add_argument('--folder_name', help='The name of the folder. Required for --delete folder')
 parser_datasource.add_argument('--column_name', help='The local name of the column. Required.')
 parser_datasource.add_argument('--remote_name', help='The remote (SQL) name of the column.')
 parser_datasource.add_argument('--caption', help='Short name/Alias for the column')
 parser_datasource.add_argument('--title_case_caption', default=False, action='store_true',
                                help='Converts caption to title case. Applied after --caption')
-parser_datasource.add_argument('--role', default=None, choices=['measure', 'dimension'],
-                               help='required for adding a new column')
+parser_datasource.add_argument('--persona', choices=list(personas.keys()),
+                               help='The datatype persona of the column. Required for adding a new column')
 parser_datasource.add_argument('--desc', help='A Tableau column description')
 parser_datasource.add_argument('--calculation', help='A Tableau calculation')
-parser_datasource.add_argument('--datatype', default=None, choices=['date', 'datetime', 'integer', 'real', 'string'],
-                               help='required for adding a new column')
-parser_datasource.add_argument('--role_type', default=None, choices=['nominal', 'ordinal', 'quantitative'],
-                               help='required for adding a new column')
 parser_datasource.set_defaults(func=datasource)
 
 # GENERATE CONFIG
@@ -219,17 +217,13 @@ def validate_args_id_name_project(args):
                 '--location online requires either a --id or a --name and --project_name')
 
 
-def validate_args_command_connection(args):
-    """ Validate connection args are included """
-    if args.conn is None:
-        parser.error(f'{args.command} requires --conn')
-
-
 def validate_args_command_datasource(args):
     """ Validates args for the datasource command """
-    if args.column:
-        if args.file_path is None:
-            parser.error(f'{args.command} --column requires --file_path')
+    if args.delete == 'folder' and not args.folder_name:
+        parser.error(f'{args.command} --delete folder requires --folder_name')
+
+    if args.delete == 'column' and not args.column_name:
+        parser.error(f'{args.command} --delete column requires --column_name')
 
 
 def validate_args_command_merge_config(args):
@@ -247,9 +241,15 @@ def tableau_authentication(args):
     """ Creates the Tableau server authentication from a variety of methods for passing in credentials """
     debug = args.debugging_logs
     yaml_path = args.settings_path
+    color = Color()
+    symbol = Symbol()
 
     if debug:
-        print('Credentials are prioritized by: CLI Arguments > Settings YAML > Environment Variables')
+        title = f'{symbol.line * 29} Tableau Server Authentication {symbol.line * 29}'
+        sub_title = ' Credentials are prioritized by: CLI Arguments > Settings YAML > Environment Variables '
+        title_color = {'fg': 'green'}
+        color_print(title, **title_color)
+        print(f'{color.fg_black}{color.bg_yellow}{sub_title}{color.reset}')
 
     # Set CLI Argument credentials
     creds = {
@@ -264,7 +264,8 @@ def tableau_authentication(args):
     if debug:
         for cred_name, cred_value in creds.items():
             if cred_value:
-                print(f'Using CLI Argument cred: {cred_name} = {cred_value}')
+                print(f'  {symbol.arrow_r} Using CLI Argument cred: '
+                      f'{cred_name} = {color.fg_cyan}{cred_value}{color.reset}')
 
     # Set Settings YAML file credentials
     if yaml_path and os.path.exists(yaml_path):
@@ -275,7 +276,8 @@ def tableau_authentication(args):
             if cred_value and cred_name in creds and not creds[cred_name]:
                 creds[cred_name] = cred_value
                 if debug:
-                    print(f'Using Settings YAML cred: {cred_name} = {cred_value}')
+                    print(f'  {symbol.arrow_r} Using Settings YAML cred: '
+                          f'{cred_name} = {color.fg_cyan}{cred_value}{color.reset}')
 
     # Set Environment Variables credentials
     env_creds = {
@@ -288,7 +290,8 @@ def tableau_authentication(args):
         if cred_value and not creds[cred_name]:
             creds[cred_name] = cred_value
             if debug:
-                print(f'Using Environment Variable cred: {cred_name} = {cred_value}')
+                print(f'  {symbol.arrow_r} Using Environment Variable cred: '
+                      f'{cred_name} = {color.fg_cyan}{cred_value}{color.reset}')
 
     # Validate the combinations for authentication methods
     # If one, but not both, of token_name/token_secret or username/password are provided, throw an error
@@ -297,8 +300,13 @@ def tableau_authentication(args):
     if (creds['user'] or creds['password']) and not (creds['password'] and creds['user']):
         parser.error('--password and --user are required together')
 
+    if debug:
+        # Prints ending lines based on the title and title color printed above
+        color_print(symbol.line * len(title), **title_color)
+        print()  # new line
+
     # Create the server object and run the functions
-    return ts.TableauServer(
+    t = ts.TableauServer(
         personal_access_token_name=creds['token_name'],
         personal_access_token_secret=creds['token_secret'],
         user=creds['user'],
@@ -307,26 +315,32 @@ def tableau_authentication(args):
         host=f'https://{creds["server"]}.online.tableau.com',
         api_version=creds['api_version']
     )
+    color_print(symbol.success, ' Connected to Tableau Server', **title_color)
+    return t
 
 
 def main():
     args = parser.parse_args()
 
+    # Set absolute path of the settings_path, if it exists and is not already absolute
+    if not os.path.isabs(args.settings_path) and os.path.exists(args.settings_path):
+        args.settings_path = os.path.abspath(args.settings_path)
+
     # Validate the arguments
+    if args.location == 'local' and args.file_path is None:
+        parser.error('--location local requires --file_path')
     if args.command == 'server_operate':
         validate_args_server_operate(args)
     if args.command in ['generate_config', 'connection']:
         validate_args_id_name_project(args)
-    if args.command == 'connection':
-        validate_args_command_connection(args)
     if args.command == 'datasource':
         validate_args_command_datasource(args)
     if args.command == 'merge_config':
         validate_args_command_merge_config(args)
 
     # Set/Reset the directory
-    tmp_folder = args.local_folder
-    if args.clean_up_first:
+    tmp_folder = args.output_dir
+    if args.clean_dir:
         shutil.rmtree(tmp_folder, ignore_errors=True)
 
     os.makedirs(tmp_folder, exist_ok=True)
@@ -342,12 +356,10 @@ def main():
     )
 
     if needs_tableau_server:
-        print("LOCAL OR SERVER: Tableau Server Operations")
         server = tableau_authentication(args)
         args.func(args, server)
     # Run functions that don't need the server
     else:
-        print('LOCAL OR SERVER: Local Operations')
         args.func(args)
 
 

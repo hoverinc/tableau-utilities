@@ -18,7 +18,7 @@ class TableauConnectionError(Exception):
 class TableauServer:
     """ Connects and interacts with Tableau Online/Server, via the REST API. """
 
-    def __init__(self, host, site, user=None, password=None, personal_access_token_secret=None, personal_access_token_name=None, api_version=3.16):
+    def __init__(self, host, site, user=None, password=None, personal_access_token_secret=None, personal_access_token_name=None, api_version=None):
         """ To sign in to Tableau a user needs either a username & password or token secret & token name
 
         Args:
@@ -36,7 +36,7 @@ class TableauServer:
         self.personal_access_token_name = personal_access_token_name
         self.host = host
         self.site = site
-        self.api = api_version
+        self.api = api_version or 3.18
         # Set by class
         self._auth_token = None
         self.url = None
