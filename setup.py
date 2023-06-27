@@ -5,7 +5,7 @@ with open('README.md') as f:
 
 setup(
     author="Justin Grilli",
-    author_email="jgrilli@hover.to",
+    author_email="justin.grilli@gmail.com",
     license='MIT',
     url='http://pypi.python.org/pypi/tableau-utilities/',
     description='Utility for maintaining Tableau objects',
