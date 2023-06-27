@@ -68,5 +68,10 @@ personas = {
         "role": "dimension",
         "role_type": "nominal",
         "datatype": "boolean"
+    },
+    "boolean_measure": {
+        "role": "measure",
+        "role_type": "nominal",
+        "datatype": "boolean"
     }
 }

@@ -38,7 +38,7 @@ def connection_settings(args, debugging_logs, settings_path=None):
                 print(f'Using CLI Argument cred: {name} = {value}')
 
     # Set Settings YAML credentials
-    if settings_path:
+    if settings_path and os.path.exists(settings_path):
         with open(settings_path, 'r') as f:
             yaml_creds = yaml.safe_load(f)
             yaml_creds = yaml_creds['embed_connection']
@@ -148,7 +148,15 @@ def connection(args, server=None):
     if connection_operation == 'update_local_connection':
         print('Local Datasource, Updating Connection')
         datasource = Datasource(datasource_path)
+        if args.save_tds:
+            xml_path = datasource.unzip(extract_to=f'{os.path.basename(datasource_path)} - BEFORE')
+            if debugging_logs:
+                print(f'BEFORE - TDS SAVED TO: {xml_path}')
         update_connection(datasource, conn_settings, debugging_logs)
+        if args.save_tds:
+            xml_path = datasource.unzip(extract_to=f'{os.path.basename(datasource_path)} - AFTER')
+            if debugging_logs:
+                print(f'AFTER - TDS SAVED TO: {xml_path}')
 
     elif connection_operation == 'embed_user_pass':
         print('Online Datasource, Updating Embedded Username and Password')

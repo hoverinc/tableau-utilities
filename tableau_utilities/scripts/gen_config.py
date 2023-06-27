@@ -37,7 +37,7 @@ def load_csv_with_definitions(file=None):
     return definitions_mapping
 
 
-def choose_persona(role, role_type, datatype):
+def choose_persona(role, role_type, datatype, caption):
     """  The config relies on a persona which is a combination of role, role_type and datatype for each column.
     This returns the persona name or raises an exception if the combination is not found
 
@@ -45,6 +45,7 @@ def choose_persona(role, role_type, datatype):
         role: dimension or measure
         role_type: nominal, ordinal, or quantitative
         datatype: string, date, datetype, real, or boolean
+        caption: The name of the column for the persona. Used in error messagfe
 
     """
     for k, v in personas.items():
@@ -52,7 +53,8 @@ def choose_persona(role, role_type, datatype):
             return k
 
     raise ValueError(
-        f"There is no persona for the combination of ROLE {role}, ROLE_TYPE {role_type}, and DATATYPE {datatype}'"
+        f"There is no persona for the combination of ROLE {role}, ROLE_TYPE {role_type}, and DATATYPE {datatype}."
+        f"Error on column {caption}'"
     )
 
 
@@ -164,7 +166,8 @@ def create_column_config(columns, datasource_name, folder_mapping, metadata_reco
         else:
             caption = column_name.replace('_', ' ').title()
 
-        persona = choose_persona(role=column.role, role_type=column.type, datatype=column.datatype)
+        persona = choose_persona(role=column.role, role_type=column.type, datatype=column.datatype,
+                                 caption=caption)
 
         # Takes the description from the csv if there is one
         # Assumes the csv  is the source of truth if there are definitions in both

@@ -28,8 +28,8 @@ def test_cli_local_args():
     argv = [
         '-l', 'local',
         '-f', EXTRACT_PATH,
-        'datasource',
-        '-tds'
+        '-tds',
+        'datasource'
     ]
     args = tu.cli.parser.parse_args(argv)
     assert args.file_path == EXTRACT_PATH
