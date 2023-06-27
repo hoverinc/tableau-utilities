@@ -76,6 +76,8 @@ group_file.add_argument('--definitions_csv', help='Add data defintions from a cs
 group_file.add_argument('--include_extract', action='store_true', help='Includes the extract in the download if '
                                                                        'specified. This will make downloads take a '
                                                                        'long time for large extracts.')
+group_file.add_argument('-tds', '--save_tds', action='store_true',
+                        help='Saves the TDS for the datasource to view the raw xml')
 
 # SERVER INFO
 parser_server_info = subparsers.add_parser('server_info', help='Retrieve and view information from Tableau Cloud/Server')
@@ -121,8 +123,6 @@ parser_connection.set_defaults(func=connection)
 
 # DATASOURCE
 parser_datasource = subparsers.add_parser('datasource', help='View and edit metadata about the datasource')
-parser_datasource.add_argument('-tds', '--save_tds', action='store_true',
-                               help='Saves the TDS for the datasource to view the raw xml')
 parser_datasource.add_argument('--folder', choices=['add', 'delete'],
                                help='Add or delete a folder in the downloaded datasource')
 parser_datasource.add_argument(
@@ -267,7 +267,7 @@ def tableau_authentication(args):
                 print(f'Using CLI Argument cred: {cred_name} = {cred_value}')
 
     # Set Settings YAML file credentials
-    if yaml_path:
+    if yaml_path and os.path.exists(yaml_path):
         with open(yaml_path, 'r') as f:
             yaml_creds = yaml.safe_load(f)
             yaml_creds = yaml_creds['tableau_login']

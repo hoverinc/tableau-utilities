@@ -265,17 +265,31 @@ class TableauServer:
         for connection in self.__get_objects_pager(url, 'connection'):
             yield tso.Connection(**connection)
 
-    def get_workbook(self, workbook_id):
+    def get_workbook(self, workbook_id=None, workbook_name=None, workbook_project=None):
         """ Queries for a workbook in the site
             URI GET /api/api-version/sites/site-id/workbooks/workbook_id
         Args:
             workbook_id (str): The ID of the Tableau Workbook
+            workbook_name (str): The name of the workbook
+            workbook_project (str): The name of the project the workbook is in
         Returns: A Workbooks Tableau object
         """
-        w = self.get(f'{self.url}/workbooks/{workbook_id}')
-        w = w['workbook']
-        self.__transform_tableau_object(w)
-        return tso.Workbook(**w)
+        if workbook_id:
+            w = self.get(f'{self.url}/workbooks/{workbook_id}')
+            w = w['workbook']
+            self.__transform_tableau_object(w)
+            return tso.Workbook(**w)
+        elif workbook_name and workbook_project:
+            for w in self.get_workbooks():
+                if w.name == workbook_name and w.project_name == workbook_project:
+                    return w
+            raise TableauConnectionError(
+                f'Datasource not found:\n\tName    -> {workbook_name}\n\tProject -> {workbook_project}'
+            )
+
+        raise TableauConnectionError(
+            'Please provide either the workbook_id, or both workbook_name and workbook_project'
+        )
 
     def get_workbooks(self):
         """ Queries for all workbooks in the site

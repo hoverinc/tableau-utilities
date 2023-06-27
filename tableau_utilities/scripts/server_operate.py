@@ -27,7 +27,7 @@ def server_operate(args, server):
         object_list = [o for o in getattr(server, f'get_{object_type}s')()]
         for o in object_list:
             print(f"DOWNLOADING {object_type}: {o.name} {o.project_name} {o.id}")
-            response = getattr(server, f'download_{object_type}')(o['id'], include_extract)
+            response = getattr(server, f'download_{object_type}')(o['id'], include_extract=include_extract)
             print(f'RESPONSE {response}')
     else:
         # Gets the ID, name, and project from the object in Tableau Server
@@ -43,7 +43,7 @@ def server_operate(args, server):
                 f'PROJECT: {project_name}, '
                 f'INCLUDE EXTRACT {include_extract}'
             )
-            getattr(server, f'download_{object_type}')(object_id, include_extract)
+            getattr(server, f'download_{object_type}')(object_id, include_extract=include_extract)
         elif action_type == 'publish':
             print(
                 f'PUBLISHING {object_type.upper()} -> ID: {object_id}, '
