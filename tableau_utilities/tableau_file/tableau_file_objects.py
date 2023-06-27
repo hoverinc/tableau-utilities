@@ -1,10 +1,10 @@
+import sys
 import re
 import xml.etree.ElementTree as ET
 import xmltodict
 from dataclasses import dataclass, astuple, field
 from typing import Literal
 from tableau_utilities.general.funcs import transform_tableau_object
-
 
 @dataclass
 class TableauFileObject:
@@ -235,6 +235,8 @@ class Column(TableauFileObject):
     aliases: list = None
     members: dict = None
     range: dict = None
+    fiscal_year_start: int = None
+    visual_totals: str = None
 
     def __post_init__(self):
         if not re.match(r'^\[.+]$', self.name):
@@ -275,6 +277,7 @@ class Column(TableauFileObject):
             '@datatype': self.datatype,
             '@role': self.role,
             '@type': self.type
+
         }
         if self.semantic_role is not None:
             output['@semantic-role'] = self.semantic_role
@@ -317,6 +320,11 @@ class Column(TableauFileObject):
         if self.aliases is not None:
             output['aliases'] = dict()
             output['aliases']['alias'] = self.aliases
+        if self.fiscal_year_start is not None:
+            output['@fiscal-year-start'] = self.fiscal_year_start
+        if self.visual_totals is not None:
+            output['@visual-totals'] = self.visual_totals
+
         return output
 
 
@@ -540,6 +548,123 @@ class FoldersCommon(TableauFileObject):
 
 
 @dataclass
+class DrillPathItem(TableauFileObject):
+    """ The DrillPathItem Tableau file object, is an Item of the drill-path list """
+    tag: str = 'field'
+
+    def __hash__(self):
+        return hash(str(astuple(self)))
+
+
+@dataclass
+class DrillPath(TableauFileObject):
+    """ The drill paths """
+    name: str
+    field: str
+    drill_path_item: TableauFileObjects[DrillPathItem] = None
+
+    def __post_init__(self):
+        if self.drill_path_item is not None:
+            self.drill_path_item = TableauFileObjects(self.drill_path_item, item_class=DrillPathItem, tag='field')
+        else:
+            self.drill_path_item = TableauFileObjects(item_class=DrillPathItem, tag='field')
+
+    def __hash__(self):
+        return hash(str(astuple(self)))
+
+    def __eq__(self, other):
+        if isinstance(other, str):
+            return self.name == other
+        else:
+            if isinstance(other, dict):
+                return self.name == other.get('name')
+        return False
+
+    def dict(self):
+        output = {'@name': self.name}
+        if self.drill_path_item:
+            output['drill-path'] = list()
+            for drill_path_item in self.drill_path_item:
+                output['drill-path'].append(drill_path_item.dict())
+        return output
+
+
+@dataclass
+class DrillPaths(TableauFileObject):
+    drill_path: TableauFileObjects[DrillPath] = None
+    tag: str = 'drill-paths'
+
+    def __post_init__(self):
+        if self.drill_path is not None:
+            self.drill_path = TableauFileObjects(self.drill_path, item_class=DrillPath, tag='drill-path')
+        else:
+            self.drill_path = TableauFileObjects(item_class=DrillPath, tag='drill-path')
+
+    def __getitem__(self, item):
+        return self.drill_path[item]
+
+    def __setitem__(self, key, value):
+        self.drill_path[key] = value
+
+    def __str__(self):
+        return str(self.drill_path)
+
+    def __repr__(self):
+        return repr(self.drill_path)
+
+    def __iter__(self):
+        return iter(self.drill_path)
+
+    def __eq__(self, other):
+        if isinstance(other, DrillPaths):
+            other = other.drill_path
+        for item in self.drill_path:
+            if item not in other:
+                return False
+        for item in other:
+            if item not in self.drill_path:
+                return False
+        return True
+
+    def get(self, drill_path):
+        """ Get the Drill Path object from DrillPaths
+
+        Args:
+            drill_path (str): The drill path to get
+
+        Returns: The Drill Path object
+        """
+        return self.drill_path.get(drill_path)
+
+    def add(self, drill_path):
+        """ Add the Drill Path object to DrillPaths
+
+        Args:
+            drill_path (str): The drill path to add
+        """
+        self.drill_path.add(drill_path)
+
+    def delete(self, drill_path):
+        """ Delete the Drill Path object from DrillPaths
+
+        Args:
+            drill_path (str): The drill path to delete
+        """
+        self.drill_path.delete(drill_path)
+
+    def update(self, drill_path):
+        """ Update the DrillPaths object
+
+        Args:
+            drill_path (str): The drill path to update
+        """
+        self.drill_path.update(drill_path)
+
+    def dict(self):
+        return {'drill_paths': [f.dict() for f in self.drill_path]}
+
+
+@dataclass
 class Connection(TableauFileObject):
     tag: str = 'connection'
     authentication: str = None
@@ -552,7 +677,10 @@ class Connection(TableauFileObject):
     warehouse: str = None
     odbc_connect_string_extras: str = None
     one_time_sql: str = None
+    query_tagging_enabled: bool = None
+    saml_idp: str = None
     server_oauth: str = None
+    server_userid: str = None
     workgroup_auth_mode: str = None
     tablename: str = None
     default_settings: str = None
@@ -583,8 +711,14 @@ class Connection(TableauFileObject):
             output['@odbc-connect-string-extras'] = self.odbc_connect_string_extras
         if self.one_time_sql is not None:
             output['@one-time-sql'] = self.one_time_sql
+        if self.query_tagging_enabled is not None:
+            output['@query-tagging-enabled'] = self.query_tagging_enabled
+        if self.saml_idp is not None:
+            output['@saml-idp'] = self.saml_idp
         if self.server_oauth is not None:
             output['@server-oauth'] = self.server_oauth
+        if self.server_userid is not None:
+            output['@server-userid'] = self.server_userid
         if self.workgroup_auth_mode is not None:
             output['@workgroup-auth-mode'] = self.workgroup_auth_mode
         if self.tablename is not None:
@@ -715,12 +849,14 @@ class MetadataRecord(TableauFileObject):
 
 @dataclass
 class Refresh(TableauFileObject):
-    increment_key: str
-    incremental_updates: bool
     tag: str = 'refresh'
+    refresh_event: dict = None
+    increment_key: str = None
+    incremental_updates: bool = None
 
     def dict(self):
         return {
+            '@refresh-event': self.refresh_event,
             '@increment-key': self.increment_key,
             '@increment-updates': str(self.incremental_updates).lower()
         }
@@ -745,6 +881,7 @@ class ParentConnection(TableauFileObject):
     cols: TableauFileObjects[MappingCol] = None
     refresh: Refresh = None
     metadata_records: TableauFileObjects[MetadataRecord] = None
+    default_settings: str = None
 
     def __post_init__(self):
         if self.refresh is not None:
@@ -753,8 +890,7 @@ class ParentConnection(TableauFileObject):
             self.relation = Relation(**transform_tableau_object(self.relation))
         if self.named_connections is not None:
             self.named_connections = TableauFileObjects(
-                self.named_connections['named-connection'], item_class=NamedConnection, tag='named-connections'
-            )
+                self.named_connections['named-connection'], item_class=NamedConnection, tag='named-connections')
         else:
             self.named_connections = TableauFileObjects(item_class=NamedConnection, tag='named-connections')
         if self.cols is not None:
@@ -867,6 +1003,40 @@ class Aliases(TableauFileObject):
 
     def dict(self):
         return {'@enabled': 'yes' if self.enabled else 'no'}
+
+@dataclass
+class DateOptions(TableauFileObject):
+    fiscal_year_start: str = None
+    tag: str = 'date-options'
+
+    def dict(self):
+        dictionary = dict()
+        if self.fiscal_year_start is not None:
+            dictionary['@date-options'] = self.fiscal_year_start
+        return dictionary
+
+@dataclass
+class ColumnInstance(TableauFileObject):
+    column: str = None
+    derivation: str = None
+    name: str = None
+    pivot: str = None
+    type: str = None
+    tag: str = 'column-instance'
+
+    def dict(self):
+        dictionary = dict()
+        if self.column is not None:
+            dictionary['@column'] = self.column
+        if self.derivation is not None:
+            dictionary['@derivation'] = self.derivation
+        if self.name is not None:
+            dictionary['@name'] = self.name
+        if self.pivot is not None:
+            dictionary['@pivot'] = self.pivot
+        if self.type is not None:
+            dictionary['@type'] = self.type
+        return dictionary
 
 
 if __name__ == '__main__':

@@ -70,16 +70,112 @@ if __name__ == '__main__':
 
 ```
 
-### CLI Usage
+## CLI Usage
 
-- Lists all datasources in your site
-  - `tableau_utilities --user <login> --password <password> --site <site name> --server <server address> --list_datasources`
-  - OR `tableau_utilities --settings_path ./settings.yaml --list_datasources`
-- Download a datasource
-  - `tableau_utilities --user <login> --password <password> --site <site name> --server <server address> --download_ds --name "Datasource Name" --project "Project Name"`
-  - OR `tableau_utilities --settings_path ./settings.yaml --download_ds --name "Datasource Name" --project "Project Name"`
-- Add column to datasource
-  - `tableau_utilities --tdsx path/to/file.tdsx --add_column --name "column_name" --folder "Folder Name" --caption "Column Alias" --desc "column description"`
+### Help
+See the top level CLI arguments including the commands.
+```commandline
+tableau_utilities --help
+```
+
+See the help for a `command`.
+Each command has arguments for a different grouping of actions.
+```commandline
+tableau_utilities server_operate --help
+```
+
+### Authentication Options
+Pass your credentials into the command
+```commandline
+tableau_utilities --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az server_info --list_object datasource --list_format names
+```
+
+Use a settings YAML file
+```commandline
+tableau_utilities  --settings_path my_settings.yaml --list_object datasource --list_format names
+```
+
+Use environment variables
+```commandline
+tableau_utilities server_info --list_object datasource --list_format names
+```
+
+Using the 1password CLI with op run
+```commandline
+op run --env-file=.env -- tableau_utilities server_info list_--list_object datasource --list_format names
+```
+
+### Examples for each command
+
+#### server_info
+Lists all datasources in your site ordered by ID
+```commandline
+tableau_utilities --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az server_info --list_object datasource --list_format ids_names --list_sort_field id
+```
+
+#### server_operate
+Download a datasource by name
+```commandline
+tableau_utilities --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az --name 'My Awesome Datasource' --project_name 'My Fabulous Project' server_operate --action_type download --object_type datasource
+```
+
+#### connection
+Embed a username and password in a datasource in Tableau Online/Server
+```commandline
+tableau_utilities --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az --location online --name 'My Awesome Datasource' --project_name 'My Fabulous Project' connection --connection_operation embed_user_pass  --conn args --conn_type snowflake --conn_user MY_SNOWFLAKE_USER --conn_pw '1234567abc!'
+```
+
+#### datasource
+Save the TDS for a datasource from a local datasource to view the raw XML
+```commandline
+tableau_utilities --location local --file_path '/Downloads/My Awesome Datasource.tdsx'  datasource --save_tds
+```
+
+Save the TDS for a datasource from an online datasource to view the raw XML
+```commandline
+tableau_utilities --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az --location online --name 'My Awesome Datasource' --project_name 'My Cool Project' datasource --save_tds
+```
+
+Change the folder for a column
+```commandline
+tableau_utilities  --location local --file_path '/Downloads/Metadata Alter.tdsx'  datasource --column --column_name COLUIMN_IN_SNOWFLAKE --remote_name COLUIMN_IN_SNOWFLAKE --caption 'My Pretty Column Name' --desc 'The most perfect description helping users understand the data' 
+
+```
+
+#### generate_config
+
+Generate a config from a datasource in online/server
+```commandline
+tableau_utilities --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az --location online --name 'My Awseome Datasource' --project_name 'My Team Project' generate_config
+```
+
+Generate a config from a datasource in online/server and add definitions from a csv
+```commandline
+tableau_utilities --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az --location online --name 'My Awseome Datasource' --project_name 'My Team Project' generate_config --definitions_csv /Desktop/new_descriptions.csv
+```
+
+Generate a config from a local file. Add a file prefix and print the debugging logs to the console
+```commandline
+tableau_utilities --debugging_logs generate_config --location local --file_path '/code/tableau-utilities/tmp_tdsx_and_config/My Awesome Datasource.tdsx' --file_prefix
+```
+
+#### csv_config
+Write the config to a csv with 1 row per field per datasource
+```commandline
+ tableau_utilities csv_config --config_list /code/airflow/dags/tableau/configs/column_config.json /code/airflow/dags/tableau/configs/tableau_calc_config.json
+```
+
+#### merge_config
+Merge a new config into your main config
+```commandline
+tableau_utilities merge_config --merge_with config --existing_config /code/tableau-utilities/tmp_tdsx_and_config/main__column_config.json --additional_config /code/tableau-utilities/tmp_tdsx_and_config/new__column_config.json --merged_config code/dbt-repo/tableau_datasource_configs/column_config
+```
+
+Merge data defintions from a csv into your main config
+```commandline
+tableau_utilities --definitions_csv /Desktop/new_definitions.csv merge_config --merge_with csv  merge_config --existing_config code/dbt-repo/tableau_datasource_configs/column_config.json --merged_config code/dbt-repo/tableau_datasource_configs/column_config
+```
+
 
 ### Development
 - `pip install -r requirements/dev.txt`
