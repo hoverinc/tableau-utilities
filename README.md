@@ -92,7 +92,7 @@ tableau_utilities --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o -
 
 Use a settings YAML file
 ```commandline
-tableau_utilities  --settings_path my_settings.yaml --list_object datasource --list_format names
+tableau_utilities  --settings_path my_settings.yaml server_info --list_object datasource --list_format names
 ```
 
 Use environment variables
@@ -116,13 +116,17 @@ tableau_utilities --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o -
 #### server_operate
 Download a datasource by name
 ```commandline
-tableau_utilities --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az --name 'My Awesome Datasource' --project_name 'My Fabulous Project' server_operate --action_type download --object_type datasource
+tableau_utilities --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site_name mysitename --server 10az --name 'My Awesome Datasource' --project_name 'My Fabulous Project' server_operate --download datasource
 ```
 
-#### connection
-Embed a username and password in a datasource in Tableau Online/Server
+Publish Datasource with embedded connection credentials
 ```commandline
-tableau_utilities --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o --site mysitename --server 10az --location online --name 'My Awesome Datasource' --project_name 'My Fabulous Project' --save_tds connection --connection_operation embed_user_pass --conn_type snowflake --conn_user MY_SNOWFLAKE_USER --conn_pw '1234567abc!'
+tableau_utilities -tn my_token_name -ts 1q2w3e4r5t6y7u8i9o -sn mysitename -s 10az -n 'My Awesome Datasource' -pn 'My Fabulous Project' --file_path '/Downloads/My Awesome Datasource.tdsx' --conn_user username --conn_pw abc123 server_operate --publish datasource
+```
+
+Embed Connection credentials for a Datasource
+```commandline
+tableau_utilities -tn my_token_name -ts 1q2w3e4r5t6y7u8i9o -sn mysitename -s 10az -n 'My Awesome Datasource' -pn 'My Fabulous Project' --conn_user username --conn_pw abc123 server_operate --embed_connection
 ```
 
 #### datasource
@@ -138,17 +142,22 @@ tableau_utilities --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o -
 
 Change the folder for a column
 ```commandline
-tableau_utilities  --location local --file_path '/Downloads/Metadata Alter.tdsx' datasource --column_name COLUMN_NAME --folder_name 'Folder Name'
+tableau_utilities --location local --file_path '/Downloads/Metadata Alter.tdsx' datasource --column_name COLUMN_NAME --folder_name 'Folder Name'
 ```
 
 Update/Add attributes for a column
 ```commandline
-tableau_utilities  --location local --file_path '/Downloads/Metadata Alter.tdsx' datasource --column_name COLUMN_NAME --remote_name COLUMN_NAME_FROM_CONNECTION --caption 'My Pretty Column Name' --persona string_dimension --desc 'A help description for Tableau users to understand the data' 
+tableau_utilities --location local --file_path '/Downloads/Metadata Alter.tdsx' datasource --column_name COLUMN_NAME --remote_name COLUMN_NAME_FROM_CONNECTION --caption 'My Pretty Column Name' --persona string_dimension --desc 'A help description for Tableau users to understand the data' 
 ```
 
 Delete folder
 ```commandline
-tableau_utilities  --location local --file_path '/Downloads/Metadata Alter.tdsx' datasource --folder_name 'Folder Name' --delete folder
+tableau_utilities --location local --file_path '/Downloads/Metadata Alter.tdsx' datasource --folder_name 'Folder Name' --delete folder
+```
+
+Enforce Datasource connection credentials
+```commandline
+tableau_utilities -l local -f '/Downloads/Metadata Alter.tdsx' --conn_type snowflake --conn_host https://some.url.com --conn_user username --conn_pw password --conn_db database_name --conn_schema schema_name --conn_role role_name --conn_warehouse warehouse_name datasource --embed_connection
 ```
 
 #### generate_config
@@ -187,9 +196,9 @@ tableau_utilities --definitions_csv /Desktop/new_definitions.csv merge_config --
 
 
 ### Development
-- `pip install -r requirements/dev.txt`
-- Create `settings.yaml` file in the `tableau_utilities` directory
-  - See `sample_settings.yaml` for an example
+- `pip install -r requirements.txt`
+- Create `settings.yaml` file in the directory where `tableau_utilities` is called.
+  - See `sample_settings.yaml` for an example.
 - `test_tableau_utilities`
   - Add tests as needed
   - Run when making changes

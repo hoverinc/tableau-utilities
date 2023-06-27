@@ -3,14 +3,19 @@ import pandas as pd
 
 
 def csv_config(args):
+
+    # Set variables from args
+    debugging_logs = args.debugging_logs
+    config_list = args.config_list
+
     all_columns = []
 
-    for each_config in args.config_list:
+    for each_config in config_list:
         config = read_file(each_config)
 
         # columns = []
         for column, details in config.items():
-            if args.debugging_logs:
+            if debugging_logs:
                 print(column, details)
 
             column_name = column
