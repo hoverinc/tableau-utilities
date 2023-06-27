@@ -41,6 +41,7 @@ class Symbol:
     success: str = '✅'
     warning: str = '⚠'
     fail: str = '🚫'
+    sep: str = '║'
 
 
 def color_print(*args, fg=None, bg=None):
@@ -69,6 +70,6 @@ if __name__ == '__main__':
     color_print('This is fg_cyan', fg='cyan')
     color_print('This is bg_blue', bg='blue')
     color_print('This is fg_red and bg_blue', fg='red', bg='blue')
-    print('This is normal')
+    print(f'This {s.sep} is normal')
     # color_print('This is wont print', color='bad_color')
     print(f'{c.bad_color}This is wont print{c.reset}')

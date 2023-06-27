@@ -44,21 +44,22 @@ def datasource(args, server=None):
         print(f'{color.fg_cyan}{list_objects}:{color.reset}')
     if list_objects == 'Columns':
         for c in ds.columns:
-            print(f'{symbol.arrow_r} '
+            print(f'  {symbol.arrow_r} '
                   f'{color.fg_yellow}caption:{color.reset} {c.caption} '
                   f'{color.fg_yellow}local-name:{color.reset} {c.name} '
                   f'{color.fg_yellow}persona:{color.reset} {get_persona_by_attribs(c.role, c.type, c.datatype)}')
     if list_objects == 'Folders':
-        print([f.name for f in ds.folders_common.folder])
+        for f in ds.folders_common.folder:
+            print(f'  {symbol.arrow_r} {color.fg_yellow}{f.name}{color.reset}')
     if list_objects == 'Metadata':
         for m in ds.connection.metadata_records:
-            print(f'{symbol.arrow_r} '
+            print(f'  {symbol.arrow_r} '
                   f'{color.fg_yellow}local-name:{color.reset} {m.local_name} '
                   f'{color.fg_yellow}remote-name:{color.reset} {m.remote_name} '
                   f'{color.fg_yellow}persona:{color.reset} {get_persona_by_metadata_local_type(m.local_type)}')
     if list_objects == 'Connections':
         for c in ds.connection.named_connections:
-            print(f'{symbol.arrow_r} {c.connection.dict()}')
+            print(f'  {symbol.arrow_r} {c.connection.dict()}')
 
     # Add / modify a specified column
     if args.column_name and not args.delete:

@@ -102,10 +102,12 @@ parser_server_info.set_defaults(func=server_info)
 # SERVER OPERATE
 parser_server_operate = subparsers.add_parser('server_operate',
                                               help='Download, publish, and refresh objects on Tableau Cloud/Server')
-parser_server_operate.add_argument('--action_type', choices=['download', 'publish', 'refresh'], required=True,
-                                   help='The action to take on the object')
-parser_server_operate.add_argument('--object_type', choices=['datasource', 'workbook'], required=True,
-                                   help='The type of object to interact with.')
+parser_server_operate.add_argument('--download', choices=['datasource', 'workbook'],
+                                   help='Specify to download a Tableau object')
+parser_server_operate.add_argument('--publish', choices=['datasource', 'workbook'],
+                                   help='Specify to publish a Tableau object')
+parser_server_operate.add_argument('--refresh', choices=['datasource', 'workbook'],
+                                   help='Specify to refresh a Tableau object')
 parser_server_operate.add_argument('--all',  action='store_true', help='Download all workbooks or datasources')
 parser_server_operate.set_defaults(func=server_operate)
 
@@ -113,17 +115,17 @@ parser_server_operate.set_defaults(func=server_operate)
 parser_connection = subparsers.add_parser('connection',
                                           help='Update connection for a datasource or embed a username and password.\n'
                                                'Requires datasource arguments.')
-parser_connection.add_argument('--connection_operation', choices=['update_local_connection', 'embed_user_pass'], required=True,
-                               help='Specify the location of the datasource.')
-parser_connection.add_argument('--conn_user', default=None, help='Username for embed credentials. See --embed_creds.')
-parser_connection.add_argument('--conn_pw', default=None, help='Password for embed credentials. See --embed_creds')
+parser_connection.add_argument('--connection_operation', choices=['update_local_connection', 'embed_user_pass'],
+                               required=True, help='Specify the location of the datasource.')
+parser_connection.add_argument('--conn_user', help='Username for embed credentials. See --embed_creds.')
+parser_connection.add_argument('--conn_pw', help='Password for embed credentials. See --embed_creds')
 parser_connection.add_argument('--conn_type', default='snowflake',
                                help='Connection type for embed credentials. See --embed_creds')
-parser_connection.add_argument('--conn_db', default=None, help='Connection Database')
-parser_connection.add_argument('--conn_schema', default=None, help='Connection Schema')
-parser_connection.add_argument('--conn_host', default=None, help='Connection Host (URL)')
-parser_connection.add_argument('--conn_role', default=None, help='Connection Role')
-parser_connection.add_argument('--conn_warehouse', default=None, help='Connection Warehouse')
+parser_connection.add_argument('--conn_db', help='Connection Database')
+parser_connection.add_argument('--conn_schema', help='Connection Schema')
+parser_connection.add_argument('--conn_host', help='Connection Host (URL)')
+parser_connection.add_argument('--conn_role', help='Connection Role')
+parser_connection.add_argument('--conn_warehouse', help='Connection Warehouse')
 parser_connection.set_defaults(func=connection)
 
 # DATASOURCE
@@ -137,7 +139,7 @@ parser_datasource.add_argument('--folder_name', help='The name of the folder. Re
 parser_datasource.add_argument('--column_name', help='The local name of the column. Required.')
 parser_datasource.add_argument('--remote_name', help='The remote (SQL) name of the column.')
 parser_datasource.add_argument('--caption', help='Short name/Alias for the column')
-parser_datasource.add_argument('--title_case_caption', default=False, action='store_true',
+parser_datasource.add_argument('--title_case_caption', action='store_true',
                                help='Converts caption to title case. Applied after --caption')
 parser_datasource.add_argument('--persona', choices=list(personas.keys()),
                                help='The datatype persona of the column. Required for adding a new column')
@@ -186,13 +188,18 @@ parser_config_merge.set_defaults(func=merge_configs)
 
 
 def validate_args_server_operate(args):
-    """ Validate that combinations of args are present
-    """
+    """ Validate that combinations of args are present """
     if (args.name and not args.project_name) or (args.project_name and not args.name):
         parser.error('--name and --project_name are required together')
 
-    if args.action_type == 'publish' and (args.name is None or args.project_name is None or args.file_path is None):
-        parser.error('publish requires a --name, --project_name, and --file_path ')
+    if args.publish and (args.name is None or args.project_name is None or args.file_path is None):
+        parser.error('--publish requires: --name --project_name and --file_path ')
+
+    if not (args.download or args.publish or args.refresh):
+        parser.error('server_operate must be called with one of: --download --publish --refresh')
+
+    if len([i for i in [args.download, args.publish, args.refresh] if i]) > 1:
+        parser.error('server_operate cannot be called with more than one of: --download --publish --refresh')
 
 
 def validate_args_id_name_project(args):
