@@ -58,6 +58,7 @@ class TableauFileObject:
         self.__to_bool('enabled')
         self.__to_bool('hidden')
         self.__to_bool('incremental_updates')
+        self.__to_bool('user_specific')
         # Convert to Integer
         self.__to_int('approx_count')
         self.__to_int('collation_flag')
@@ -556,26 +557,11 @@ class FoldersCommon(TableauFileObject):
 
 
 @dataclass
-class DrillPathItem(TableauFileObject):
-    """ The DrillPathItem Tableau file object, is an Item of the drill-path list """
-    tag: str = 'field'
-
-    def __hash__(self):
-        return hash(str(astuple(self)))
-
-
-@dataclass
 class DrillPath(TableauFileObject):
     """ The drill paths """
     name: str
-    field: str
-    drill_path_item: TableauFileObjects[DrillPathItem] = None
-
-    def __post_init__(self):
-        if self.drill_path_item is not None:
-            self.drill_path_item = TableauFileObjects(self.drill_path_item, item_class=DrillPathItem, tag='field')
-        else:
-            self.drill_path_item = TableauFileObjects(item_class=DrillPathItem, tag='field')
+    field: list[str] = None
+    tag: str = 'drill-path'
 
     def __hash__(self):
         return hash(str(astuple(self)))
@@ -590,10 +576,8 @@ class DrillPath(TableauFileObject):
 
     def dict(self):
         output = {'@name': self.name}
-        if self.drill_path_item:
-            output['drill-path'] = list()
-            for drill_path_item in self.drill_path_item:
-                output['drill-path'].append(drill_path_item.dict())
+        if self.field:
+            output['field'] = self.field
         return output
 
 
@@ -669,7 +653,7 @@ class DrillPaths(TableauFileObject):
         self.drill_path.update(drill_path)
 
     def dict(self):
-        return {'drill_paths': [f.dict() for f in self.drill_path]}
+        return {'drill-path': [f.dict() for f in self.drill_path]}
 
 
 @dataclass
@@ -683,8 +667,10 @@ class Connection(TableauFileObject):
     service: str = None
     username: str = None
     warehouse: str = None
+    instanceurl: str = None
     odbc_connect_string_extras: str = None
     one_time_sql: str = None
+    role: str = None
     query_tagging_enabled: bool = None
     saml_idp: str = None
     server_oauth: str = None
@@ -715,10 +701,14 @@ class Connection(TableauFileObject):
             output['@username'] = self.username
         if self.warehouse is not None:
             output['@warehouse'] = self.warehouse
+        if self.instanceurl is not None:
+            output['@instanceurl'] = self.instanceurl
         if self.odbc_connect_string_extras is not None:
             output['@odbc-connect-string-extras'] = self.odbc_connect_string_extras
         if self.one_time_sql is not None:
             output['@one-time-sql'] = self.one_time_sql
+        if self.role is not None:
+            output['@role'] = self.role
         if self.query_tagging_enabled is not None:
             output['@query-tagging-enabled'] = self.query_tagging_enabled
         if self.saml_idp is not None:
@@ -982,6 +972,7 @@ class ParentConnection(TableauFileObject):
 @dataclass
 class Extract(TableauFileObject):
     object_id: str = None
+    user_specific: bool = None
     count: int = None
     enabled: bool = None
     units: str = None
@@ -996,6 +987,8 @@ class Extract(TableauFileObject):
         dictionary = dict()
         if self.object_id is not None:
             dictionary['@object-id'] = self.object_id
+        if self.user_specific is not None:
+            dictionary['@user-specific'] = str(self.user_specific).lower()
         if self.count is not None:
             dictionary['@count'] = self.count
         if self.enabled is not None:
@@ -1018,12 +1011,15 @@ class Aliases(TableauFileObject):
 @dataclass
 class DateOptions(TableauFileObject):
     fiscal_year_start: str = None
+    start_of_week: str = None
     tag: str = 'date-options'
 
     def dict(self):
         dictionary = dict()
         if self.fiscal_year_start is not None:
-            dictionary['@date-options'] = self.fiscal_year_start
+            dictionary['@fiscal-year-start'] = self.fiscal_year_start
+        if self.fiscal_year_start is not None:
+            dictionary['@start-of-week'] = self.start_of_week
         return dictionary
 
 @dataclass

@@ -1,5 +1,4 @@
 import pytest
-import argparse
 import tableau_utilities as tu
 import tableau_utilities.tableau_file.tableau_file_objects as tfo
 import shutil
@@ -20,7 +19,6 @@ COLUMN = tfo.Column(
     desc='Nice and friendly',
 )
 FOLDER = tfo.Folder(name='Friendly Name')
-RESOURCES = ['latest_xml_structure', 'legacy_xml_structure']
 
 
 # TEST 1: cli.parser args

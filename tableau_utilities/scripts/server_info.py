@@ -2,6 +2,7 @@ import pandas as pd
 from tabulate import tabulate
 from pprint import pprint
 
+from tableau_utilities.general.cli_styling import Color, Symbol
 from tableau_utilities.tableau_server.tableau_server import TableauServer
 
 
@@ -13,12 +14,20 @@ def server_info(args, server):
         server (TableauServer): the Tableau Server authentication object
 
     """
+
+    # Set variables from args
     format = args.list_format
     sort_field = args.list_sort_field
+    list_object = args.list_object
 
-    if args.list_object:
+    # Print Styling
+    color = Color()
+    symbol = Symbol()
+
+    if list_object:
+        print(f'{color.fg_cyan}{list_object.title()}s:{color.reset}')
         # Get server objects, and convert them to dict
-        object_list = [o.__dict__ for o in getattr(server, f'get_{args.list_object.lower()}s')()]
+        object_list = [o.__dict__ for o in getattr(server, f'get_{list_object.lower()}s')()]
         sorted_records = sorted(object_list, key=lambda d: d[sort_field])
         if format == 'names':
             for record in sorted_records:
