@@ -52,3 +52,4 @@ def csv_config(args):
     df = pd.DataFrame(all_columns)
     df.to_csv('config_columns.csv', index=False)
 
+
