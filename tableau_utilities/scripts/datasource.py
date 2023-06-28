@@ -30,6 +30,7 @@ def datasource(args, server=None):
     datasource_name = args.name
     project_name = args.project_name
     location = args.location
+    enforce_connection = args.enforce_connection
 
     # Folder/Fields Args
     persona = args.persona
@@ -41,6 +42,15 @@ def datasource(args, server=None):
     calculation = args.calculation
     remote_name = args.remote_name
     list_objects = args.list.title() if args.list else None
+
+    # Datasource Connection Args
+    conn_type = args.conn_type
+    conn_host = args.conn_host
+    conn_user = args.conn_user
+    conn_role = args.conn_role
+    conn_db = args.conn_db
+    conn_schema = args.conn_schema
+    conn_warehouse = args.conn_warehouse
 
     # Print Styling
     color = Color()
@@ -133,8 +143,19 @@ def datasource(args, server=None):
     if delete == 'folder':
         ds.folders_common.folder.delete(folder_name)
 
+    # Enforce Connection
+    if enforce_connection:
+        if debugging_logs:
+            print(f'Updating the datasource connection: {color.fg_cyan}{conn_type}{color.reset}')
+        ds.connection.named_connections[conn_type].connection.server = conn_host
+        ds.connection.named_connections[conn_type].connection.username = conn_user
+        ds.connection.named_connections[conn_type].connection.service = conn_role
+        ds.connection.named_connections[conn_type].connection.dbname = conn_db
+        ds.connection.named_connections[conn_type].connection.schema = conn_schema
+        ds.connection.named_connections[conn_type].connection.warehouse = conn_warehouse
+
     # Save the datasource if an edit may have happened
-    if column_name or folder_name or delete:
+    if column_name or folder_name or delete or enforce_connection:
         ds.save()
         print(f'{color.fg_green}{symbol.success}  Saved changes to: {color.fg_yellow}{datasource_path}{color.reset}')
 
