@@ -4,4 +4,4 @@ requests
 pandas
 tabulate
 pytest
-
+setuptools >= 68.0.0
