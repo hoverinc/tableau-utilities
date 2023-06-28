@@ -1,421 +1,299 @@
 import pytest
-import tableau_utilities
-import collections
+import tableau_utilities as tu
+import tableau_utilities.tableau_file.tableau_file_objects as tfo
 import shutil
 import os
-from pathlib import Path
 
 
-def make_argv(user='fred', password='toast'):
+EXTRACT_PATH = 'test_data_source.tdsx'
+LIVE_PATH = 'test_live_data_source.tdsx'
+ONE_FOLDER_PATH = 'one_folder.tdsx'
+NO_FOLDER_PATH = 'no_folder.tdsx'
+
+COLUMN = tfo.Column(
+    name='FRIENDLY_NAME',
+    caption='Friendly Name',
+    datatype='string',
+    type='ordinal',
+    role='dimension',
+    desc='Nice and friendly',
+)
+FOLDER = tfo.Folder(name='Friendly Name')
+
+
+# TEST 1: cli.parser args
+def test_cli_local_args():
     argv = [
-        '--user', user,
-        '--password', password,
-        '--project', 'test_tableau_utilities',
-        '--name', 'feelies',
-        '--tdsx', 'test_data_source.tdsx',
+        '-l', 'local',
+        '-f', EXTRACT_PATH,
+        '-tds',
+        'datasource'
     ]
-    return argv
+    args = tu.cli.parser.parse_args(argv)
+    assert args.file_path == EXTRACT_PATH
 
 
-def add_column_args():
-    argv = make_argv()
-    args = tableau_utilities.do_args(argv)
-    args.caption = 'Friendly Name'
-    args.datatype = 'string'
-    args.column_name = 'FRIENDLY_NAME'
-    args.role = 'dimension'
-    args.desc = 'Nice and friendly'
-    return args
+# TEST 2: cli.parser args
+def test_cli_server_info_args():
+    argv = [
+        '-tn', 'token_name',
+        '-ts', 'token_secret',
+        '-sn', 'nice_site',
+        '-s', 'us-east-1',
+        'server_info',
+        '--list_object', 'datasource',
+        '--list_format', 'ids_names',
+        '--list_sort_field', 'id',
+    ]
+    args = tu.cli.parser.parse_args(argv)
+    assert args.server == 'us-east-1'
 
 
-def add_folder_args():
-    argv = make_argv()
-    args = tableau_utilities.do_args(argv)
-    args.folder_name = 'Friendly Name'
-    args.role = 'dimension'
-    return args
+# TEST 3: Datasource().DatasourceItems
+def test_datasource_items():
+    shutil.copyfile(f'resources/{EXTRACT_PATH}', EXTRACT_PATH)
+    datasource = tu.Datasource(EXTRACT_PATH)
+    os.remove(EXTRACT_PATH)
+    assert datasource.columns is not None and datasource.columns != []
+    assert datasource.folders_common is not None and datasource.folders_common != []
+    assert datasource.aliases is not None and datasource.aliases != []
+    assert datasource.connection is not None and datasource.connection != []
+    assert datasource.extract is not None and datasource.extract != []
 
 
-# TEST 1: do_args()
-def test_do_args():
-    argv = make_argv()
-    args = tableau_utilities.do_args(argv)
-    assert args.name == 'feelies'
+# TEST 4: Datasource().unzip()
+def test_unzip_tableau_file():
+    shutil.copyfile(f'resources/{EXTRACT_PATH}', EXTRACT_PATH)
+    path = tu.Datasource(EXTRACT_PATH).unzip()
+    with open(path) as f:
+        content = f.read()
+    os.remove(EXTRACT_PATH)
+    os.remove(path)
+    assert content is not None
 
 
-# TEST 2: extract_tds()
-def test_extract_tds():
-
-    for folder in ['latest_xml_structure', 'legacy_xml_structure']:
-        shutil.copyfile(f'resources/{folder}/test_data_source.tdsx', 'test_data_source.tdsx')
-        tds_dict = tableau_utilities.extract_tds('test_data_source.tdsx')
-        os.remove('test_data_source.tdsx')
-        assert isinstance(type(tds_dict), type(collections.OrderedDict))
-
-
-# TEST 3: update_tds()
-def test_update_tds():
-    for folder in ['latest_xml_structure', 'legacy_xml_structure']:
-        shutil.copyfile(f'resources/{folder}/test_data_source.tdsx', 'test_data_source.tdsx')
-        tds_before = tableau_utilities.extract_tds('test_data_source.tdsx')
-        junk_tds_file = open('a_junk_tds.tds', 'w').close()
-        tableau_utilities.update_tdsx('test_data_source.tdsx', tds_before)
-        tds_after = tableau_utilities.extract_tds('test_data_source.tdsx')
-        os.remove('test_data_source.tdsx')
-        remaing_tds_file = list(Path('.').glob('*.tds'))[0]
-        os.remove(remaing_tds_file)
-        assert tds_after == tds_before
-        assert str(remaing_tds_file) == 'a_junk_tds.tds'
+# TEST 5: Datasource().save()
+def test_datasource_save():
+    shutil.copyfile(f'resources/{EXTRACT_PATH}', EXTRACT_PATH)
+    datasource_before = tu.Datasource(EXTRACT_PATH)
+    datasource_before.save()
+    datasource_after = tu.Datasource(EXTRACT_PATH)
+    os.remove(EXTRACT_PATH)
+    for before, after in zip(datasource_before.sections(), datasource_after.sections()):
+        assert before == after
 
 
-# TEST 4: add_column()
+# TEST 6: Datasource().columns.add()
 def test_add_column():
-
-    for folder in ['latest_xml_structure', 'legacy_xml_structure']:
-        shutil.copyfile(f'resources/{folder}/test_data_source.tdsx', 'test_data_source.tdsx')
-        args = add_column_args()
-        column_name = 'COOL_NAME'
-        caption = 'Cool Name'
-        role = 'dimension'
-        folder = 'tidy'
-        tds_dict = tableau_utilities.extract_tds('test_data_source.tdsx')
-        os.remove('test_data_source.tdsx')
-        attribs = {
-            'item_type': 'column',
-            'column_name': column_name,
-            'caption': caption,
-            'folder_name': folder,
-            'role': role
-        }
-        tds = tableau_utilities.TDS(tds_dict)
-        tds.add(**attribs)
-        col = tds.get(**attribs)
-        folder = tds.get('folder', folder_name=folder, role=role)
-        folder_item_added = False
-        if isinstance(folder['folder-item'], list):
-            folder_items = folder['folder-item']
-        else:
-            folder_items = [folder['folder-item']]
-        for f in folder_items:
-            if f and f['@name'] == f'[{column_name}]':
-                folder_item_added = True
-        assert col is not None
-        assert folder_item_added
+    shutil.copyfile(f'resources/{EXTRACT_PATH}', EXTRACT_PATH)
+    datasource = tu.Datasource(EXTRACT_PATH)
+    os.remove(EXTRACT_PATH)
+    datasource.columns.add(COLUMN)
+    column = datasource.columns.get(COLUMN)
+    assert column is not None
 
 
-# TEST 5: add_column()
-def test_add_existing_column_fails():
-
-    for folder in ['latest_xml_structure', 'legacy_xml_structure']:
-        shutil.copyfile(f'resources/{folder}/test_data_source.tdsx', 'test_data_source.tdsx')
-        args = add_column_args()
-        add_existing_column_fails = False
-        tds_dict = tableau_utilities.extract_tds('test_data_source.tdsx')
-        os.remove('test_data_source.tdsx')
-        attribs = {
-            'item_type': 'column',
-            'column_name': args.column_name,
-            'caption': args.caption,
-            'folder_name': 'tidy',
-            'role': args.role,
-            'role_type': args.role_type,
-            'datatype': args.datatype,
-            'desc': args.desc
-        }
-        tds = tableau_utilities.TDS(tds_dict)
-        tds.add(**attribs)
-        try:
-            tds.add(**attribs)
-        except tableau_utilities.tableau_utilities.TableauUtilitiesError:
-            add_existing_column_fails = True
-        assert add_existing_column_fails
+# TEST 7: Datasource().enforce_column()
+def test_enforce_column():
+    shutil.copyfile(f'resources/{EXTRACT_PATH}', EXTRACT_PATH)
+    datasource = tu.Datasource(EXTRACT_PATH)
+    os.remove(EXTRACT_PATH)
+    col = tfo.Column(
+        name='renamed_name',
+        datatype='string',
+        role='dimension',
+        type='nominal',
+        caption='Renamed Name'
+    )
+    datasource.enforce_column(col, folder_name='A New Folder', remote_name='NAME')
+    column = datasource.columns.get(col)
+    folder = datasource.folders_common.get('A New Folder')
+    metadata = datasource.connection.metadata_records.get('NAME')
+    assert column == col
+    assert folder is not None
+    assert metadata.local_name == '[renamed_name]'
 
 
-# TEST 6: add_column()
-def test_add_column_fails_with_wrong_folder():
-
-    for folder in ['latest_xml_structure', 'legacy_xml_structure']:
-        shutil.copyfile(f'resources/{folder}/test_data_source.tdsx', 'test_data_source.tdsx')
-        args = add_column_args()
-        tds_dict = tableau_utilities.extract_tds('test_data_source.tdsx')
-        os.remove('test_data_source.tdsx')
-        got_a_TableauUtilitiesError = False
-        try:
-            tableau_utilities.TDS(tds_dict).add(
-                item_type='column',
-                column_name=args.column_name,
-                caption=args.caption,
-                folder_name='not_here',
-                role=args.role,
-                role_type=args.role_type,
-                datatype=args.datatype,
-                desc=args.desc,
-                calculation=args.calculation
-            )
-        except tableau_utilities.tableau_utilities.TableauUtilitiesError:
-            got_a_TableauUtilitiesError = True
-        assert got_a_TableauUtilitiesError
+# TEST 8: Datasource().columns.add()
+def test_add_existing_column():
+    shutil.copyfile(f'resources/{EXTRACT_PATH}', EXTRACT_PATH)
+    datasource = tu.Datasource(EXTRACT_PATH)
+    os.remove(EXTRACT_PATH)
+    datasource.columns.add(COLUMN)
+    datasource.columns.add(COLUMN)
+    assert len([c for c in datasource.columns if c == COLUMN]) == 1
 
 
-# TEST 7: add_folder()
+# TEST 9: Datasource().folders_common.folder.add()
 def test_add_folder_tdsx_has_folder():
-
-    for folder in ['latest_xml_structure', 'legacy_xml_structure']:
-        shutil.copyfile(f'resources/{folder}/test_data_source.tdsx', 'test_data_source.tdsx')
-        args = add_folder_args()
-        tds_dict = tableau_utilities.extract_tds('test_data_source.tdsx')
-        os.remove('test_data_source.tdsx')
-        attribs = {
-            'item_type': 'folder',
-            'folder_name': args.folder_name,
-            'role': args.role
-        }
-        tds = tableau_utilities.TDS(tds_dict)
-        tds.add(**attribs)
-        found_folder = tds.get(**attribs)
-        assert found_folder is not None
+    shutil.copyfile(f'resources/{EXTRACT_PATH}', EXTRACT_PATH)
+    datasource = tu.Datasource(EXTRACT_PATH)
+    os.remove(EXTRACT_PATH)
+    datasource.folders_common.add(FOLDER)
+    found_folder = datasource.folders_common.get(FOLDER)
+    assert found_folder is not None
 
 
-# TEST 8: add_folder()
+# TEST 10: Datasource().folders_common.folder.add()
 def test_add_folder_tdsx_does_not_have_folder():
-
-    for folder in ['latest_xml_structure', 'legacy_xml_structure']:
-        shutil.copyfile(f'resources/{folder}/no_folder.tdsx', 'no_folder.tdsx')
-        args = add_folder_args()
-        tds_dict = tableau_utilities.extract_tds('no_folder.tdsx')
-        os.remove('no_folder.tdsx')
-        attribs = {
-            'item_type': 'folder',
-            'folder_name': args.folder_name,
-            'role': args.role
-        }
-        tds = tableau_utilities.TDS(tds_dict)
-        tds.add(**attribs)
-        found_folder = tds.get(**attribs)
-        assert found_folder is not None
+    shutil.copyfile(f'resources/{NO_FOLDER_PATH}', NO_FOLDER_PATH)
+    datasource = tu.Datasource(NO_FOLDER_PATH)
+    os.remove(NO_FOLDER_PATH)
+    datasource.folders_common.add(FOLDER)
+    found_folder = datasource.folders_common.get(FOLDER)
+    assert found_folder is not None
 
 
-# TEST 9: add_folder()
+# TEST 11: Datasource().folders_common.folder.add()
 def test_add_folder_tdsx_has_one_folder():
-
-    for folder in ['latest_xml_structure', 'legacy_xml_structure']:
-        shutil.copyfile(f'resources/{folder}/one_folder.tdsx', 'one_folder.tdsx')
-        args = add_folder_args()
-        tds_dict = tableau_utilities.extract_tds('one_folder.tdsx')
-        os.remove('one_folder.tdsx')
-        attribs = {
-            'item_type': 'folder',
-            'folder_name': args.folder_name,
-            'role': args.role
-        }
-        tds = tableau_utilities.TDS(tds_dict)
-        tds.add(**attribs)
-        found_folder = tds.get(**attribs)
-        assert found_folder is not None
+    shutil.copyfile(f'resources/{EXTRACT_PATH}', EXTRACT_PATH)
+    datasource = tu.Datasource(EXTRACT_PATH)
+    os.remove(EXTRACT_PATH)
+    datasource.folders_common.add(FOLDER)
+    found_folder = datasource.folders_common.get(FOLDER)
+    assert found_folder is not None
 
 
-# TEST 10: add_folder()
-def test_add_existing_folder_fails():
-
-    for folder in ['latest_xml_structure', 'legacy_xml_structure']:
-        shutil.copyfile(f'resources/{folder}/test_data_source.tdsx', 'test_data_source.tdsx')
-        args = add_folder_args()
-        tds_dict = tableau_utilities.extract_tds('test_data_source.tdsx')
-        os.remove('test_data_source.tdsx')
-        add_existing_folder_fails = False
-        attribs = {
-            'item_type': 'folder',
-            'folder_name': args.folder_name,
-            'role': args.role
-        }
-        tds = tableau_utilities.TDS(tds_dict)
-        tds.add(**attribs)
-        try:
-            tds.add(**attribs)
-        except tableau_utilities.tableau_utilities.TableauUtilitiesError:
-            add_existing_folder_fails = True
-        assert add_existing_folder_fails
+# TEST 12: Datasource().folders_common.add()
+def test_add_existing_folder():
+    shutil.copyfile(f'resources/{EXTRACT_PATH}', EXTRACT_PATH)
+    datasource = tu.Datasource(EXTRACT_PATH)
+    os.remove(EXTRACT_PATH)
+    datasource.folders_common.add(FOLDER)
+    datasource.folders_common.add(FOLDER)
+    assert len([f for f in datasource.folders_common if f == FOLDER]) == 1
 
 
-# TEST 11: delete_folder()
+# TEST 13: Datasource().folders_common.delete()
 def test_delete_folder():
-
-    for folder in ['latest_xml_structure', 'legacy_xml_structure']:
-        shutil.copyfile(f'resources/{folder}/test_data_source.tdsx', 'test_data_source.tdsx')
-        args = add_folder_args()
-        tds_dict = tableau_utilities.extract_tds('test_data_source.tdsx')
-        os.remove('test_data_source.tdsx')
-        attribs = {
-            'item_type': 'folder',
-            'folder_name': args.folder_name,
-            'role': args.role
-        }
-        tds = tableau_utilities.TDS(tds_dict)
-        tds.add(**attribs)
-        tds.delete(**attribs)
-        found_folder = tds.get(**attribs)
-        assert not found_folder
+    shutil.copyfile(f'resources/{EXTRACT_PATH}', EXTRACT_PATH)
+    datasource = tu.Datasource(EXTRACT_PATH)
+    os.remove(EXTRACT_PATH)
+    datasource.folders_common.add(FOLDER)
+    datasource.folders_common.delete(FOLDER)
+    found_folder = datasource.folders_common.get(FOLDER)
+    assert not found_folder
 
 
-# TEST 12: modify_column()
-def test_modify_column():
+# TEST 14: Datasource().columns.update()
+def test_update_column():
+    shutil.copyfile(f'resources/{EXTRACT_PATH}', EXTRACT_PATH)
+    datasource = tu.Datasource(EXTRACT_PATH)
+    os.remove(EXTRACT_PATH)
+    column = tfo.Column(
+        name='QUANTITY',
+        caption='Quantity Renamed',
+        datatype="integer",
+        role="measure",
+        type="quantitative"
+    )
+    datasource.columns.update(column)
+    col = datasource.columns.get(column)
+    assert col.caption == 'Quantity Renamed'
 
-    for folder in ['latest_xml_structure', 'legacy_xml_structure']:
-        shutil.copyfile(f'resources/{folder}/test_data_source.tdsx', 'test_data_source.tdsx')
-        tds_dict = tableau_utilities.extract_tds('test_data_source.tdsx')
-        os.remove('test_data_source.tdsx')
-        attribs = {
-            'item_type': 'column',
-            'column_name': 'QUANTITY',
-            'caption': 'Quantity'
-        }
-        tds = tableau_utilities.TDS(tds_dict)
-        tds.update(**attribs)
-        col = tds.get(**attribs)
-        assert col['@caption'] == 'Quantity'
 
-
-# TEST 13: find_folder()
+# TEST 15: Datasource().folders_common.get()
 def test_get_folder():
-
-    for folder in ['latest_xml_structure', 'legacy_xml_structure']:
-        shutil.copyfile(f'resources/{folder}/test_data_source.tdsx', 'test_data_source.tdsx')
-        shutil.copyfile(f'resources/{folder}/test_live_data_source.tdsx', 'test_live_data_source.tdsx')
-        shutil.copyfile(f'resources/{folder}/one_folder.tdsx', 'one_folder.tdsx')
-        tds_extract = tableau_utilities.extract_tds('test_data_source.tdsx')
-        tds_live = tableau_utilities.extract_tds('test_live_data_source.tdsx')
-        tds_one_folder = tableau_utilities.extract_tds('one_folder.tdsx')
-        os.remove('test_data_source.tdsx')
-        os.remove('test_live_data_source.tdsx')
-        os.remove('one_folder.tdsx')
-        assert tableau_utilities.TDS(tds_extract).get(
-            item_type='folder', folder_name='tidy', role='dimension') is not None
-        assert tableau_utilities.TDS(tds_live).get(
-            item_type='folder', folder_name='tidy', role='dimension') is None
-        assert tableau_utilities.TDS(tds_one_folder).get(
-            item_type='folder', folder_name='neat', role='measure') is not None
+    shutil.copyfile(f'resources/{EXTRACT_PATH}', EXTRACT_PATH)
+    shutil.copyfile(f'resources/{LIVE_PATH}', LIVE_PATH)
+    shutil.copyfile(f'resources/{ONE_FOLDER_PATH}', ONE_FOLDER_PATH)
+    ds_extract = tu.Datasource(EXTRACT_PATH)
+    ds_live = tu.Datasource(LIVE_PATH)
+    ds_one_folder = tu.Datasource(ONE_FOLDER_PATH)
+    os.remove(EXTRACT_PATH)
+    os.remove(LIVE_PATH)
+    os.remove(ONE_FOLDER_PATH)
+    assert ds_extract.folders_common.get('tidy') is not None
+    assert ds_live.folders_common.get('tidy') is None
+    assert ds_one_folder.folders_common.get('neat') is not None
 
 
-# TEST 14: find_all_folders()
+# TEST 16: Datasource().folders_common
 def test_find_all_folders():
-
-    def compare_list(outcome, expected):
-        # Compare each item because sorting affects comparison
-        if not isinstance(outcome, list):
-            return outcome == expected
-        for f in expected:
-            if f not in outcome:
-                return outcome == expected
-        for f in outcome:
-            if f not in expected:
-                return outcome == expected
-        return True
-
-    def remove_folder_items(outcome):
-        # Remove folder-items from folders found
-        if isinstance(outcome, list):
-            for f in outcome:
-                if f and f.get('folder-item'):
-                    del f['folder-item']
-        else:
-            if outcome and outcome.get('folder-item'):
-                del outcome['folder-item']
-
-    for folder in ['latest_xml_structure', 'legacy_xml_structure']:
-        shutil.copyfile(f'resources/{folder}/test_data_source.tdsx', 'test_data_source.tdsx')
-        shutil.copyfile(f'resources/{folder}/test_live_data_source.tdsx', 'test_live_data_source.tdsx')
-        shutil.copyfile(f'resources/{folder}/one_folder.tdsx', 'one_folder.tdsx')
-        tds_extract = tableau_utilities.extract_tds('test_data_source.tdsx')
-        tds_live = tableau_utilities.extract_tds('test_live_data_source.tdsx')
-        tds_one_folder = tableau_utilities.extract_tds('one_folder.tdsx')
-        os.remove('test_data_source.tdsx')
-        os.remove('test_live_data_source.tdsx')
-        os.remove('one_folder.tdsx')
-        # The new xml structure does not specify role
-        if folder == 'latest_xml_structure':
-            expected_two_folders = [collections.OrderedDict({'@name': 'neat'}),
-                                    collections.OrderedDict({'@name': 'tidy'})]
-            expected_one_folder = [collections.OrderedDict({'@name': 'neat'})]
-        else:
-            expected_two_folders = [collections.OrderedDict({'@name': 'neat', '@role': 'measures'}),
-                                    collections.OrderedDict({'@name': 'tidy', '@role': 'dimensions'})]
-            expected_one_folder = [collections.OrderedDict({'@name': 'neat', '@role': 'measures'})]
-        _folder = tableau_utilities.TDS(tds_extract).list('folder')
-        _folder_live = tableau_utilities.TDS(tds_live).list('folder')
-        _folder_one_folder = tableau_utilities.TDS(tds_one_folder).list('folder')
-        remove_folder_items(_folder)
-        remove_folder_items(_folder_live)
-        remove_folder_items(_folder_one_folder)
-        assert compare_list(outcome=_folder, expected=expected_two_folders)
-        assert _folder_live is None
-        assert _folder_one_folder == expected_one_folder
+    shutil.copyfile(f'resources/{EXTRACT_PATH}', EXTRACT_PATH)
+    shutil.copyfile(f'resources/{LIVE_PATH}', LIVE_PATH)
+    shutil.copyfile(f'resources/{ONE_FOLDER_PATH}', ONE_FOLDER_PATH)
+    ds_extract = tu.Datasource(EXTRACT_PATH)
+    ds_live = tu.Datasource(LIVE_PATH)
+    ds_one_folder = tu.Datasource(ONE_FOLDER_PATH)
+    os.remove(EXTRACT_PATH)
+    os.remove(LIVE_PATH)
+    os.remove(ONE_FOLDER_PATH)
+    # The new xml structure does not specify role
+    _folder = ds_extract.folders_common
+    _folder_live = ds_live.folders_common
+    _folder_one_folder = ds_one_folder.folders_common
+    assert _folder == ['neat', 'tidy']
+    assert _folder_live == []
+    assert _folder_one_folder == ['neat']
 
 
-# TEST 15: find_column()
-def test_find_column():
-
-    for folder in ['latest_xml_structure', 'legacy_xml_structure']:
-        shutil.copyfile(f'resources/{folder}/test_data_source.tdsx', 'test_data_source.tdsx')
-        shutil.copyfile(f'resources/{folder}/test_live_data_source.tdsx', 'test_live_data_source.tdsx')
-        tds_extract = tableau_utilities.extract_tds('test_data_source.tdsx')
-        tds_live = tableau_utilities.extract_tds('test_live_data_source.tdsx')
-        os.remove('test_data_source.tdsx')
-        os.remove('test_live_data_source.tdsx')
-        attribs = {'item_type': 'column', 'column_name': 'Number of Records'}
-        assert tableau_utilities.TDS(tds_extract).get(**attribs) is not None
-        assert tableau_utilities.TDS(tds_live).get(**attribs) is not None
-
-
-# TEST 16: list_connections()
-def test_list_connections():
-
-    for folder in ['latest_xml_structure', 'legacy_xml_structure']:
-        shutil.copyfile(f'resources/{folder}/test_data_source.tdsx', 'test_data_source.tdsx')
-        shutil.copyfile(f'resources/{folder}/test_live_data_source.tdsx', 'test_live_data_source.tdsx')
-        tds_extract = tableau_utilities.extract_tds('test_data_source.tdsx')
-        tds_live = tableau_utilities.extract_tds('test_live_data_source.tdsx')
-        os.remove('test_data_source.tdsx')
-        os.remove('test_live_data_source.tdsx')
-        assert tableau_utilities.TDS(tds_extract).list('connection') is not None
-        assert tableau_utilities.TDS(tds_live).list('connection') is not None
+# TEST 17: Datasource().columns
+def test_find_all_columns():
+    shutil.copyfile(f'resources/{EXTRACT_PATH}', EXTRACT_PATH)
+    shutil.copyfile(f'resources/{LIVE_PATH}', LIVE_PATH)
+    ds_extract = tu.Datasource(EXTRACT_PATH)
+    ds_live = tu.Datasource(LIVE_PATH)
+    os.remove(EXTRACT_PATH)
+    os.remove(LIVE_PATH)
+    assert ds_extract.columns == [
+        'CREATED_AT',
+        'ID',
+        'NAME',
+        'Number of Records',
+        'QUANTITY',
+        '[__tableau_internal_object_id__].[Migrated Data]'
+    ]
+    assert ds_live.columns == [
+        'Number of Records',
+        '[__tableau_internal_object_id__].[Migrated Data]'
+    ]
 
 
-# TEST 17: get_connections()
+# TEST 18: Datasource().connection.relation.connection
+def test_find_all_connections():
+    shutil.copyfile(f'resources/{EXTRACT_PATH}', EXTRACT_PATH)
+    shutil.copyfile(f'resources/{LIVE_PATH}', LIVE_PATH)
+    ds_extract = tu.Datasource(EXTRACT_PATH)
+    ds_live = tu.Datasource(LIVE_PATH)
+    os.remove(EXTRACT_PATH)
+    os.remove(LIVE_PATH)
+    assert ds_extract.connection.named_connections == ['snowflake']
+    assert ds_live.connection.named_connections == ['snowflake']
+
+
+# TEST 19: get_connections()
 def test_get_connection():
-
-    for folder in ['latest_xml_structure', 'legacy_xml_structure']:
-        shutil.copyfile(f'resources/{folder}/test_data_source.tdsx', 'test_data_source.tdsx')
-        shutil.copyfile(f'resources/{folder}/test_live_data_source.tdsx', 'test_live_data_source.tdsx')
-        tds_extract = tableau_utilities.extract_tds('test_data_source.tdsx')
-        tds_live = tableau_utilities.extract_tds('test_live_data_source.tdsx')
-        os.remove('test_data_source.tdsx')
-        os.remove('test_live_data_source.tdsx')
-        assert tableau_utilities.TDS(tds_extract).get('connection', conn_type='snowflake') is not None
-        assert tableau_utilities.TDS(tds_live).get('connection', conn_type='snowflake') is not None
+    shutil.copyfile(f'resources/{EXTRACT_PATH}', EXTRACT_PATH)
+    shutil.copyfile(f'resources/{LIVE_PATH}', LIVE_PATH)
+    ds_extract = tu.Datasource(EXTRACT_PATH)
+    ds_live = tu.Datasource(LIVE_PATH)
+    os.remove(EXTRACT_PATH)
+    os.remove(LIVE_PATH)
+    assert ds_extract.connection.named_connections.get('snowflake') is not None
+    assert ds_live.connection.named_connections.get('snowflake') is not None
 
 
-# TEST 18: update_connections()
+# TEST 20: Datasource().connection.update()
 def test_update_connection():
-
-    for folder in ['latest_xml_structure', 'legacy_xml_structure']:
-        shutil.copyfile(f'resources/{folder}/test_data_source.tdsx', 'test_data_source.tdsx')
-        shutil.copyfile(f'resources/{folder}/test_live_data_source.tdsx', 'test_live_data_source.tdsx')
-        tds_extract = tableau_utilities.TDS(tableau_utilities.extract_tds('test_data_source.tdsx'))
-        tds_live = tableau_utilities.TDS(tableau_utilities.extract_tds('test_live_data_source.tdsx'))
-        os.remove('test_data_source.tdsx')
-        os.remove('test_live_data_source.tdsx')
-        attributes = {
-            'conn_type': 'snowflake',
-            'conn_db': 'FAKE_DB',
-            'conn_schema': 'FAKE_SCHEMA',
-            'conn_host': 'my_account_name.snowflakecomputing.com',
-            'conn_role': 'FAKE_ROLE',
-            'conn_user': 'FAKE_USER',
-            'conn_warehouse': 'FAKE_WAREHOUSE'
-        }
-        tds_extract.update('connection', **attributes)
-        tds_live.update('connection', **attributes)
-        tds_extract_conn = tds_extract.get('connection', conn_type='snowflake')
-        tds_live_conn = tds_live.get('connection', conn_type='snowflake')
-        assert tds_extract_conn['connection']['@dbname'] == 'FAKE_DB'
-        assert tds_live_conn['connection']['@dbname'] == 'FAKE_DB'
+    shutil.copyfile(f'resources/{EXTRACT_PATH}', EXTRACT_PATH)
+    shutil.copyfile(f'resources/{LIVE_PATH}', LIVE_PATH)
+    ds_extract = tu.Datasource(EXTRACT_PATH)
+    ds_live = tu.Datasource(LIVE_PATH)
+    os.remove(EXTRACT_PATH)
+    os.remove(LIVE_PATH)
+    connection = tfo.Connection(
+        class_name='snowflake',
+        dbname='FAKE_DB',
+        schema='FAKE_SCHEMA',
+        server='my_account_name.snowflakecomputing.com',
+        service='FAKE_ROLE',
+        username='FAKE_USER',
+        warehouse='FAKE_WAREHOUSE'
+    )
+    ds_extract.connection.update(connection)
+    ds_live.connection.update(connection)
+    tds_extract_conn = ds_extract.connection.get('snowflake')
+    tds_live_conn = ds_live.connection.get('snowflake')
+    assert tds_extract_conn.dbname == 'FAKE_DB'
+    assert tds_live_conn.dbname == 'FAKE_DB'

@@ -1,0 +1,23 @@
+# Settings for logging into Tableau Online / Server
+tableau_login:
+  host: https://server-address.online.tableau.com  # https://<server_address>.online.tableau.com
+  server: server-address  # "server_address" in https://<server_address>.online.tableau.com
+  site: site_name  # "site" in https://<server_address>.online.tableau.com/#/site/<site>
+  api_version: 3.18  # https://help.tableau.com/current/api/rest_api/en-us/REST/rest_api_whats_new.htm
+  # Auth methods -> user/password OR token_name/token_secret
+  # If you use user/password, you should remove token_name/token_secret, and vice versa
+  user: username
+  password: password
+  token_name: token-name
+  token_secret: abc123
+
+# Settings for embedding connection credentials into Datasources
+datasource_connection:
+  conn_type: snowflake  # Connection type for embed credentials. e.g. 'snowflake' or 'redshift'
+  conn_host: https://some.url.com  # Connection Host (URL or IP Address)
+  conn_user: username
+  conn_pw: password
+  conn_db: database_name
+  conn_schema: schema_name
+  conn_role: role_name
+  conn_warehouse: warehouse_name
