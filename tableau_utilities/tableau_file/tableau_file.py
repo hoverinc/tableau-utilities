@@ -204,7 +204,7 @@ class Datasource(TableauFile):
             datasource_record = self.connection.metadata_records.get(remote_name)
             datasource_record.local_name = column.name
             self.connection.metadata_records.update(datasource_record)
-            extract_record = self.extract.connection.metadata_records.get(remote_name)
+            extract_record = self.extract.connection.metadata_records.get(remote_name) if self.extract else None
             if extract_record:
                 extract_record.local_name = column.name
                 self.extract.connection.metadata_records.update(extract_record)
@@ -213,7 +213,7 @@ class Datasource(TableauFile):
                 self.connection.cols.append(
                     tfo.MappingCol(key=column.name, value=f'{datasource_record.parent_name}.[{remote_name}]')
                 )
-            if column.name not in self.extract.connection.cols and extract_record:
+            if extract_record and column.name not in self.extract.connection.cols:
                 self.extract.connection.cols.append(
                     tfo.MappingCol(key=column.name, value=f'{extract_record.parent_name}.[{remote_name}]')
                 )
