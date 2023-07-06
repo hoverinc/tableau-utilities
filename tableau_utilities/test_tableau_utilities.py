@@ -49,7 +49,27 @@ def test_cli_server_info_args():
     assert args.server == 'us-east-1'
 
 
-# TEST 3: Datasource().DatasourceItems
+# TEST 3: Column()
+def test_column_attributes():
+    column_attributes = {
+        'name': '[FRIENDLY_CALC]',
+        'caption': 'Friendly Calc',
+        'datatype': 'integer',
+        'type': 'ordinal',
+        'role': 'dimension',
+        'desc': 'Nice and friendly',
+    }
+    column1 = tfo.Column(calculation='count(1)', **column_attributes)
+    column2 = tfo.Column(calculation={'@formula': 'count(1)', '@class': 'tableau'}, **column_attributes)
+    for attr, value in column_attributes.items():
+        assert value == getattr(column1, attr)
+        if attr == 'calculation':
+            assert 'count(1)' == getattr(column2, attr)
+        else:
+            assert value == getattr(column2, attr)
+
+
+# TEST 4: Datasource().DatasourceItems
 def test_datasource_items():
     shutil.copyfile(f'resources/{EXTRACT_PATH}', EXTRACT_PATH)
     datasource = tu.Datasource(EXTRACT_PATH)
@@ -61,7 +81,7 @@ def test_datasource_items():
     assert datasource.extract is not None and datasource.extract != []
 
 
-# TEST 4: Datasource().unzip()
+# TEST 5: Datasource().unzip()
 def test_unzip_tableau_file():
     shutil.copyfile(f'resources/{EXTRACT_PATH}', EXTRACT_PATH)
     path = tu.Datasource(EXTRACT_PATH).unzip()
@@ -72,7 +92,7 @@ def test_unzip_tableau_file():
     assert content is not None
 
 
-# TEST 5: Datasource().save()
+# TEST 6: Datasource().save()
 def test_datasource_save():
     shutil.copyfile(f'resources/{EXTRACT_PATH}', EXTRACT_PATH)
     datasource_before = tu.Datasource(EXTRACT_PATH)
@@ -83,7 +103,7 @@ def test_datasource_save():
         assert before == after
 
 
-# TEST 6: Datasource().columns.add()
+# TEST 7: Datasource().columns.add()
 def test_add_column():
     shutil.copyfile(f'resources/{EXTRACT_PATH}', EXTRACT_PATH)
     datasource = tu.Datasource(EXTRACT_PATH)
@@ -93,7 +113,7 @@ def test_add_column():
     assert column is not None
 
 
-# TEST 7: Datasource().enforce_column()
+# TEST 8: Datasource().enforce_column()
 def test_enforce_column():
     shutil.copyfile(f'resources/{EXTRACT_PATH}', EXTRACT_PATH)
     datasource = tu.Datasource(EXTRACT_PATH)
@@ -114,7 +134,7 @@ def test_enforce_column():
     assert metadata.local_name == '[renamed_name]'
 
 
-# TEST 8: Datasource().columns.add()
+# TEST 9: Datasource().columns.add()
 def test_add_existing_column():
     shutil.copyfile(f'resources/{EXTRACT_PATH}', EXTRACT_PATH)
     datasource = tu.Datasource(EXTRACT_PATH)
@@ -124,7 +144,7 @@ def test_add_existing_column():
     assert len([c for c in datasource.columns if c == COLUMN]) == 1
 
 
-# TEST 9: Datasource().folders_common.folder.add()
+# TEST 10: Datasource().folders_common.folder.add()
 def test_add_folder_tdsx_has_folder():
     shutil.copyfile(f'resources/{EXTRACT_PATH}', EXTRACT_PATH)
     datasource = tu.Datasource(EXTRACT_PATH)
@@ -134,7 +154,7 @@ def test_add_folder_tdsx_has_folder():
     assert found_folder is not None
 
 
-# TEST 10: Datasource().folders_common.folder.add()
+# TEST 11: Datasource().folders_common.folder.add()
 def test_add_folder_tdsx_does_not_have_folder():
     shutil.copyfile(f'resources/{NO_FOLDER_PATH}', NO_FOLDER_PATH)
     datasource = tu.Datasource(NO_FOLDER_PATH)
@@ -144,7 +164,7 @@ def test_add_folder_tdsx_does_not_have_folder():
     assert found_folder is not None
 
 
-# TEST 11: Datasource().folders_common.folder.add()
+# TEST 12: Datasource().folders_common.folder.add()
 def test_add_folder_tdsx_has_one_folder():
     shutil.copyfile(f'resources/{EXTRACT_PATH}', EXTRACT_PATH)
     datasource = tu.Datasource(EXTRACT_PATH)
@@ -154,7 +174,7 @@ def test_add_folder_tdsx_has_one_folder():
     assert found_folder is not None
 
 
-# TEST 12: Datasource().folders_common.add()
+# TEST 13: Datasource().folders_common.add()
 def test_add_existing_folder():
     shutil.copyfile(f'resources/{EXTRACT_PATH}', EXTRACT_PATH)
     datasource = tu.Datasource(EXTRACT_PATH)
@@ -164,7 +184,7 @@ def test_add_existing_folder():
     assert len([f for f in datasource.folders_common if f == FOLDER]) == 1
 
 
-# TEST 13: Datasource().folders_common.delete()
+# TEST 14: Datasource().folders_common.delete()
 def test_delete_folder():
     shutil.copyfile(f'resources/{EXTRACT_PATH}', EXTRACT_PATH)
     datasource = tu.Datasource(EXTRACT_PATH)
@@ -175,7 +195,7 @@ def test_delete_folder():
     assert not found_folder
 
 
-# TEST 14: Datasource().columns.update()
+# TEST 15: Datasource().columns.update()
 def test_update_column():
     shutil.copyfile(f'resources/{EXTRACT_PATH}', EXTRACT_PATH)
     datasource = tu.Datasource(EXTRACT_PATH)
@@ -192,7 +212,7 @@ def test_update_column():
     assert col.caption == 'Quantity Renamed'
 
 
-# TEST 15: Datasource().folders_common.get()
+# TEST 16: Datasource().folders_common.get()
 def test_get_folder():
     shutil.copyfile(f'resources/{EXTRACT_PATH}', EXTRACT_PATH)
     shutil.copyfile(f'resources/{LIVE_PATH}', LIVE_PATH)
@@ -208,7 +228,7 @@ def test_get_folder():
     assert ds_one_folder.folders_common.get('neat') is not None
 
 
-# TEST 16: Datasource().folders_common
+# TEST 17: Datasource().folders_common
 def test_find_all_folders():
     shutil.copyfile(f'resources/{EXTRACT_PATH}', EXTRACT_PATH)
     shutil.copyfile(f'resources/{LIVE_PATH}', LIVE_PATH)
@@ -228,7 +248,7 @@ def test_find_all_folders():
     assert _folder_one_folder == ['neat']
 
 
-# TEST 17: Datasource().columns
+# TEST 18: Datasource().columns
 def test_find_all_columns():
     shutil.copyfile(f'resources/{EXTRACT_PATH}', EXTRACT_PATH)
     shutil.copyfile(f'resources/{LIVE_PATH}', LIVE_PATH)
@@ -250,7 +270,7 @@ def test_find_all_columns():
     ]
 
 
-# TEST 18: Datasource().connection.relation.connection
+# TEST 19: Datasource().connection.relation.connection
 def test_find_all_connections():
     shutil.copyfile(f'resources/{EXTRACT_PATH}', EXTRACT_PATH)
     shutil.copyfile(f'resources/{LIVE_PATH}', LIVE_PATH)
@@ -262,7 +282,7 @@ def test_find_all_connections():
     assert ds_live.connection.named_connections == ['snowflake']
 
 
-# TEST 19: get_connections()
+# TEST 20: get_connections()
 def test_get_connection():
     shutil.copyfile(f'resources/{EXTRACT_PATH}', EXTRACT_PATH)
     shutil.copyfile(f'resources/{LIVE_PATH}', LIVE_PATH)
@@ -274,7 +294,7 @@ def test_get_connection():
     assert ds_live.connection.named_connections.get('snowflake') is not None
 
 
-# TEST 20: Datasource().connection.update()
+# TEST 21: Datasource().connection.update()
 def test_update_connection():
     shutil.copyfile(f'resources/{EXTRACT_PATH}', EXTRACT_PATH)
     shutil.copyfile(f'resources/{LIVE_PATH}', LIVE_PATH)
