@@ -147,12 +147,15 @@ def datasource(args, server=None):
     if enforce_connection:
         if debugging_logs:
             print(f'Updating the datasource connection: {color.fg_cyan}{conn_type}{color.reset}')
-        ds.connection.named_connections[conn_type].connection.server = conn_host
-        ds.connection.named_connections[conn_type].connection.username = conn_user
-        ds.connection.named_connections[conn_type].connection.service = conn_role
-        ds.connection.named_connections[conn_type].connection.dbname = conn_db
-        ds.connection.named_connections[conn_type].connection.schema = conn_schema
-        ds.connection.named_connections[conn_type].connection.warehouse = conn_warehouse
+        ds.connection.update(tfo.Connection(
+            class_name=conn_type,
+            server=conn_host,
+            username=conn_user,
+            service=conn_role,
+            dbname=conn_db,
+            schema=conn_schema,
+            warehouse=conn_warehouse
+        ))
 
     # Save the datasource if an edit may have happened
     if column_name or folder_name or delete or enforce_connection:
