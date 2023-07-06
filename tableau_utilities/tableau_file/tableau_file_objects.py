@@ -255,10 +255,8 @@ class Column(TableauFileObject):
                 self.aliases = [self.aliases['alias']]
         if self.desc and isinstance(self.desc, dict):
             self.desc = self.desc['formatted-text']['run']
-        if self.calculation and isinstance(self.calculation, dict) and self.calculation['@class'] == 'tableau':
-            self.calculation = self.calculation['@formula']
-        elif self.calculation:
-            self.calculation = None
+        if self.calculation and isinstance(self.calculation, dict):
+            self.calculation = self.calculation['@formula'] if self.calculation['@class'] == 'tableau' else None
         super().__post_init__()
 
     def __hash__(self):
