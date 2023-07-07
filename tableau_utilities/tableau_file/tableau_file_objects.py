@@ -930,6 +930,7 @@ class ParentConnection(TableauFileObject):
         Returns: The TableauFileObject Connection object
         """
         if item.class_name in self.named_connections:
+            self.named_connections[item.class_name].caption = item.server
             self.named_connections[item.class_name].connection = item
 
     def dict(self):
