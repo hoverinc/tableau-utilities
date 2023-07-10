@@ -59,7 +59,7 @@ def datasource(args, server=None):
     # Downloads the datasource from Tableau Server if the datasource is not local
     if location == 'online':
         d = server.get_datasource(datasource_id, datasource_name, project_name)
-        datasource_path = server.download_datasource(d.id, include_extract)
+        datasource_path = server.download_datasource(d.id, include_extract=include_extract)
         print(f'{color.fg_green}{symbol.success}  Downloaded Datasource:', f'{color.fg_yellow}{datasource_path}{color.reset}', '\n')
 
     datasource_file_name = os.path.basename(datasource_path)
@@ -72,7 +72,7 @@ def datasource(args, server=None):
             xml_path = os.path.join(save_folder, datasource_file_name)
             shutil.copy(datasource_path, xml_path)
         else:
-            xml_path = ds.unzip(extract_to=save_folder)
+            xml_path = ds.unzip(extract_to=save_folder, unzip_all=True)
         if debugging_logs:
             print(f'{color.fg_green}{symbol.success}  BEFORE - TDS SAVED TO: {color.fg_yellow}{xml_path}{color.reset}')
 
@@ -147,15 +147,18 @@ def datasource(args, server=None):
     if enforce_connection:
         if debugging_logs:
             print(f'Updating the datasource connection: {color.fg_cyan}{conn_type}{color.reset}')
-        ds.connection.update(tfo.Connection(
-            class_name=conn_type,
-            server=conn_host,
-            username=conn_user,
-            service=conn_role,
-            dbname=conn_db,
-            schema=conn_schema,
-            warehouse=conn_warehouse
-        ))
+        connection = ds.connection.get(conn_type)
+        if not connection and debugging_logs:
+            print(f'Datasource does not contain a connection of type: {conn_type}')
+        else:
+            connection.class_name = conn_type or connection.class_name
+            connection.server = conn_host or connection.server
+            connection.username = conn_user or connection.username
+            connection.service = conn_role or connection.service
+            connection.dbname = conn_db or connection.dbname
+            connection.schema = conn_schema or connection.schema
+            connection.warehouse = conn_warehouse or connection.warehouse
+            ds.connection.update(connection)
 
     # Save the datasource if an edit may have happened
     if column_name or folder_name or delete or enforce_connection:
@@ -169,6 +172,6 @@ def datasource(args, server=None):
             xml_path = os.path.join(save_folder, datasource_file_name)
             shutil.copy(datasource_path, xml_path)
         else:
-            xml_path = ds.unzip(extract_to=save_folder)
+            xml_path = ds.unzip(extract_to=save_folder, unzip_all=True)
         if debugging_logs:
             print(f'{color.fg_green}{symbol.success}  AFTER - TDS SAVED TO: {color.fg_yellow}{xml_path}{color.reset}')

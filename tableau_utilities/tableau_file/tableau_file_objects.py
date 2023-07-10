@@ -3,6 +3,7 @@ import sys
 import re
 import xml.etree.ElementTree as ET
 import xmltodict
+from datetime import datetime
 from dataclasses import dataclass, astuple
 from typing import Literal
 from tableau_utilities.general.funcs import transform_tableau_object
@@ -50,6 +51,15 @@ class TableauFileObject:
         if self.__existing_str_attr(attr):
             setattr(self, attr, getattr(self, attr).lower() in ['true', 'yes'])
 
+    def __to_datetime(self, attr: str):
+        """
+            Set the attribute to a datetime,
+            if the class has the attribute,
+            and if the attribute is a string.
+        """
+        if self.__existing_str_attr(attr):
+            setattr(self, attr, datetime.strptime(getattr(self, attr), '%Y-%m-%d %H:%M:%S.%f'))
+
     def __post_init__(self):
         # Convert to Boolean
         self.__to_bool('contains_null')
@@ -68,6 +78,8 @@ class TableauFileObject:
         self.__to_int('precision')
         self.__to_int('scale')
         self.__to_int('width')
+        # Convert to Datetime
+        self.__to_datetime('timestamp_start')
 
     def dict(self):
         pass
@@ -337,6 +349,7 @@ class Column(TableauFileObject):
 
 @dataclass
 class Relation(TableauFileObject):
+    """ The Relation Tableau file object """
     type: str
     tag: str = 'relation'
     name: str = None
@@ -362,6 +375,7 @@ class Relation(TableauFileObject):
             self.relation = TableauFileObjects(self.relation, item_class=Relation, tag=self.tag)
         else:
             self.relation = TableauFileObjects(item_class=Relation, tag=self.tag)
+        super().__post_init__()
 
     def dict(self):
         dictionary = {'@type': self.type}
@@ -380,6 +394,7 @@ class Relation(TableauFileObject):
 
 @dataclass
 class MappingCol(TableauFileObject):
+    """ The mapping Col Tableau file object """
     key: str
     value: str
     tag: str = 'map'
@@ -449,6 +464,7 @@ class Folder(TableauFileObject):
             self.folder_item = TableauFileObjects(self.folder_item, item_class=FolderItem, tag='folder-item')
         else:
             self.folder_item = TableauFileObjects(item_class=FolderItem, tag='folder-item')
+        super().__post_init__()
 
     def __hash__(self):
         return hash(str(astuple(self)))
@@ -481,6 +497,7 @@ class Folder(TableauFileObject):
 
 @dataclass
 class FoldersCommon(TableauFileObject):
+    """ The FoldersCommon Tableau file object """
     folder: TableauFileObjects[Folder] = None
     tag: str = 'folders-common'
 
@@ -489,6 +506,7 @@ class FoldersCommon(TableauFileObject):
             self.folder = TableauFileObjects(self.folder, item_class=Folder, tag='folder')
         else:
             self.folder = TableauFileObjects(item_class=Folder, tag='folder')
+        super().__post_init__()
 
     def __getitem__(self, item):
         return self.folder[item]
@@ -556,7 +574,7 @@ class FoldersCommon(TableauFileObject):
 
 @dataclass
 class DrillPath(TableauFileObject):
-    """ The drill paths """
+    """ The DrillPath Tableau file object """
     name: str
     field: list[str] = None
     tag: str = 'drill-path'
@@ -581,6 +599,7 @@ class DrillPath(TableauFileObject):
 
 @dataclass
 class DrillPaths(TableauFileObject):
+    """ The DrillPaths Tableau file object """
     drill_path: TableauFileObjects[DrillPath] = None
     tag: str = 'drill-paths'
 
@@ -589,6 +608,7 @@ class DrillPaths(TableauFileObject):
             self.drill_path = TableauFileObjects(self.drill_path, item_class=DrillPath, tag='drill-path')
         else:
             self.drill_path = TableauFileObjects(item_class=DrillPath, tag='drill-path')
+        super().__post_init__()
 
     def __getitem__(self, item):
         return self.drill_path[item]
@@ -656,6 +676,7 @@ class DrillPaths(TableauFileObject):
 
 @dataclass
 class Connection(TableauFileObject):
+    """ The Connection Tableau file object """
     tag: str = 'connection'
     authentication: str = None
     class_name: str = None
@@ -734,7 +755,7 @@ class Connection(TableauFileObject):
 
 @dataclass
 class NamedConnection(TableauFileObject):
-    """ The Connection Tableau file object """
+    """ The NamedConnection Tableau file object """
     name: str
     tag: str = 'named-connection'
     caption: str = None
@@ -743,6 +764,7 @@ class NamedConnection(TableauFileObject):
     def __post_init__(self):
         if self.connection:
             self.connection = Connection(**transform_tableau_object(self.connection))
+        super().__post_init__()
 
     def __hash__(self):
         return hash(str(astuple(self)))
@@ -768,26 +790,26 @@ class NamedConnection(TableauFileObject):
 
 @dataclass
 class MetadataRecord(TableauFileObject):
-    """ The MetadataColumn Tableau file object """
+    """ The MetadataRecord Tableau file object """
     class_name: str
     remote_name: str
     remote_type: str
     parent_name: str
     remote_alias: str
     tag: str = 'metadata-record'
-    local_name: str = None
-    local_type: str = None
-    object_id: str = None
-    aggregation: str = None
-    family: str = None
-    collation: dict = None
-    contains_null: bool = None
-    approx_count: int = None
     ordinal: int = None
+    family: str = None
+    local_type: str = None
+    local_name: str = None
+    aggregation: str = None
+    approx_count: int = None
+    width: int = None
     precision: int = None
     scale: int = None
-    width: int = None
+    contains_null: bool = None
+    collation: dict = None
     attributes: list = None
+    object_id: str = None
 
     def __post_init__(self):
         if self.attributes and isinstance(self.attributes, dict):
@@ -844,22 +866,58 @@ class MetadataRecord(TableauFileObject):
 
 
 @dataclass
+class RefreshEvent(TableauFileObject):
+    """ The RefreshEvent Tableau file object """
+    add_from_file_path: str = None
+    increment_value: str = None
+    refresh_type: str = None
+    rows_inserted: str = None
+    timestamp_start: datetime = None
+
+    def dict(self):
+        dictionary = dict()
+        if self.add_from_file_path is not None:
+            dictionary['@add-from-file-path'] = self.add_from_file_path
+        if self.increment_value is not None:
+            dictionary['@increment-value'] = self.increment_value
+        if self.refresh_type is not None:
+            dictionary['@refresh-type'] = self.refresh_type
+        if self.rows_inserted is not None:
+            dictionary['@rows-inserted'] = self.rows_inserted
+        if isinstance(self.timestamp_start, datetime):
+            dictionary['@timestamp-start'] = self.timestamp_start.strftime('%Y-%m-%d %H:%M:%S.%f')
+        return dictionary
+
+
+@dataclass
 class Refresh(TableauFileObject):
+    """ The Refresh Tableau file object """
     tag: str = 'refresh'
-    refresh_event: dict = None
+    refresh_event: RefreshEvent = None
     increment_key: str = None
     incremental_updates: bool = None
 
+    def __post_init__(self):
+        if isinstance(self.refresh_event, dict):
+            self.refresh_event = RefreshEvent(**transform_tableau_object(self.refresh_event))
+        super().__post_init__()
+
     def dict(self):
-        return {
-            '@refresh-event': self.refresh_event,
-            '@increment-key': self.increment_key,
-            '@incremental-updates': str(self.incremental_updates).lower()
-        }
+        dictionary = dict()
+        if isinstance(self.increment_key, str):
+            dictionary['@increment-key'] = self.increment_key
+        if isinstance(self.incremental_updates, bool):
+            dictionary['@incremental-updates'] = str(self.incremental_updates).lower()
+        if isinstance(self.refresh_event, RefreshEvent):
+            dictionary['refresh-event'] = self.refresh_event.dict()
+        else:
+            dictionary['@refresh-event'] = self.refresh_event
+        return dictionary
 
 
 @dataclass
 class ParentConnection(TableauFileObject):
+    """ The parent Connection Tableau file object """
     tag: str = 'connection'
     class_name: str = None
     authentication: str = None
@@ -899,6 +957,7 @@ class ParentConnection(TableauFileObject):
             )
         else:
             self.metadata_records = TableauFileObjects(item_class=MetadataRecord, tag='metadata-records')
+        super().__post_init__()
 
     def __getitem__(self, item):
         if item in self.named_connections:
@@ -935,7 +994,7 @@ class ParentConnection(TableauFileObject):
 
     def dict(self):
         dictionary = {'@class': self.class_name}
-        if self.named_connections is not None:
+        if self.named_connections:
             dictionary['named-connections'] = {'named-connection': [nc.dict() for nc in self.named_connections]}
         if self.relation is not None:
             dictionary['relation'] = self.relation.dict()
@@ -970,6 +1029,7 @@ class ParentConnection(TableauFileObject):
 
 @dataclass
 class Extract(TableauFileObject):
+    """ The Extract Tableau file object """
     object_id: str = None
     user_specific: bool = None
     count: int = None
@@ -981,6 +1041,7 @@ class Extract(TableauFileObject):
     def __post_init__(self):
         if self.connection is not None:
             self.connection = ParentConnection(**transform_tableau_object(self.connection))
+        super().__post_init__()
 
     def dict(self):
         dictionary = dict()
@@ -1001,14 +1062,17 @@ class Extract(TableauFileObject):
 
 @dataclass
 class Aliases(TableauFileObject):
+    """ The Aliases Tableau file object """
     enabled: bool = True
     tag: str = 'aliases'
 
     def dict(self):
         return {'@enabled': 'yes' if self.enabled else 'no'}
 
+
 @dataclass
 class DateOptions(TableauFileObject):
+    """ The DateOptions Tableau file object """
     fiscal_year_start: str = None
     start_of_week: str = None
     tag: str = 'date-options'
@@ -1021,8 +1085,10 @@ class DateOptions(TableauFileObject):
             dictionary['@start-of-week'] = self.start_of_week
         return dictionary
 
+
 @dataclass
 class ColumnInstance(TableauFileObject):
+    """ The ColumnInstance Tableau file object """
     column: str = None
     derivation: str = None
     name: str = None

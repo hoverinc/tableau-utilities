@@ -87,13 +87,22 @@ class TableauFile:
         """ Save/Update the Tableau file with the XML changes made """
 
         if self.extension in ['tdsx', 'twbx']:
-            with ZipFile(self.file_path, 'r') as zr, ZipFile(self.file_path, 'w') as zw:
+            # Rebuild the TDSX / TWBX archive file, with the updated archived TDS / TWB
+            directory = os.path.dirname(self.file_path)
+            file_name = os.path.basename(self.file_path)
+            temp_path = os.path.join(directory, f'__temp_{file_name}')
+            with ZipFile(self.file_path, 'r') as zr, ZipFile(temp_path, 'w') as zw:
                 for file in zr.filelist:
                     if file.filename.split('.')[-1] in ['tds', 'twb']:
-                        self._tree.write(zw.open(file.filename, 'w'))
+                        self._tree.write(zw.open(file.filename, 'w'),
+                                         encoding="utf-8", xml_declaration=True)
+                    else:
+                        zw.writestr(file, zr.read(file.filename))
+            os.remove(self.file_path)
+            os.rename(temp_path, self.file_path)
         else:
             # Update the Tableau file's contents
-            self._tree.write(self.file_path)
+            self._tree.write(self.file_path, encoding="utf-8", xml_declaration=True)
 
 
 class Datasource(TableauFile):
@@ -155,9 +164,9 @@ class Datasource(TableauFile):
                     raise TableauFileError(f'{err}\n\nPre-transform {obj.tag} attributes: {item}') from err
         if len(section) > 1 or len(section) == 1 and enforce_list:
             return tfo.TableauFileObjects(section, item_class=obj, tag=obj.tag)
-        elif len(section) == 1:
+        if len(section) == 1:
             return section[0]
-        elif enforce_list:
+        if enforce_list:
             return tfo.TableauFileObjects(item_class=obj, tag=obj.tag)
         return obj()
 
