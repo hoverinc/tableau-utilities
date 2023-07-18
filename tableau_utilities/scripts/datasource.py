@@ -58,6 +58,7 @@ def datasource(args, server=None):
 
     # Downloads the datasource from Tableau Server if the datasource is not local
     if location == 'online':
+        print(f'{color.fg_cyan}...Downloading {datasource_name}...{color.reset}')
         d = server.get_datasource(datasource_id, datasource_name, project_name)
         datasource_path = server.download_datasource(d.id, include_extract=include_extract)
         print(f'{color.fg_green}{symbol.success}  Downloaded Datasource:', f'{color.fg_yellow}{datasource_path}{color.reset}', '\n')
@@ -66,6 +67,7 @@ def datasource(args, server=None):
     ds = Datasource(datasource_path)
 
     if save_tds:
+        print(f'{color.fg_cyan}...Extracting {datasource_file_name}...{color.reset}')
         save_folder = f'{datasource_file_name} - BEFORE'
         os.makedirs(save_folder, exist_ok=True)
         if ds.extension == 'tds':
@@ -166,6 +168,7 @@ def datasource(args, server=None):
         print(f'{color.fg_green}{symbol.success}  Saved changes to: {color.fg_yellow}{datasource_path}{color.reset}')
 
     if save_tds:
+        print(f'{color.fg_cyan}...Extracting {datasource_file_name}...{color.reset}')
         save_folder = f'{datasource_file_name} - AFTER'
         os.makedirs(save_folder, exist_ok=True)
         if ds.extension == 'tds':

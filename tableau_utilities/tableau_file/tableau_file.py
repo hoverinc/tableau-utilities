@@ -1,5 +1,6 @@
 import xml.etree.ElementTree as ET
 import os
+import shutil
 
 import xmltodict
 from zipfile import ZipFile
@@ -85,21 +86,34 @@ class TableauFile:
 
     def save(self):
         """ Save/Update the Tableau file with the XML changes made """
-
         if self.extension in ['tdsx', 'twbx']:
             # Rebuild the TDSX / TWBX archive file, with the updated archived TDS / TWB
-            directory = os.path.dirname(self.file_path)
-            file_name = os.path.basename(self.file_path)
-            temp_path = os.path.join(directory, f'__temp_{file_name}')
-            with ZipFile(self.file_path, 'r') as zr, ZipFile(temp_path, 'w') as zw:
-                for file in zr.filelist:
-                    if file.filename.split('.')[-1] in ['tds', 'twb']:
-                        self._tree.write(zw.open(file.filename, 'w'),
-                                         encoding="utf-8", xml_declaration=True)
-                    else:
-                        zw.writestr(file, zr.read(file.filename))
-            os.remove(self.file_path)
-            os.rename(temp_path, self.file_path)
+            original_file = os.path.basename(self.file_path)
+            # Move the file into a temporary folder while updating
+            temp_folder = os.path.join(os.path.dirname(self.file_path),
+                                       f'__TEMP_{original_file.replace(".tdsx", "")}')
+            os.makedirs(temp_folder, exist_ok=False)
+            temp_path = os.path.join(temp_folder, original_file)
+            shutil.move(self.file_path, temp_path)
+            # Unzip the zipped files
+            extracted_files = list()
+            with ZipFile(temp_path) as z:
+                for f in z.filelist:
+                    ext = f.filename.split('.')[-1]
+                    path = z.extract(member=f, path=temp_folder)
+                    extracted_files.append(path)
+                    if ext in ['tds', 'twb']:
+                        xml_path = path
+            # Update XML file
+            self._tree.write(xml_path, encoding="utf-8", xml_declaration=True)
+            # Repack the unzipped file
+            with ZipFile(temp_path, 'w') as z:
+                for file in extracted_files:
+                    arcname = file.split(temp_folder)[-1]
+                    z.write(file, arcname=arcname)
+            # Move file back to the original folder and remove any unpacked contents
+            shutil.move(temp_path, self.file_path)
+            shutil.rmtree(temp_folder)
         else:
             # Update the Tableau file's contents
             self._tree.write(self.file_path, encoding="utf-8", xml_declaration=True)
