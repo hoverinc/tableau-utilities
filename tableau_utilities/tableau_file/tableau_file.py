@@ -26,9 +26,10 @@ class TableauFile:
 
         """
         self.file_path = os.path.abspath(file_path)
+        self.file_directory = os.path.dirname(self.file_path)
+        self.file_basename = os.path.basename(self.file_path)
         self.extension = file_path.split('.')[-1]
-        self.file_path_without_extension = file_path.split('.')[0]
-        self.file_name = self.file_path_without_extension.split('/')[-1]
+        self.file_name = self.file_basename.replace(f'.{self.extension}', '')
         ''' Set on init '''
         self._tree: ET.ElementTree
         self._root: ET.Element
@@ -69,7 +70,7 @@ class TableauFile:
         if extract_to is not None:
             file_dir = extract_to
         else:
-            file_dir = os.path.dirname(self.file_path)
+            file_dir = self.file_directory
 
         tableau_file_path = None
         with ZipFile(self.file_path) as zip_file:
@@ -88,12 +89,10 @@ class TableauFile:
         """ Save/Update the Tableau file with the XML changes made """
         if self.extension in ['tdsx', 'twbx']:
             # Rebuild the TDSX / TWBX archive file, with the updated archived TDS / TWB
-            original_file = os.path.basename(self.file_path)
             # Move the file into a temporary folder while updating
-            temp_folder = os.path.join(os.path.dirname(self.file_path),
-                                       f'__TEMP_{original_file.replace(".tdsx", "")}')
+            temp_folder = os.path.join(self.file_directory, f'__TEMP_{self.file_name}')
             os.makedirs(temp_folder, exist_ok=False)
-            temp_path = os.path.join(temp_folder, original_file)
+            temp_path = os.path.join(temp_folder, self.file_basename)
             shutil.move(self.file_path, temp_path)
             # Unzip the zipped files
             extracted_files = list()
