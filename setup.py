@@ -12,7 +12,7 @@ setup(
     long_description=readme,
     long_description_content_type='text/markdown',
     name="tableau_utilities",
-    version="2.0.61",
+    version="2.0.62",
     packages=[
         'tableau_utilities',
         'tableau_utilities.general',

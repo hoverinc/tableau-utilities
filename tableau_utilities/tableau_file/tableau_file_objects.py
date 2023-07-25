@@ -277,16 +277,16 @@ class Column(TableauFileObject):
     def __eq__(self, other):
         name = ''
         if isinstance(other, str):
-            name = other.lower()
+            name = other
         elif isinstance(other, dict):
-            name = other.get('name').lower()
+            name = other.get('name')
         elif isinstance(other, (Column, object)):
-            name = other.name.lower()
+            name = other.name
 
         if not re.match(r'^\[.+]$', name):
             name = f'[{name}]'
 
-        return self.name.lower() == name
+        return self.name == name
 
     def dict(self):
         output = {
@@ -413,16 +413,16 @@ class MappingCol(TableauFileObject):
     def __eq__(self, other):
         key = ''
         if isinstance(other, str):
-            key = other.lower()
+            key = other
         elif isinstance(other, dict):
-            key = other.get('key').lower()
+            key = other.get('key')
         elif isinstance(other, (MappingCol, object)):
-            key = other.key.lower()
+            key = other.key
 
         if not re.match(r'^\[.+]$', key):
             key = f'[{key}]'
 
-        return self.key.lower() == key
+        return self.key == key
 
     def dict(self):
         return {'@key': self.key, '@value': self.value}
