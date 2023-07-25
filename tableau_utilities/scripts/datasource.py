@@ -105,14 +105,14 @@ def datasource(args, server=None):
         # Column name needs to be enclosed in brackets
         if debugging_logs:
             print('Going to add/update column:', column_name)
-        column_name = f'[{column_name}]'
         column = ds.columns.get(column_name)
-        persona = dict()
-        if args.persona:
-            persona = personas.get(args.persona.lower(), {})
+        if persona:
+            persona = personas.get(persona.lower(), {})
+        else:
+            persona = dict()
 
         if not column:
-            if not args.persona:
+            if not persona:
                 raise Exception('Column does not exist, and more args are need to add a new column.\n'
                                 f'Minimum required args: {color.fg_yellow}--column_name --persona{color.reset}')
             column = tfo.Column(
