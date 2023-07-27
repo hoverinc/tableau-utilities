@@ -412,17 +412,23 @@ class MappingCol(TableauFileObject):
 
     def __eq__(self, other):
         key = ''
+        value = None
         if isinstance(other, str):
             key = other
         elif isinstance(other, dict):
             key = other.get('key')
+            value = other.get('value')
         elif isinstance(other, (MappingCol, object)):
             key = other.key
+            value = other.value
 
         if not re.match(r'^\[.+]$', key):
             key = f'[{key}]'
 
-        return self.key == key
+        if value:
+            return self.key == key and self.value == value
+        else:
+            return self.key == key
 
     def dict(self):
         return {'@key': self.key, '@value': self.value}
