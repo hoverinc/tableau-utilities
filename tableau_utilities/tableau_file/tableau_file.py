@@ -205,6 +205,7 @@ class Datasource(TableauFile):
         # Update the Column
         else:
             self.columns.update(column)
+
         # Add Folder / FolderItem for the column, if folder_name was provided
         if folder_name:
             # Remove the column's folder-item for preview folder, if it will be moved to a new folder
@@ -220,25 +221,54 @@ class Datasource(TableauFile):
                 self.folders_common.folder.update(folder)
             elif not folder:
                 self.folders_common.folder.add(tfo.Folder(name=folder_name, folder_item=[folder_item]))
+
         # If a remote_name was provided, and the column is not a Tableau Calculation - enforce metadata
-        if remote_name and not column.calculation:
-            # Update MetadataRecords
-            datasource_record = self.connection.metadata_records.get(remote_name)
-            datasource_record.local_name = column.name
-            self.connection.metadata_records.update(datasource_record)
-            extract_record = self.extract.connection.metadata_records.get(remote_name) if self.extract else None
-            if extract_record:
-                extract_record.local_name = column.name
-                self.extract.connection.metadata_records.update(extract_record)
-            # Update MappingCols
-            if column.name not in self.connection.cols:
-                self.connection.cols.append(
-                    tfo.MappingCol(key=column.name, value=f'{datasource_record.parent_name}.[{remote_name}]')
-                )
-            if extract_record and column.name not in self.extract.connection.cols:
-                self.extract.connection.cols.append(
-                    tfo.MappingCol(key=column.name, value=f'{extract_record.parent_name}.[{remote_name}]')
-                )
+        if not remote_name or column.calculation:
+            return None
+
+        # Update Connection MetadataRecords & MappingCols
+        connection_record = self.connection.metadata_records.get(remote_name)
+        if not connection_record:
+            raise TableauFileError(f'Remote name provided is not in the metadata of the connection: {remote_name}')
+        connection_record.local_name = column.name
+        self.connection.metadata_records.update(connection_record)
+        # Update Connection MappingCols
+        if column.name not in self.connection.cols:
+            # Delete existing mapping for the remote_name
+            existing_mapped_remote_col = None
+            for col in self.connection.cols:
+                col_remote_name = col.value.split('.')[0][1:-1]
+                if col_remote_name == remote_name:
+                    existing_mapped_remote_col = col
+            if existing_mapped_remote_col:
+                self.connection.cols.delete(existing_mapped_remote_col)
+            # Add Connection MappingCol
+            self.connection.cols.append(
+                tfo.MappingCol(key=column.name, value=f'{connection_record.parent_name}.[{remote_name}]')
+            )
+
+        # Update Extract MetadataRecords & MappingCols
+        if not self.extract:
+            return None
+        extract_record = self.extract.connection.metadata_records.get(remote_name)
+        if not extract_record:
+            raise TableauFileError(f'Remote name provided is not in the metadata of the extract: {remote_name}')
+        extract_record.local_name = column.name
+        self.extract.connection.metadata_records.update(extract_record)
+        # Update Extract MappingCols
+        if column.name not in self.extract.connection.cols:
+            # Delete existing mapping for the remote_name
+            existing_mapped_remote_col = None
+            for col in self.extract.connection.cols:
+                col_remote_name = col.value.split('.')[0][1:-1]
+                if col_remote_name == remote_name:
+                    existing_mapped_remote_col = col
+            if existing_mapped_remote_col:
+                self.extract.connection.cols.delete(existing_mapped_remote_col)
+            # Add Extract MappingCol
+            self.extract.connection.cols.append(
+                tfo.MappingCol(key=column.name, value=f'{extract_record.parent_name}.[{remote_name}]')
+            )
 
     def save(self):
         """ Save all changes made to each section of the Datasource """
