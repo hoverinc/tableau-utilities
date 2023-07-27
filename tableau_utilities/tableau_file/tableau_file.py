@@ -237,7 +237,7 @@ class Datasource(TableauFile):
             # Delete existing mapping for the remote_name
             existing_mapped_remote_col = None
             for col in self.connection.cols:
-                col_remote_name = col.value.split('.')[0][1:-1]
+                col_remote_name = col.value.split('.')[-1][1:-1]
                 if col_remote_name == remote_name:
                     existing_mapped_remote_col = col
             if existing_mapped_remote_col:
@@ -260,7 +260,7 @@ class Datasource(TableauFile):
             # Delete existing mapping for the remote_name
             existing_mapped_remote_col = None
             for col in self.extract.connection.cols:
-                col_remote_name = col.value.split('.')[0][1:-1]
+                col_remote_name = col.value.split('.')[-1][1:-1]
                 if col_remote_name == remote_name:
                     existing_mapped_remote_col = col
             if existing_mapped_remote_col:
