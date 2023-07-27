@@ -232,20 +232,19 @@ class Datasource(TableauFile):
             raise TableauFileError(f'Remote name provided is not in the metadata of the connection: {remote_name}')
         connection_record.local_name = column.name
         self.connection.metadata_records.update(connection_record)
+        conn_col = tfo.MappingCol(key=column.name, value=f'{connection_record.parent_name}.[{remote_name}]')
         # Update Connection MappingCols
-        if column.name not in self.connection.cols:
-            # Delete existing mapping for the remote_name
-            existing_mapped_remote_col = None
+        if conn_col not in self.connection.cols:
+            # Update the Connection MappingCol if key or value is different
+            found = False
             for col in self.connection.cols:
-                col_remote_name = col.value.split('.')[-1][1:-1]
-                if col_remote_name == remote_name:
-                    existing_mapped_remote_col = col
-            if existing_mapped_remote_col:
-                self.connection.cols.delete(existing_mapped_remote_col)
-            # Add Connection MappingCol
-            self.connection.cols.append(
-                tfo.MappingCol(key=column.name, value=f'{connection_record.parent_name}.[{remote_name}]')
-            )
+                if conn_col.key == col.key or conn_col.value == col.value:
+                    found = True
+                    self.connection.cols[col].key = conn_col.key
+                    self.connection.cols[col].value = conn_col.value
+            # Otherwise, Add Connection MappingCol
+            if not found:
+                self.connection.cols.append(conn_col)
 
         # Update Extract MetadataRecords & MappingCols
         if not self.extract:
@@ -255,20 +254,19 @@ class Datasource(TableauFile):
             raise TableauFileError(f'Remote name provided is not in the metadata of the extract: {remote_name}')
         extract_record.local_name = column.name
         self.extract.connection.metadata_records.update(extract_record)
+        extract_col = tfo.MappingCol(key=column.name, value=f'{extract_record.parent_name}.[{remote_name}]')
         # Update Extract MappingCols
-        if column.name not in self.extract.connection.cols:
-            # Delete existing mapping for the remote_name
-            existing_mapped_remote_col = None
+        if extract_col not in self.extract.connection.cols:
+            # Update the Extract MappingCol if key or value is different
+            found = False
             for col in self.extract.connection.cols:
-                col_remote_name = col.value.split('.')[-1][1:-1]
-                if col_remote_name == remote_name:
-                    existing_mapped_remote_col = col
-            if existing_mapped_remote_col:
-                self.extract.connection.cols.delete(existing_mapped_remote_col)
-            # Add Extract MappingCol
-            self.extract.connection.cols.append(
-                tfo.MappingCol(key=column.name, value=f'{extract_record.parent_name}.[{remote_name}]')
-            )
+                if extract_col.key == col.key or extract_col.value == col.value:
+                    found = True
+                    self.extract.connection.cols[col].key = extract_col.key
+                    self.extract.connection.cols[col].value = extract_col.value
+            # Otherwise, Add Extract MappingCol
+            if not found:
+                self.extract.connection.cols.append(extract_col)
 
     def save(self):
         """ Save all changes made to each section of the Datasource """
