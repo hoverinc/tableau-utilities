@@ -1,0 +1,123 @@
+boolean_dimension:
+  datatype: boolean
+  role: dimension
+  role_type: nominal
+  metadata:
+    remote_type: 11
+    aggregation: Count
+
+continuous_decimal_dimension:
+  datatype: real
+  role: dimension
+  role_type: quantitative
+  metadata:
+    remote_type: 5
+    precision: 15
+    aggregation: Sum
+
+continuous_decimal_measure:
+  datatype: real
+  role: measure
+  role_type: quantitative
+  metadata:
+    remote_type: 5
+    precision: 15
+    aggregation: Sum
+
+continuous_number_dimension:
+  datatype: integer
+  role: dimension
+  role_type: quantitative
+  metadata:
+    remote_type: 131
+    scale: 0
+    precision: 38
+    aggregation: Sum
+
+continuous_number_measure:
+  datatype: integer
+  role: measure
+  role_type: quantitative
+  metadata:
+    remote_type: 131
+    scale: 0
+    precision: 38
+    aggregation: Sum
+
+date_dimension:
+  datatype: date
+  role: dimension
+  role_type: ordinal
+  metadata:
+    remote_type: 7
+    aggregation: Year
+
+date_measure:
+  datatype: date
+  role: measure
+  role_type: ordinal
+  metadata:
+    remote_type: 7
+    aggregation: Year
+
+datetime_dimension:
+  datatype: datetime
+  role: dimension
+  role_type: ordinal
+  metadata:
+    remote_type: 7
+    aggregation: Year
+
+datetime_measure:
+  datatype: datetime
+  role: measure
+  role_type: ordinal
+  metadata:
+    remote_type: 7
+    aggregation: Year
+
+discrete_decimal_dimension:
+  datatype: real
+  role: dimension
+  role_type: ordinal
+  metadata:
+    remote_type: 5
+    precision: 15
+    aggregation: Sum
+
+discrete_decimal_measure:
+  datatype: real
+  role: measure
+  role_type: ordinal
+  metadata:
+    remote_type: 5
+    precision: 15
+    aggregation: Sum
+
+discrete_number_dimension:
+  datatype: integer
+  role: dimension
+  role_type: ordinal
+  metadata:
+    remote_type: 131
+    scale: 0
+    precision: 38
+    aggregation: Sum
+
+discrete_number_measure:
+  datatype: integer
+  role: measure
+  role_type: ordinal
+  metadata:
+    remote_type: 131
+    scale: 0
+    precision: 38
+    aggregation: Sum
+
+string_dimension:
+  datatype: string
+  role: dimension
+  role_type: nominal
+  metadata:
+    remote_type: 129
+    aggregation: Count
