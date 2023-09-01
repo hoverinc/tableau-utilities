@@ -1,0 +1,33 @@
+version: 2
+models:
+  - name: my_datasource_model
+    docs:
+      show: True
+    meta:
+      tableau:
+        # Required
+        datasource: My Datasource Name
+        project: My Datasource Project Name
+        # Optional
+        calculations:
+          - local_name: Calculation_1
+            alias: My Custom Calc
+            # Format the calculation the same as you would in Tableau; i.e. Column references should use the alias
+            calculation: 'COUNT([Unique ID])'
+            description: A count of unique IDs
+            persona: continuous_number_measure
+            folder: My Custom Calcs Folder
+    columns:
+      # (CASE SENSITIVE) Name casing should match the output casing of the SQL query
+      - name: UNIQUE_ID
+        description: A unique ID for each row in the datasource
+        tests:
+          - unique
+        meta:
+          tableau:
+            # (CASE SENSITIVE) local_name casing should match the underlying metadata local-name in the Datasource XML
+            # For new columns, this should match the SQL column name
+            local_name: UNIQUE_ID
+            alias: Unique ID
+            persona: discrete_number_dimension
+            folder: My Datasource Folder
