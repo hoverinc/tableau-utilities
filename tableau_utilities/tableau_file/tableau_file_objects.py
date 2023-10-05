@@ -997,6 +997,8 @@ class ParentConnection(TableauFileObject):
         if item.class_name in self.named_connections:
             self.named_connections[item.class_name].caption = item.server
             self.named_connections[item.class_name].connection = item
+            if item.schema and self.relation.type == 'table':
+                self.relation.table = f'[{item.schema}].' + self.relation.table.split('.')[-1]
 
     def dict(self):
         dictionary = {'@class': self.class_name}
