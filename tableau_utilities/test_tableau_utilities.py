@@ -103,6 +103,18 @@ def test_datasource_save():
         assert before == after
 
 
+# del Datasource().<section>
+def test_delete_datasource_section():
+    shutil.copyfile(f'resources/{EXTRACT_PATH}', EXTRACT_PATH)
+    datasource_before = tu.Datasource(EXTRACT_PATH)
+    extract_before = datasource_before.extract
+    del datasource_before.extract
+    datasource_before.save()
+    datasource_after = tu.Datasource(EXTRACT_PATH)
+    os.remove(EXTRACT_PATH)
+    assert extract_before and not datasource_after.extract
+
+
 # Datasource().columns.add()
 def test_add_column():
     shutil.copyfile(f'resources/{EXTRACT_PATH}', EXTRACT_PATH)
