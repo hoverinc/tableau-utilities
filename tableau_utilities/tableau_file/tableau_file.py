@@ -146,6 +146,16 @@ class Datasource(TableauFile):
         self.date_options: tfo.DateOptions = self.__get_section(tfo.DateOptions)
         self.extract: tfo.Extract = self.__get_section(tfo.Extract)
 
+    def __delattr__(self, attr):
+        section = getattr(self, attr)
+        if not section:
+            return None
+        # Remove the section from the parent Element
+        parent = self._root.find('.')
+        self.__remove_section_from_parent(parent, section.tag)
+        # Set the section to None
+        setattr(self, attr, None)
+
     def sections(self):
         """ Yields each section defined in the class, for iteration """
         yield self.connection
@@ -156,6 +166,21 @@ class Datasource(TableauFile):
         yield self.folders_common
         yield self.date_options
         yield self.extract
+
+    @staticmethod
+    def __remove_section_from_parent(parent, tag) -> list[tuple[int, ET.Element]]:
+        """ Removes all elements of a section from the parent, and returns those elements
+        Args:
+            parent (ET.Element): The parent element to remove the section from
+            tag (str): The tag of the section element(s)
+
+        Returns: A list of (index, Element) for the elements removed from the parent Element
+        """
+        # A section can be multiple elements within the parent element
+        elements = [(i, e) for i, e in enumerate(parent) if e.tag.endswith(f'true...{tag}') or e.tag == tag]
+        for _, e in elements:
+            parent.remove(e)
+        return elements
 
     def __get_section(self, obj, enforce_list=False):
         """ Sets DatasourceItems for each section
@@ -277,16 +302,11 @@ class Datasource(TableauFile):
         for section in self.sections():
             if not section:
                 continue
-            # Find all elements within the parent element, and the index of those elements
-            elements = [(idx, element)
-                        for idx, element in enumerate(parent)
-                        if element.tag.endswith(f'true...{section.tag}') or element.tag == section.tag]
+            # Remove and get all elements of the section from the parent element
+            elements = self.__remove_section_from_parent(parent, section.tag)
             # If there are no existing element(s), the index will be for the previous ending_index (default == -1)
             starting_index = elements[0][0] if elements else ending_index
             ending_index = elements[-1][0] + 1 if elements else starting_index
-            # Remove the existing items
-            for _, e in elements:
-                parent.remove(e)
             # Insert the new / updated items
             if isinstance(section, tfo.TableauFileObjects):
                 section.reverse()
