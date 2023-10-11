@@ -33,6 +33,7 @@ class TableauFile:
         ''' Set on init '''
         self._tree: ET.ElementTree
         self._root: ET.Element
+        self.has_extract_data: bool = False
         self.__extract_xml()
 
     def __extract_xml(self, path=None):
@@ -50,6 +51,7 @@ class TableauFile:
             with ZipFile(path) as zip_file:
                 for z in zip_file.filelist:
                     if z.filename.split('.')[-1] not in ['tds', 'twb']:
+                        self.has_extract_data = True
                         continue
                     self._tree = ET.parse(zip_file.open(z.filename))
                     self._root = self._tree.getroot()
