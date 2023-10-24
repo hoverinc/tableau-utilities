@@ -212,9 +212,9 @@ class TableauFileObjects(list):
         Returns: The Tableau FileObject
         """
         if isinstance(item, int):
-            return self.pop(item)
+            return super().pop(item)
         else:
-            return self.pop(self.index(item))
+            return super().pop(self.index(item))
 
     def xml(self):
         """ Returns the TableauFileObjects as an XML Element """

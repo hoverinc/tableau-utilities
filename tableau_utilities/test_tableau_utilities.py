@@ -69,6 +69,21 @@ def test_column_attributes():
             assert value == getattr(column2, attr)
 
 
+# TableauFileObjects().pop()
+def test_tableau_file_objects_pop():
+    column = tfo.Column(**{
+        'name': '[FRIENDLY_CALC]',
+        'caption': 'Friendly Calc',
+        'datatype': 'integer',
+        'type': 'ordinal',
+        'role': 'dimension',
+        'desc': 'Nice and friendly',
+    })
+    columns = tfo.TableauFileObjects([column])
+    columns.pop(column)
+    assert len(columns) == 0
+
+
 # Datasource().DatasourceItems
 def test_datasource_items():
     shutil.copyfile(f'resources/{EXTRACT_PATH}', EXTRACT_PATH)
