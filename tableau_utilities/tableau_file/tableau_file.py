@@ -3,7 +3,7 @@ import os
 import shutil
 
 import xmltodict
-from zipfile import ZipFile
+from zipfile import ZipFile, ZIP_DEFLATED
 
 import tableau_utilities.tableau_file.tableau_file_objects as tfo
 from tableau_utilities.general.funcs import transform_tableau_object
@@ -95,25 +95,25 @@ class TableauFile:
             temp_folder = os.path.join(self.file_directory, f'__TEMP_{self.file_name}')
             os.makedirs(temp_folder, exist_ok=False)
             temp_path = os.path.join(temp_folder, self.file_basename)
+            dupe_temp_path = os.path.join(temp_folder, f'__tmp_{self.file_basename}')
             shutil.move(self.file_path, temp_path)
-            # Unzip the zipped files
-            extracted_files = list()
-            with ZipFile(temp_path) as z:
-                for f in z.filelist:
-                    ext = f.filename.split('.')[-1]
-                    path = z.extract(member=f, path=temp_folder)
-                    extracted_files.append(path)
-                    if ext in ['tds', 'twb']:
-                        xml_path = path
+            # Re-archive the zipped files, minus the XML file
+            with ZipFile(temp_path) as old:
+                with ZipFile(dupe_temp_path, 'w') as new:
+                    new.comment = old.comment
+                    for f in old.filelist:
+                        ext = f.filename.split('.')[-1]
+                        if ext in ['tds', 'twb']:
+                            xml_path = os.path.join(temp_folder, f.filename)
+                            continue
+                        new.writestr(f, old.read(f.filename))
             # Update XML file
             self._tree.write(xml_path, encoding="utf-8", xml_declaration=True)
-            # Repack the unzipped file
-            with ZipFile(temp_path, 'w') as z:
-                for file in extracted_files:
-                    arcname = file.split(temp_folder)[-1]
-                    z.write(file, arcname=arcname)
-            # Move file back to the original folder and remove any unpacked contents
-            shutil.move(temp_path, self.file_path)
+            # Add the XML file to the new archive
+            with ZipFile(dupe_temp_path, 'a', compression=ZIP_DEFLATED) as new:
+                new.write(xml_path, arcname=xml_path.split(temp_folder)[-1])
+            # Move file back to the original folder and remove temp file remnants
+            shutil.move(dupe_temp_path, self.file_path)
             shutil.rmtree(temp_folder)
         else:
             # Update the Tableau file's contents
