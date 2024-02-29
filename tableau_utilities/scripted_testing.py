@@ -26,17 +26,6 @@ if __name__ == '__main__':
     os.chdir(tmp_folder)
 
     #  ### ### Testing here ### ###
-    # RAN IN --> 217 seconds
-    # tableau_auth = TSC.PersonalAccessTokenAuth(
-    #     personal_access_token_name,
-    #     personal_access_token_secret,
-    #     site_id=site
-    # )
-    # server = TSC.Server(host, use_server_version=True)
-    # server.auth.sign_in(tableau_auth)
-    # datasource_item = [d for d in server.datasources.get()[0] if d.id == dsid][0]
-    # server.datasources.publish(datasource_item, path, 'Overwrite')
-    # print('Published')
 
     # datasource = Datasource('../resources/test_data_source.tdsx')
     # datasource.unzip()
