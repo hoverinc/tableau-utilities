@@ -38,11 +38,11 @@ def all_columns_all_datasources(server):
     tmp_folder = 'tmp_tdsx'
     os.makedirs(tmp_folder, exist_ok=True)
     os.chdir(tmp_folder)
-    datasource_list = [d for d in server.get_datasources()]
+    datasource_list = [d for d in server.get.datasources()]
     rows = dict()
     for datasource in datasource_list:
         print(datasource.project_name, (datasource.id, datasource.name))
-        datasource_path = server.download_datasource(datasource.id, include_extract=False)
+        datasource_path = server.download.datasource(datasource.id, include_extract=False)
         columns = [c.dict() for c in Datasource(datasource_path).columns]
         rows.setdefault(datasource.name, [])
         rows[datasource.name].extend(columns)

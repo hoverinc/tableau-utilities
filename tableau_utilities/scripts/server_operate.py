@@ -40,7 +40,7 @@ def server_operate(args, server):
 
     # Download all objects, and return early if all objects have been downloaded
     if all_objects and download:
-        object_list = [o for o in getattr(server, f'get_{object_type}s')()]
+        object_list = [o for o in getattr(server.get, f'{object_type}s')()]
         for o in object_list:
             print(
                 f'{color.fg_yellow}DOWNLOADING {object_type} {symbol.arrow_r} {color.fg_grey}'
@@ -49,12 +49,12 @@ def server_operate(args, server):
                 f'PROJECT: {o.project_name} {symbol.sep} '
                 f'INCLUDE EXTRACT: {include_extract}{color.reset}'
             )
-            res = getattr(server, f'download_{object_type}')(o.id, include_extract=include_extract)
+            res = getattr(server.download, f'{object_type}')(o.id, include_extract=include_extract)
             color_print(f'{symbol.success}  {res}', fg='green')
         return f'Successfully downloaded all {object_type}s'
 
     # Gets the ID, name, and project from the object in Tableau Server
-    obj = getattr(server, f'get_{object_type}')(object_id, object_name, project_name)
+    obj = getattr(server.get, object_type)(object_id, object_name, project_name)
     object_id = obj.id or object_id
     object_name = obj.name or object_name
     project_name = obj.project_name or project_name
@@ -67,7 +67,7 @@ def server_operate(args, server):
             f'PROJECT: {project_name} {symbol.sep} '
             f'INCLUDE EXTRACT: {include_extract}{color.reset}'
         )
-        res: str = getattr(server, f'download_{object_type}')(object_id, include_extract=include_extract)
+        res: str = getattr(server.download, object_type)(object_id, include_extract=include_extract)
         color_print(f'{symbol.success}  {res}', fg='green')
     elif publish:
         print(
@@ -76,7 +76,7 @@ def server_operate(args, server):
             f'NAME: {object_name} {symbol.sep} '
             f'PROJECT NAME: {project_name}{color.reset}'
         )
-        res: Datasource | Workbook = getattr(server, f'publish_{object_type}')(
+        res: Datasource | Workbook = getattr(server.publish, object_type)(
             file_path, object_id, object_name, project_name,
             connection=connection
         )
@@ -100,5 +100,5 @@ def server_operate(args, server):
             f'NAME: {object_name} {symbol.sep} '
             f'PROJECT NAME: {project_name}{color.reset}'
         )
-        res: Job = getattr(server, f'refresh_{object_type}')(object_id)
+        res: Job = getattr(server.refresh, object_type)(object_id)
         color_print(f'{symbol.success}  {res}', fg='green')

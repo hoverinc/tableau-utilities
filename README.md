@@ -36,7 +36,7 @@ def main():
     # Create a Tableau Connection
     ts = TableauServer(**tableau_creds)
     # Download a Datasource
-    datasource_path = ts.download_datasource(datasource_id=datasource_id)
+    datasource_path = ts.download.datasource(datasource_id=datasource_id)
     # Define a Datasource object from the datasource_path
     datasource = Datasource(datasource_path)
     # Define a new folder
@@ -62,7 +62,7 @@ def main():
     # Save changes to the Datasource
     datasource.save()
     # Publish & Overwrite the Datasource
-    ts.publish_datasource(datasource_path, datasource_id=datasource_id)
+    ts.publish.datasource(datasource_path, datasource_id=datasource_id)
 
 
 if __name__ == '__main__':

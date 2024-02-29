@@ -4,4 +4,3 @@ requests
 pandas
 tabulate
 pytest
-

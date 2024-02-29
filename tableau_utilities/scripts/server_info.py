@@ -27,7 +27,7 @@ def server_info(args, server):
     if list_object:
         print(f'{color.fg_cyan}{list_object.title()}s:{color.reset}')
         # Get server objects, and convert them to dict
-        object_list = [o.__dict__ for o in getattr(server, f'get_{list_object.lower()}s')()]
+        object_list = [o.__dict__ for o in getattr(server.get, f'{list_object.lower()}s')()]
         sorted_records = sorted(object_list, key=lambda d: d[sort_field])
         if format == 'names':
             for record in sorted_records:

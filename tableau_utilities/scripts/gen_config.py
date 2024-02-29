@@ -282,14 +282,14 @@ def generate_config(args, server: TableauServer = None):
         datasource_name = Path(datasource_path).stem
     # Download the datasouce and set values for
     elif location == 'online':
-        obj = server.get_datasource(id, datasource_name, project_name)
+        obj = server.get.datasource(id, datasource_name, project_name)
         id = obj.id
         datasource_name = obj.name
         print(f'{color.fg_yellow}GETTING DATASOURCE {symbol.arrow_r} '
               f'{color.fg_grey}ID: {id} {symbol.sep} '
               f'NAME: {datasource_name} {symbol.sep} '
               f'INCLUDE EXTRACT: false{color.reset}')
-        datasource_path = server.download_datasource(id, include_extract=False)
+        datasource_path = server.download.datasource(id, include_extract=False)
 
     print(f'{color.fg_yellow}BUILDING CONFIG {symbol.arrow_r} '
           f'{color.fg_grey}{datasource_name} {symbol.sep} {datasource_path}{color.reset}')

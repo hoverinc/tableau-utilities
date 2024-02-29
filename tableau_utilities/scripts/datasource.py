@@ -59,8 +59,8 @@ def datasource(args, server=None):
     # Downloads the datasource from Tableau Server if the datasource is not local
     if location == 'online':
         print(f'{color.fg_cyan}...Downloading {datasource_name}...{color.reset}')
-        d = server.get_datasource(datasource_id, datasource_name, project_name)
-        datasource_path = server.download_datasource(d.id, include_extract=include_extract)
+        d = server.get.datasource(datasource_id, datasource_name, project_name)
+        datasource_path = server.download.datasource(d.id, include_extract=include_extract)
         print(f'{color.fg_green}{symbol.success}  Downloaded Datasource:', f'{color.fg_yellow}{datasource_path}{color.reset}', '\n')
 
     datasource_file_name = os.path.basename(datasource_path)
