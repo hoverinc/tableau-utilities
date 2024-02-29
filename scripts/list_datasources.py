@@ -32,17 +32,17 @@ group_server.add_argument('--api_version', help='Tableau API version', default='
 
 def main():
     args = parser.parse_args()
-
     url = f'https://{args.server}.online.tableau.com'
+    ts = TableauServer(
+        user=args.user,
+        password=args.password,
+        personal_access_token_name=args.token_name,
+        personal_access_token_secret=args.token_secret,
+        host=url,
+        site=args.site
+    )
+    ts.get.datasources(print_info=True)
 
-    ts = TableauServer(user=args.user,
-                       password=args.password,
-                       token_name=args.token_name,
-                       token_secret=args.token_secret,
-                       url=url,
-                       site=args.site)
-
-    ts.list_datasources(print_info=True)
 
 if __name__ == '__main__':
     main()
