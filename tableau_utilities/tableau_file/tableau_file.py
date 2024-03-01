@@ -1,3 +1,4 @@
+import logging
 import xml.etree.ElementTree as ET
 import os
 import shutil
@@ -102,15 +103,18 @@ class TableauFile:
             with ZipFile(temp_path) as z:
                 for f in z.filelist:
                     ext = f.filename.split('.')[-1]
+                    logging.info('Extracting file {}'.format(f.filename))
                     path = z.extract(member=f, path=temp_folder)
                     extracted_files.append(path)
                     if ext in ['tds', 'twb']:
                         xml_path = path
             # Update XML file
+            logging.info('Extracting updating XML {}'.format(xml_path))
             self._tree.write(xml_path, encoding="utf-8", xml_declaration=True)
             # Repack the unzipped file
             with ZipFile(temp_path, 'w') as z:
                 for file in extracted_files:
+                    logging.info('Archiving {}'.format(file))
                     arcname = file.split(temp_folder)[-1]
                     z.write(file, arcname=arcname)
             # Move file back to the original folder and remove any unpacked contents
