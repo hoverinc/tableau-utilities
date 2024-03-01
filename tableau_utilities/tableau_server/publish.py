@@ -1,4 +1,6 @@
 import os
+import logging
+from time import time
 from urllib3.fields import RequestField
 from urllib3.filepost import encode_multipart_formdata
 import tableau_utilities.tableau_server.tableau_server_objects as tso
@@ -69,7 +71,8 @@ class Publish(Base):
         else:
             raise TableauConnectionError('Specify datasource_id or datasource_name and project_name')
 
-    def __upload_in_chunks(self, file_path, chunk_size_mb=50):
+    # 323 seconds at 5 mb, 145 seconds at 50mb
+    def __upload_in_chunks(self, file_path, chunk_size_mb=5):
         """ Uplaods a file to Tableau, in chunks.
             - PUT /api/api-version/sites/site-id/fileUploads
             - PUT /api/api-version/sites/site-id/fileUploads/upload_session_id
@@ -80,11 +83,14 @@ class Publish(Base):
 
         Returns: An upload_session_id of the uploaded file
         """
+        start = time()
         file_name = os.path.basename(file_path)
         # Initialize file upload session
         res = self._post(f'{self.url}/fileUploads')
         upload_session_id = res['fileUpload']["uploadSessionId"]
         # Read file and append data in chunks
+        total = round(bytes_to_mb(os.path.getsize(file_path)), 1)
+        current = 0
         file = open(file_path, 'rb')
         while True:
             chunk = file.read(mb_to_bytes(chunk_size_mb))
@@ -94,11 +100,14 @@ class Publish(Base):
                 ('request_payload', '', None, 'text/xml'),
                 ('tableau_file', chunk, file_name, 'application/octet-stream')
             ])
+            current += chunk_size_mb
+            logging.info('({} of {} mb) Uploading {}'.format(current if current < total else total, total, file_path))
             self._put(
                 f'{self.url}/fileUploads/{upload_session_id}',
                 data=post_body, headers={'Content-Type': content_type}
             )
         file.close()
+        logging.info('Uploaded {}: {} mb in {} seconds'.format(file_path, total, round(time() - start)))
         return upload_session_id
 
     def datasource(self, file_path, datasource_id=None, datasource_name=None, project_name=None, **kw):
@@ -148,7 +157,10 @@ class Publish(Base):
                 ])
 
         # Finally, publish the file uploaded
+        start = time()
+        logging.info('Publishing uploaded datasource {}'.format(file_path))
         content = self._post(publish_url, data=post_body, headers={'Content-Type': content_type})
+        logging.info('Published uploaded datasource {} in {} seconds'.format(file_path, round(time() - start)))
         transform_tableau_object(content['datasource'])
         return tso.Datasource(**content['datasource'])
 
@@ -179,15 +191,12 @@ class Publish(Base):
         skip_connection_check = kw.pop('skip_connection_check', False)
         connections = kw.pop('connections', None)
         file_name = os.path.basename(file_path)
-        # 1024 bytes in 1kb, 1000kb in 1mb
-        file_size_mb = os.path.getsize(file_path) / 1024 / 1000
         extension = file_path.split('.')[-1]
         workbook = self.__get_workbook_for_publication(workbook_id, workbook_name, project_name)
         wb_xml = workbook.publish_xml(connections)
         # Datasource must be 64mb or less to publish all at once
-        maximum_megabytes = 64
-        if file_size_mb > maximum_megabytes:
-            upload_session_id = self.__upload_in_chunks(file_path, maximum_megabytes)
+        if bytes_to_mb(os.path.getsize(file_path)) > 64:
+            upload_session_id = self.__upload_in_chunks(file_path)
             publish_url = f'{self.url}/workbooks?uploadSessionId={upload_session_id}' \
                           f'&workbookType={extension}' \
                           f'&skipConnectionCheck={skip_connection_check}' \
@@ -207,6 +216,9 @@ class Publish(Base):
                 ])
 
         # Finally, publish the file uploaded
+        start = time()
+        logging.info('Publishing uploaded workbook {}'.format(file_path))
         content = self._post(publish_url, data=post_body, headers={'Content-Type': content_type})
+        logging.info('Published uploaded workbook {} in {} seconds'.format(file_path, round(time() - start)))
         transform_tableau_object(content['workbook'])
         return tso.Workbook(**content['workbook'])
