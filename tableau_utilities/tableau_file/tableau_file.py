@@ -104,11 +104,11 @@ class TableauFile:
             with ZipFile(temp_path) as z:
                 for f in z.filelist:
                     ext = f.filename.split('.')[-1]
-                    if ext in ['tds', 'twb']:
-                        xml_path = path
                     logging.info('Extracting file {}'.format(f.filename))
                     path = z.extract(member=f, path=temp_folder)
                     extracted_files.append(path)
+                    if ext in ['tds', 'twb']:
+                        xml_path = path
             # Overwrite XML file with new XML
             logging.info('Overwriting XML file {}'.format(os.path.basename(xml_path)))
             self._tree.write(xml_path, encoding="utf-8", xml_declaration=True)
