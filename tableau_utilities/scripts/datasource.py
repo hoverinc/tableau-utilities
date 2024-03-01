@@ -1,7 +1,8 @@
 import os
 import shutil
-
 import tableau_utilities.tableau_file.tableau_file_objects as tfo
+
+from time import time
 from tableau_utilities.general.config_column_persona import personas, get_persona_by_attribs, \
     get_persona_by_metadata_local_type
 from tableau_utilities.general.cli_styling import Color
@@ -58,15 +59,18 @@ def datasource(args, server=None):
 
     # Downloads the datasource from Tableau Server if the datasource is not local
     if location == 'online':
+        start = time()
         print(f'{color.fg_cyan}...Downloading {datasource_name}...{color.reset}')
         d = server.get.datasource(datasource_id, datasource_name, project_name)
         datasource_path = server.download.datasource(d.id, include_extract=include_extract)
-        print(f'{color.fg_green}{symbol.success}  Downloaded Datasource:', f'{color.fg_yellow}{datasource_path}{color.reset}', '\n')
+        print(f'{color.fg_green}{symbol.success}  (Done in {round(time() - start)} sec) '
+              f'Downloaded Datasource: {color.fg_yellow}{datasource_path}{color.reset}\n')
 
     datasource_file_name = os.path.basename(datasource_path)
     ds = Datasource(datasource_path)
 
     if save_tds:
+        start = time()
         print(f'{color.fg_cyan}...Extracting {datasource_file_name}...{color.reset}')
         save_folder = f'{datasource_file_name} - BEFORE'
         os.makedirs(save_folder, exist_ok=True)
@@ -76,7 +80,8 @@ def datasource(args, server=None):
         else:
             xml_path = ds.unzip(extract_to=save_folder, unzip_all=True)
         if debugging_logs:
-            print(f'{color.fg_green}{symbol.success}  BEFORE - TDS SAVED TO: {color.fg_yellow}{xml_path}{color.reset}')
+            print(f'{color.fg_green}{symbol.success} (Done in {round(time() - start)} sec) '
+                  f'BEFORE - TDS SAVED TO: {color.fg_yellow}{xml_path}{color.reset}')
 
     # List each of the objects specified to list
     if list_objects:
@@ -164,10 +169,13 @@ def datasource(args, server=None):
 
     # Save the datasource if an edit may have happened
     if column_name or folder_name or delete or enforce_connection:
+        start = time()
         ds.save()
-        print(f'{color.fg_green}{symbol.success}  Saved changes to: {color.fg_yellow}{datasource_path}{color.reset}')
+        print(f'{color.fg_green}{symbol.success} (Done in {round(time() - start)} sec) '
+              f'Saved changes to: {color.fg_yellow}{datasource_path}{color.reset}')
 
     if save_tds:
+        start = time()
         print(f'{color.fg_cyan}...Extracting {datasource_file_name}...{color.reset}')
         save_folder = f'{datasource_file_name} - AFTER'
         os.makedirs(save_folder, exist_ok=True)
@@ -177,4 +185,5 @@ def datasource(args, server=None):
         else:
             xml_path = ds.unzip(extract_to=save_folder, unzip_all=True)
         if debugging_logs:
-            print(f'{color.fg_green}{symbol.success}  AFTER - TDS SAVED TO: {color.fg_yellow}{xml_path}{color.reset}')
+            print(f'{color.fg_green}{symbol.success} (Done in {round(time() - start)} sec) '
+                  f'AFTER - TDS SAVED TO: {color.fg_yellow}{xml_path}{color.reset}')
