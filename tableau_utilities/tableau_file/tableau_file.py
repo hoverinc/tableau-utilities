@@ -99,22 +99,24 @@ class TableauFile:
             dupe_temp_path = os.path.join(temp_folder, f'__tmp_{self.file_basename}')
             shutil.move(self.file_path, temp_path)
             # Unzip the zipped files
+            logging.info('Unzipping files from {}'.format(temp_path))
             extracted_files = list()
             with ZipFile(temp_path) as z:
                 for f in z.filelist:
                     ext = f.filename.split('.')[-1]
+                    if ext in ['tds', 'twb']:
+                        xml_path = path
                     logging.info('Extracting file {}'.format(f.filename))
                     path = z.extract(member=f, path=temp_folder)
                     extracted_files.append(path)
-                    if ext in ['tds', 'twb']:
-                        xml_path = path
-            # Update XML file
-            logging.info('Extracting updating XML {}'.format(xml_path))
+            # Overwrite XML file with new XML
+            logging.info('Overwriting XML file {}'.format(os.path.basename(xml_path)))
             self._tree.write(xml_path, encoding="utf-8", xml_declaration=True)
-            # Repack the unzipped file
+            logging.info('Zipping files into {}'.format(temp_path))
+            # Repack the unzipped files
             with ZipFile(temp_path, 'w') as z:
                 for file in extracted_files:
-                    logging.info('Archiving {}'.format(file))
+                    logging.info('Archiving {}'.format(os.path.basename(file)))
                     arcname = file.split(temp_folder)[-1]
                     z.write(file, arcname=arcname)
             # Move file back to the original folder and remove any unpacked contents

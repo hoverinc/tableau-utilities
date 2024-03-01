@@ -5,6 +5,7 @@ from tableau_utilities.tableau_server.base import Base
 
 
 class Update(Base):
+    """ Core Update functionality of the TableauServer class """
     def __init__(self, parent):
         super().__init__(parent)
 

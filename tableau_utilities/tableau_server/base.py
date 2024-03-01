@@ -3,6 +3,7 @@ from tableau_utilities.tableau_server.static import validate_response
 
 
 class Base:
+    """ Base functionality inherited by TableauServer class, and Core TableauServer classes """
     def __init__(self, parent):
         self.session: Session = parent.session
         self.user: str = parent.user

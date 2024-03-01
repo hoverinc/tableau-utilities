@@ -1,3 +1,4 @@
+""" Static functionality of the TableauServer and Core classes """
 import requests
 from tableau_utilities.general.funcs import flatten_dict
 

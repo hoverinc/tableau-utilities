@@ -11,6 +11,7 @@ from tableau_utilities.tableau_server.base import Base
 
 
 class Publish(Base):
+    """ Core Publish functionality of the TableauServer class """
     def __init__(self, parent):
         super().__init__(parent)
 
@@ -100,8 +101,11 @@ class Publish(Base):
                 ('request_payload', '', None, 'text/xml'),
                 ('tableau_file', chunk, file_name, 'application/octet-stream')
             ])
+            # Log progress every so often
             current += chunk_size_mb
-            logging.info('({} of {} mb) Uploading {}'.format(current if current < total else total, total, file_path))
+            if current == chunk_size_mb or current % 500 == 0 or current >= total:
+                logging.info('({} of {} mb) Uploading {}'.format(
+                    current if current < total else total, total, file_path))
             self._put(
                 f'{self.url}/fileUploads/{upload_session_id}',
                 data=post_body, headers={'Content-Type': content_type}
