@@ -73,7 +73,7 @@ class Publish(Base):
             raise TableauConnectionError('Specify datasource_id or datasource_name and project_name')
 
     # 323 seconds at 5 mb, 145 seconds at 50mb
-    def __upload_in_chunks(self, file_path, chunk_size_mb=5):
+    def __upload_in_chunks(self, file_path, chunk_size_mb=5, log_interval=5):
         """ Uplaods a file to Tableau, in chunks.
             - PUT /api/api-version/sites/site-id/fileUploads
             - PUT /api/api-version/sites/site-id/fileUploads/upload_session_id
@@ -81,6 +81,7 @@ class Publish(Base):
         Args:
             file_path (str): The path to the file
             chunk_size_mb (int): The chunking size of increments to be uploaded
+            log_interval (int): The interval of megabytes uploaded to log progress of the upload.
 
         Returns: An upload_session_id of the uploaded file
         """
@@ -132,6 +133,8 @@ class Publish(Base):
             append (bool): True to append the data to the datasource in Tableau Online
             connection (dict): A dict of connection credentials to embed in the datasource
                 i.e. 'username' and 'password'
+            upload_chunk_size (int): The number of megabytes that will be uploaded at a time. Max is 64, default is 64.
+            upload_log_interval (int): The interval of megabytes when to log the progress of the upload. Default is 64.
 
         Returns: A Datasource Tableau server object
         """
@@ -139,13 +142,15 @@ class Publish(Base):
         as_job = kw.pop('as_job', False)
         append = kw.pop('append', False)
         connection = kw.pop('connection', None)
+        upload_chunk_size = kw.pop('upload_chunk_size', 64)
+        upload_log_interval = kw.pop('upload_log_interval', 64)
         file_name = os.path.basename(file_path)
         extension = file_path.split('.')[-1]
         datasource = self.__get_datasource_for_publication(datasource_id, datasource_name, project_name)
         ds_xml = datasource.publish_xml(connection)
         # Datasource must be less than 64mb to publish all at once
         if bytes_to_mb(os.path.getsize(file_path)) >= 64:
-            upload_session_id = self.__upload_in_chunks(file_path)
+            upload_session_id = self.__upload_in_chunks(file_path, upload_chunk_size, upload_log_interval)
             publish_url = f'{self.url}/datasources?uploadSessionId={upload_session_id}' \
                           f'&datasourceType={extension}&overwrite={overwrite}&append={append}&asJob={as_job}'
             post_body, content_type = self.__get_multipart_details([
@@ -187,6 +192,8 @@ class Publish(Base):
                 a non-published connection, of a workbook is reachable
             connections (list[dict]): A list of connections
                 i.e. [{address, port, username, password}]
+            upload_chunk_size (int): The number of megabytes that will be uploaded at a time. Max is 64, default is 64.
+            upload_log_interval (int): The interval of megabytes when to log the progress of the upload. Default is 64.
 
         Returns: A Workbook Tableau server object
         """
@@ -194,13 +201,15 @@ class Publish(Base):
         as_job = kw.pop('as_job', False)
         skip_connection_check = kw.pop('skip_connection_check', False)
         connections = kw.pop('connections', None)
+        upload_chunk_size = kw.pop('upload_chunk_size', 64)
+        upload_log_interval = kw.pop('upload_log_interval', 64)
         file_name = os.path.basename(file_path)
         extension = file_path.split('.')[-1]
         workbook = self.__get_workbook_for_publication(workbook_id, workbook_name, project_name)
         wb_xml = workbook.publish_xml(connections)
         # Datasource must be 64mb or less to publish all at once
         if bytes_to_mb(os.path.getsize(file_path)) > 64:
-            upload_session_id = self.__upload_in_chunks(file_path)
+            upload_session_id = self.__upload_in_chunks(file_path, upload_chunk_size, upload_log_interval)
             publish_url = f'{self.url}/workbooks?uploadSessionId={upload_session_id}' \
                           f'&workbookType={extension}' \
                           f'&skipConnectionCheck={skip_connection_check}' \
