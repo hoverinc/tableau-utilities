@@ -104,7 +104,7 @@ class Publish(Base):
             ])
             # Log progress every so often
             current += chunk_size_mb
-            if current == chunk_size_mb or current % 500 == 0 or current >= total:
+            if current == chunk_size_mb or current % log_interval == 0 or current >= total:
                 logging.info('({} of {} mb) Uploading {}'.format(
                     current if current < total else total, total, file_path))
             self._put(
