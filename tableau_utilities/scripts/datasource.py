@@ -32,6 +32,8 @@ def datasource(args, server=None):
     project_name = args.project_name
     location = args.location
     enforce_connection = args.enforce_connection
+    empty_extract = args.empty_extract
+    filter_extract = args.filter_extract
 
     # Folder/Fields Args
     persona = args.persona
@@ -68,6 +70,18 @@ def datasource(args, server=None):
 
     datasource_file_name = os.path.basename(datasource_path)
     ds = Datasource(datasource_path)
+
+    # Add an empty .hyper file to the Datasource; Useful for publishing without data
+    if empty_extract:
+        ds.empty_extract()
+        print(f'{color.fg_green}Added empty .hyper extract for {datasource_path}{color.reset}')
+    # Otherwise, filter the extract if filter_extract string provided
+    elif filter_extract:
+        start = time()
+        print(f'{color.fg_cyan}...Filtering extract data...{color.reset}')
+        ds.filter_extract(filter_extract)
+        print(f'{color.fg_green}{symbol.success} (Done in {round(time() - start)} sec) '
+              f'Filtered extract data for {datasource_path}{color.reset}')
 
     if save_tds:
         start = time()
@@ -168,11 +182,12 @@ def datasource(args, server=None):
             ds.connection.update(connection)
 
     # Save the datasource if an edit may have happened
-    if column_name or folder_name or delete or enforce_connection:
+    if column_name or folder_name or delete or enforce_connection or empty_extract:
         start = time()
+        print(f'{color.fg_cyan}...Saving datasource changes...{color.reset}')
         ds.save()
         print(f'{color.fg_green}{symbol.success} (Done in {round(time() - start)} sec) '
-              f'Saved changes to: {color.fg_yellow}{datasource_path}{color.reset}')
+              f'Saved datasource changes: {color.fg_yellow}{datasource_path}{color.reset}')
 
     if save_tds:
         start = time()
