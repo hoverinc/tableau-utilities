@@ -326,28 +326,29 @@ class Datasource(TableauFile):
         hyper_path = os.path.join(extract_folder, f'{self.file_name}.hyper')
         params = {"default_database_version": "2"}
         # Get columns from the metadata
-        columns = list()
+        columns = dict()  # Use a dict to ensure not duplicate column are referenced
         for metadata in self.connection.metadata_records:
             if metadata.local_type == 'integer':
-                columns.append(TableDefinition.Column(metadata.remote_name, SqlType.int()))
+                column = TableDefinition.Column(metadata.remote_name, SqlType.int())
             elif metadata.local_type == 'real':
-                columns.append(TableDefinition.Column(metadata.remote_name, SqlType.double()))
+                column = TableDefinition.Column(metadata.remote_name, SqlType.double())
             elif metadata.local_type == 'string':
-                columns.append(TableDefinition.Column(metadata.remote_name, SqlType.varchar(metadata.width or 1020)))
+                column = TableDefinition.Column(metadata.remote_name, SqlType.varchar(metadata.width or 1020))
             elif metadata.local_type == 'boolean':
-                columns.append(TableDefinition.Column(metadata.remote_name, SqlType.bool()))
+                column = TableDefinition.Column(metadata.remote_name, SqlType.bool())
             elif metadata.local_type == 'datetime':
-                columns.append(TableDefinition.Column(metadata.remote_name, SqlType.timestamp()))
+                column = TableDefinition.Column(metadata.remote_name, SqlType.timestamp())
             elif metadata.local_type == 'date':
-                columns.append(TableDefinition.Column(metadata.remote_name, SqlType.date()))
+                column = TableDefinition.Column(metadata.remote_name, SqlType.date())
             else:
                 raise TableauFileError(f'Got unexpected metadata type for hyper table: {metadata.local_type}')
+            columns[metadata.remote_name] = column
         # Create an empty .hyper file based on the metadata of the Tableau file
         with HyperProcess(Telemetry.SEND_USAGE_DATA_TO_TABLEAU, parameters=params) as hyper:
             with Connection(hyper.endpoint, hyper_path, CreateMode.CREATE_AND_REPLACE) as connection:
                 # Create an `Extract` table inside an `Extract` schema
                 connection.catalog.create_schema('Extract')
-                table = TableDefinition(TableName('Extract', 'Extract'), columns)
+                table = TableDefinition(TableName('Extract', 'Extract'), columns.values())
                 connection.catalog.create_table(table)
         # Archive the extract with the TDS file
         with ZipFile(tdsx_path, 'w') as z:
