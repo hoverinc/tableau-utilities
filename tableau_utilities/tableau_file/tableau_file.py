@@ -326,7 +326,7 @@ class Datasource(TableauFile):
         hyper_path = os.path.join(extract_folder, f'{self.file_name}.hyper')
         params = {"default_database_version": "2"}
         # Get columns from the metadata
-        columns = dict()  # Use a dict to ensure not duplicate column are referenced
+        columns = dict()  # Use a dict to ensure no duplicate columns are referenced
         for metadata in self.connection.metadata_records:
             if metadata.local_type == 'integer':
                 column = TableDefinition.Column(metadata.remote_name, SqlType.int())
