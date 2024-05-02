@@ -5,7 +5,7 @@ from urllib3.fields import RequestField
 from urllib3.filepost import encode_multipart_formdata
 import tableau_utilities.tableau_server.tableau_server_objects as tso
 from requests import Session
-from tableau_utilities.tableau_server.static import (
+from tableau_utilities.core.tableau_server.static import (
     TableauConnectionError, bytes_to_mb, mb_to_bytes, transform_tableau_object)
 from tableau_utilities.tableau_server.base import Base
 

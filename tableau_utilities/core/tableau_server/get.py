@@ -1,6 +1,6 @@
 import logging
 import tableau_utilities.tableau_server.tableau_server_objects as tso
-from tableau_utilities.tableau_server.static import TableauConnectionError, transform_tableau_object
+from tableau_utilities.core.tableau_server.static import TableauConnectionError, transform_tableau_object
 from tableau_utilities.tableau_server.base import Base
 
 

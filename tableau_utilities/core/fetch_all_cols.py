@@ -46,7 +46,7 @@ def all_columns_all_datasources(server):
         columns = [c.dict() for c in Datasource(datasource_path).columns]
         rows.setdefault(datasource.name, [])
         rows[datasource.name].extend(columns)
-    os.chdir('..')
+    os.chdir('../..')
     shutil.rmtree(tmp_folder)
     return rows
 

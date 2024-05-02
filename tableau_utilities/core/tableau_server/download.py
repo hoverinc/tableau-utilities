@@ -1,8 +1,7 @@
 import cgi
 import os
 import requests
-from requests import Session
-from tableau_utilities.tableau_server.static import TableauConnectionError
+from tableau_utilities.core.tableau_server.static import TableauConnectionError
 from tableau_utilities.tableau_server.base import Base
 
 

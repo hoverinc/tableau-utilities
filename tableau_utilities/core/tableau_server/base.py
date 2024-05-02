@@ -1,5 +1,5 @@
 from requests import Session
-from tableau_utilities.tableau_server.static import validate_response
+from tableau_utilities.core.tableau_server.static import validate_response
 
 
 class Base:

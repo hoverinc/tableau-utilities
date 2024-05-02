@@ -6,7 +6,7 @@ from tableau_utilities.tableau_server.download import Download
 from tableau_utilities.tableau_server.publish import Publish
 from tableau_utilities.tableau_server.refresh import Refresh
 from tableau_utilities.tableau_server.update import Update
-from tableau_utilities.tableau_server.static import TableauConnectionError
+from tableau_utilities.core.tableau_server.static import TableauConnectionError
 
 
 class TableauServer(Base):
