@@ -7,7 +7,15 @@ A module and CLI Utility for managing Tableau objects, locally, and in Tableau O
 ### Installation
 
 #### From pypi
+
+##### Core Package
 - `pip install tableau-utilities`
+
+##### Hyper Subpackage
+This extra package depends on the tableauhyperapi which is incompatible with Apple Silicon computers.  See the [tableauhyperapi installation docs](https://tableau.github.io/hyper-db/docs/installation) for workarounds to use the package on Applie Silicon.
+
+- `pip install tableau-utilities[hyper]`
+- `pip install 'tableau-utilities[hyper]'`  if you're using zsh makes sure to add quotes
 
 #### Locally using pip
 - `cd tableau-utilities`
