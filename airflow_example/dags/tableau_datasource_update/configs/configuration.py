@@ -1,8 +1,14 @@
 import logging
+import os
 import re
 import yaml
+from datetime import datetime
+from pytz import timezone
 from github import Github, Auth
 from dataclasses import dataclass, field, asdict
+
+# Set to true if you want to test against the test_configs YAML files
+USE_TEST_CONFIGS = False
 
 
 class CFGList(list):
@@ -115,21 +121,15 @@ class CFGDatasource:
 
 
 class Config:
-    """ Creates a configuration of the Tableau Datasource(s),
-        based on the corresponding DBT model YAML file(s) in a separate GitHub repo.
-
-    Args:
-        githup_token (str): The GitHub token with scope to read from the DBT repo
-        repo_name (str): The name of the DBT GitHub repo
-        repo_branch (str): The branch name of the GitHub repo
-        subfolder (str): The sub-folder in the GitHub repo which contains the Datasource yaml file(s)
-    """
-    def __init__(self, githup_token, repo_name, subfolder, repo_branch='main'):
+    """ A Config object based on the YAML config files """
+    def __init__(self, githup_token, repo_name, repo_branch, subfolder):
         self.__github_token = githup_token
         self._repo_name = repo_name
         self._repo_branch = repo_branch
         self._yaml_subfolder = subfolder
-        with open('dags/tableau_datasource_update/configs/column_personas.yaml') as read_config:
+        self.in_maintenance_window: bool = self.__check_maintenance_window()
+        cfg_path = 'dags/tableau_datasource_update/configs'
+        with open(os.path.join(cfg_path, 'column_personas.yaml')) as read_config:
             self._personas = yaml.safe_load(read_config)
 
         # Set the datasources configuration based on the config files
@@ -137,28 +137,53 @@ class Config:
         self.__set_datasources()
         self.__update_column_calcs()
 
+    @staticmethod
+    def __check_maintenance_window():
+        """ Determines if the DAG is running within the maintenance window """
+        with open('dags/tableau_datasource_update/configs/settings.yaml') as f:
+            window = yaml.safe_load(f)['maintenance_window']
+        start = datetime.strptime(window['start'], '%I:%M %p').time()
+        end = datetime.strptime(window['end'], '%I:%M %p').time()
+        now = datetime.now(timezone(window['timezone'])).time()
+        return now >= start or now < end
+
+    def __get_config_files(self):
+        """ Reads the config files and yields the YAML data within """
+        # If running a test, use the test_config files rather than querying the GitHub repo files
+        if USE_TEST_CONFIGS:
+            config_dir = 'dags/tableau_datasource_update/test_configs'
+            for file in os.listdir(config_dir):
+                name, extension = file.split('.')
+                if extension.lower() not in ['yaml', 'yml']:
+                    continue
+                with open(os.path.join(config_dir, file)) as f:
+                    yield name, yaml.safe_load(f)
+        else:
+            # Read the files from GitHub
+            auth = Auth.Token(self.__github_token)
+            github = Github(auth=auth)
+            repo = github.get_repo(self._repo_name)
+            files = repo.get_contents(self._yaml_subfolder, ref=self._repo_branch)
+            for file in files:
+                # Parse YAML files
+                name, extension = file.name.split('.')
+                if extension.lower() not in ['yaml', 'yml']:
+                    continue
+                yield name, yaml.safe_load(file.decoded_content.decode())
+
+
     def __set_datasources(self):
         """
             Reads the YAML files from DBT to form the datasources attribute.
             Output -> {datasource: {column_caption: info}}
         """
-        # Read the files from GitHub
-        auth = Auth.Token(self.__github_token)
-        github = Github(auth=auth)
-        repo = github.get_repo(self._repo_name)
-        files = repo.get_contents(self._yaml_subfolder, ref=self._repo_branch)
-        for file in files:
-            # Parse YAML files
-            name, extension = file.name.split('.')
-            if extension.lower() not in ['yaml', 'yml']:
-                continue
-            model_cfg = yaml.safe_load(file.decoded_content.decode())
-            model_meta_tableau = model_cfg['models'][0].get('meta', {}).get('tableau', None)
+        for name, file_dict in self.__get_config_files():
+            model_meta_tableau = file_dict['models'][0].get('meta', {}).get('tableau', None)
             if not model_meta_tableau:
                 logging.warning('(Skipping) Datasource model does not contain tableau meta data: %s', name)
                 continue
             calculations = model_meta_tableau.pop('calculations', [])
-            columns = model_cfg['models'][0].pop('columns', [])
+            columns = file_dict['models'][0].pop('columns', [])
             datasource = CFGDatasource(
                 name=model_meta_tableau.pop('datasource'),
                 project_name=model_meta_tableau.pop('project')
