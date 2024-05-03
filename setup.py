@@ -19,7 +19,8 @@ setup(
         'tableau_utilities.general',
         'tableau_utilities.tableau_file',
         'tableau_utilities.tableau_server',
-        'tableau_utilities.scripts'
+        'tableau_utilities.hyper',
+        'tableau_utilities.scripts',
     ],
     package_data={'tableau_utilities': ['tableau_file/*.yml']},
     include_package_data=True,
