@@ -1,0 +1,7 @@
+# The starting / ending maintenance window hours, where the DAG will make updates to the datasources.
+#  - During this period of time, if updates need to be made, the datasource(s) will be published without data.
+#  - Data will appear after the extract refreshes in Tableau Online, following the update from the DAG.
+maintenance_window:
+  timezone: US/Pacific
+  start: 11:00 PM
+  end: 02:00 AM

@@ -140,7 +140,7 @@ class Config:
     @staticmethod
     def __check_maintenance_window():
         """ Determines if the DAG is running within the maintenance window """
-        with open('dags/tableau_datasource_update/configs/settings.yaml') as f:
+        with open('dags/tableau_datasource_update/configs/cfg_settings.yaml') as f:
             window = yaml.safe_load(f)['maintenance_window']
         start = datetime.strptime(window['start'], '%I:%M %p').time()
         end = datetime.strptime(window['end'], '%I:%M %p').time()
