@@ -3,7 +3,7 @@ import os
 import shutil
 from argparse import RawTextHelpFormatter
 import yaml
-import pkg_resources
+import pkgutil
 
 import tableau_utilities.tableau_server.tableau_server as ts
 
@@ -16,7 +16,7 @@ from tableau_utilities.scripts.server_operate import server_operate
 from tableau_utilities.scripts.datasource import datasource
 from tableau_utilities.scripts.csv_config import csv_config
 
-__version__ = pkg_resources.require("tableau_utilities")[0].version
+__version__ = pkgutil.get_importer("tableau_utilities").find_module("tableau_utilities").load_module().__version__
 
 parser = argparse.ArgumentParser(
     prog='tableau_utilities',
@@ -262,6 +262,16 @@ def validate_args_command_merge_config(args):
         parser.error(f'--merge_with {args.merge_with} requires --target_directory')
 
 
+def validate_subpackage_hyper():
+    """ Checks that the hyper subpackage is installed for functions that use it """
+
+    if pkgutil.find_loader('numpy') is not None:
+        pass
+    else:
+        parser.error(
+            '--filter_extract and --empty_extract require the tableau_utilities[hyper] subpackage.  See installation notes if you are on an Apple Silicon (Apple M1, Apple M2, ...)')
+
+
 def tableau_authentication(args):
     """ Creates the Tableau server authentication from a variety of methods for passing in credentials """
     debug = args.debugging_logs
@@ -453,7 +463,11 @@ def main():
     os.makedirs(tmp_folder, exist_ok=True)
     os.chdir(tmp_folder)
 
-    needs_tableau_server = (
+    needs_subpackage_hyper = (
+        args.command == 'datasource' and (args.empty_extract or args.filter_extract)
+    )
+
+    needs_tableau_server = (echo $TABLEAU_PAT_VALUE
         (args.command == 'generate_config' and args.location == 'online')
         or (args.command == 'merge_config' and args.location == 'online')
         or (args.command == 'datasource' and args.location == 'online')
@@ -461,6 +475,9 @@ def main():
         or args.command == 'server_info'
         or args.command == 'server_operate'
     )
+
+    if needs_subpackage_hyper:
+        validate_subpackage_hyper()
 
     if needs_tableau_server:
         server = tableau_authentication(args)
