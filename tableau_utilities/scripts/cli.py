@@ -3,7 +3,9 @@ import os
 import shutil
 from argparse import RawTextHelpFormatter
 import yaml
+import pkg_resources
 import pkgutil
+import importlib.metadata
 
 import tableau_utilities.tableau_server.tableau_server as ts
 
@@ -16,7 +18,8 @@ from tableau_utilities.scripts.server_operate import server_operate
 from tableau_utilities.scripts.datasource import datasource
 from tableau_utilities.scripts.csv_config import csv_config
 
-__version__ = pkgutil.get_importer("tableau_utilities").find_module("tableau_utilities").load_module().__version__
+# __version__ = pkgutil.get_importer("tableau_utilities").find_module("tableau_utilities").load_module().__version__
+__version__ = pkg_resources.require("tableau_utilities")[0].version
 
 parser = argparse.ArgumentParser(
     prog='tableau_utilities',
@@ -265,11 +268,13 @@ def validate_args_command_merge_config(args):
 def validate_subpackage_hyper():
     """ Checks that the hyper subpackage is installed for functions that use it """
 
-    if pkgutil.find_loader('numpy') is not None:
-        pass
-    else:
+    try:
+        version = importlib.metadata.version("tableauhyperapi")
+    except importlib.metadata.PackageNotFoundError:
         parser.error(
             '--filter_extract and --empty_extract require the tableau_utilities[hyper] subpackage.  See installation notes if you are on an Apple Silicon (Apple M1, Apple M2, ...)')
+
+
 
 
 def tableau_authentication(args):
