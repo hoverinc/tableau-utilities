@@ -12,13 +12,15 @@ setup(
     long_description=readme,
     long_description_content_type='text/markdown',
     name="tableau_utilities",
-    version="2.1.21",
+    version="2.2.0",
+    requires_python=">=3.8",
     packages=[
         'tableau_utilities',
         'tableau_utilities.general',
         'tableau_utilities.tableau_file',
         'tableau_utilities.tableau_server',
-        'tableau_utilities.scripts'
+        'tableau_utilities.hyper',
+        'tableau_utilities.scripts',
     ],
     package_data={'tableau_utilities': ['tableau_file/*.yml']},
     include_package_data=True,
@@ -27,7 +29,8 @@ setup(
                       'requests>=2.27.1,<3.0.0',
                       'pandas>=1.4.1,<2.0.0',
                       'tabulate>=0.8.9,<1.0.0',
-                      'tableauhyperapi==0.0.18825'],
+                      ],
+    extras_require={"hyper": ['tableauhyperapi==0.0.18825']},
     entry_points={
         'console_scripts': [
             'tableau_utilities = tableau_utilities.scripts.cli:main',
