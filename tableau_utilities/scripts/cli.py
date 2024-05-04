@@ -275,8 +275,6 @@ def validate_subpackage_hyper():
             '--filter_extract and --empty_extract require the tableau_utilities[hyper] subpackage.  See installation notes if you are on an Apple Silicon (Apple M1, Apple M2, ...)')
 
 
-
-
 def tableau_authentication(args):
     """ Creates the Tableau server authentication from a variety of methods for passing in credentials """
     debug = args.debugging_logs
