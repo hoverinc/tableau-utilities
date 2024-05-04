@@ -160,9 +160,9 @@ parser_datasource.add_argument('--persona', choices=list(personas.keys()),
                                help='The datatype persona of the column. Required for adding a new column')
 parser_datasource.add_argument('--desc', help='A Tableau column description')
 parser_datasource.add_argument('--calculation', help='A Tableau calculation')
-parser_datasource.add_argument('-E', '--empty_extract', action='store_true',
+parser_datasource.add_argument('-ee', '--empty_extract', action='store_true',
                                help='Adds an empty extract to the Datasource if specified.')
-parser_datasource.add_argument('-F', '--filter_extract',
+parser_datasource.add_argument('-fe', '--filter_extract',
                                help='Deletes data from the extract based on the condition string provided. '
                                     """E.g. "CREATED_AT" < '1/1/2024'""")
 parser_datasource.set_defaults(func=datasource)
