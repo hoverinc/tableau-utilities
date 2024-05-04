@@ -472,7 +472,7 @@ def main():
         args.command == 'datasource' and (args.empty_extract or args.filter_extract)
     )
 
-    needs_tableau_server = (echo $TABLEAU_PAT_VALUE
+    needs_tableau_server = (
         (args.command == 'generate_config' and args.location == 'online')
         or (args.command == 'merge_config' and args.location == 'online')
         or (args.command == 'datasource' and args.location == 'online')
