@@ -4,6 +4,8 @@ import shutil
 from argparse import RawTextHelpFormatter
 import yaml
 import pkg_resources
+import pkgutil
+import importlib.metadata
 
 import tableau_utilities.tableau_server.tableau_server as ts
 
@@ -157,9 +159,9 @@ parser_datasource.add_argument('--persona', choices=list(personas.keys()),
                                help='The datatype persona of the column. Required for adding a new column')
 parser_datasource.add_argument('--desc', help='A Tableau column description')
 parser_datasource.add_argument('--calculation', help='A Tableau calculation')
-parser_datasource.add_argument('-E', '--empty_extract', action='store_true',
+parser_datasource.add_argument('-ee', '--empty_extract', action='store_true',
                                help='Adds an empty extract to the Datasource if specified.')
-parser_datasource.add_argument('-F', '--filter_extract',
+parser_datasource.add_argument('-fe', '--filter_extract',
                                help='Deletes data from the extract based on the condition string provided. '
                                     """E.g. "CREATED_AT" < '1/1/2024'""")
 parser_datasource.set_defaults(func=datasource)
@@ -260,6 +262,16 @@ def validate_args_command_merge_config(args):
         parser.error(f'--merge_with {args.merge_with} requires --existing_config')
     if args.merge_with == 'generate_merge_all' and args.target_directory is None:
         parser.error(f'--merge_with {args.merge_with} requires --target_directory')
+
+
+def validate_subpackage_hyper():
+    """ Checks that the hyper subpackage is installed for functions that use it """
+
+    try:
+        version = importlib.metadata.version("tableauhyperapi")
+    except importlib.metadata.PackageNotFoundError:
+        parser.error(
+            '--filter_extract and --empty_extract require the tableau_utilities[hyper] subpackage.  See installation notes if you are on an Apple Silicon (Apple M1, Apple M2, ...)')
 
 
 def tableau_authentication(args):
@@ -453,6 +465,10 @@ def main():
     os.makedirs(tmp_folder, exist_ok=True)
     os.chdir(tmp_folder)
 
+    needs_subpackage_hyper = (
+        args.command == 'datasource' and (args.empty_extract or args.filter_extract)
+    )
+
     needs_tableau_server = (
         (args.command == 'generate_config' and args.location == 'online')
         or (args.command == 'merge_config' and args.location == 'online')
@@ -461,6 +477,9 @@ def main():
         or args.command == 'server_info'
         or args.command == 'server_operate'
     )
+
+    if needs_subpackage_hyper:
+        validate_subpackage_hyper()
 
     if needs_tableau_server:
         server = tableau_authentication(args)

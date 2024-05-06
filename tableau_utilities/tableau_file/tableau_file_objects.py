@@ -707,6 +707,7 @@ class Connection(TableauFileObject):
     filename: str = None
     extract_engine: bool = None
     port: int = None
+    max_varchar_size: str = None
 
     def dict(self):
         output = dict()
@@ -756,6 +757,8 @@ class Connection(TableauFileObject):
             output['@extract-engine'] = str(self.extract_engine).lower()
         if self.port is not None:
             output['@port'] = str(self.port)
+        if self.max_varchar_size is not None:
+            output['@max-varchar-size'] = str(self.max_varchar_size)
         return output
 
 
