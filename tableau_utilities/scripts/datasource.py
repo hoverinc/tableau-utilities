@@ -9,7 +9,7 @@ from tableau_utilities.general.cli_styling import Color
 from tableau_utilities.general.cli_styling import Symbol
 from tableau_utilities.tableau_file.tableau_file import Datasource
 from tableau_utilities.tableau_server.tableau_server import TableauServer
-from tableau_utilities.hyper.hyper import empty_hyper_extract, filter_hyper_extract
+from tableau_utilities.hyper.hyper import create_empty_hyper_extract, filter_hyper_extract
 
 
 def datasource(args, server=None):
@@ -74,7 +74,7 @@ def datasource(args, server=None):
 
     # Add an empty .hyper file to the Datasource; Useful for publishing without data
     if empty_extract:
-        empty_hyper_extract(ds)
+        create_empty_hyper_extract(ds)
         print(f'{color.fg_green}Added empty .hyper extract for {datasource_path}{color.reset}')
     # Otherwise, filter the extract if filter_extract string provided
     elif filter_extract:
