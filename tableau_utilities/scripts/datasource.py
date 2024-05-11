@@ -11,6 +11,27 @@ from tableau_utilities.tableau_file.tableau_file import Datasource
 from tableau_utilities.tableau_server.tableau_server import TableauServer
 
 
+def create_column(name: str, persona: dict):
+    """ Creates the tfo column object with the minimum required fields to add a column
+
+    Args:
+        name: The name for the column. This must be enclosed in square brackets and will become the local-name in code
+        persona: A dictionary showing the role, datatype, and role type
+
+    Returns:
+        A tfo column object
+
+    """
+
+    column = tfo.Column(
+        name=name,
+        role=persona['role'],
+        datatype=persona['datatype'],
+        type=persona['role_type'],
+    )
+
+    return column
+
 def datasource(args, server=None):
     """ Updates a Tableau Datasource locally
 
@@ -45,6 +66,7 @@ def datasource(args, server=None):
     calculation = args.calculation
     remote_name = args.remote_name
     list_objects = args.list.title() if args.list else None
+    column_init = args.column_init
 
     # Datasource Connection Args
     conn_type = args.conn_type
@@ -107,6 +129,7 @@ def datasource(args, server=None):
             print(f'  {symbol.arrow_r} '
                   f'{color.fg_yellow}caption:{color.reset} {c.caption} '
                   f'{color.fg_yellow}local-name:{color.reset} {c.name} '
+                  f'{color.fg_yellow}remote-name:{color.reset} {c.name} '
                   f'{color.fg_yellow}persona:{color.reset} {get_persona_by_attribs(c.role, c.type, c.datatype)}')
     if list_objects == 'Folders':
         for f in ds.folders_common.folder:
@@ -120,6 +143,40 @@ def datasource(args, server=None):
     if list_objects == 'Connections':
         for c in ds.connection.named_connections:
             print(f'  {symbol.arrow_r} {c.connection.dict()}')
+
+    # Column Init - Add columns for any column in Metadata records but not in columns
+    if column_init:
+
+        column_list_local_names = [c.name for c in ds.columns]
+        print(f'{color.fg_yellow}current-columns:{color.reset}{column_list_local_names}')
+        metadata_columns_local_names = [m.local_name for m in ds.connection.metadata_records]
+        print(f'{color.fg_yellow}metadata-records:{color.reset}{metadata_columns_local_names}')
+        columns_to_add = [m for m in metadata_columns_local_names if m not in column_list_local_names]
+        print(f'{color.fg_yellow}columns-to-add:{color.reset}{columns_to_add}')
+
+        for m in ds.connection.metadata_records:
+            if m.local_name in columns_to_add:
+                if debugging_logs:
+                    print("-" * 50)
+                    print(f'{color.fg_magenta}metadata-record local-name:{color.reset}{m.local_name}')
+                    print(f'{color.fg_magenta}metadata-record remote-name:{color.reset}{m.remote_name}')
+                    print(f'{color.fg_magenta}metadata-record:{color.reset}{m}')
+
+                persona = get_persona_by_metadata_local_type(m.local_type)
+                persona_dict = personas.get(persona, {})
+
+                if debugging_logs:
+                    print(f'{color.fg_blue}persona:{color.reset}{persona}')
+                    print(f'{color.fg_blue}persona_dict:{color.reset}{persona_dict}')
+
+                column = create_column(m.local_name, persona_dict)
+
+                if debugging_logs:
+                    print(f'{color.fg_yellow}column:{color.reset}{column}')
+
+                print(f'{color.fg_cyan}Creating new column for {column.name}:{color.reset} {column.dict()}')
+                ds.enforce_column(column, remote_name=m.remote_name)
+
 
     # Add / modify a specified column
     if column_name and not delete:
@@ -136,12 +193,7 @@ def datasource(args, server=None):
             if not persona:
                 raise Exception('Column does not exist, and more args are need to add a new column.\n'
                                 f'Minimum required args: {color.fg_yellow}--column_name --persona{color.reset}')
-            column = tfo.Column(
-                name=column_name,
-                role=persona['role'],
-                datatype=persona['datatype'],
-                type=persona['role_type'],
-            )
+            column = create_column(column_name, persona)
             print(f'{color.fg_cyan}Creating new column for {column_name}:{color.reset} {column.dict()}')
         else:
             print(f'{color.fg_cyan}Updating existing column:{color.reset}\n  {column.dict()}')
@@ -152,6 +204,10 @@ def datasource(args, server=None):
         column.datatype = persona.get('datatype') or column.datatype
         column.desc = desc or column.desc
         column.calculation = calculation or column.calculation
+
+        if debugging_logs:
+            print(f'{color.fg_yellow}column:{color.reset}{column}')
+
         ds.enforce_column(column, remote_name=remote_name, folder_name=folder_name)
 
     # Add a folder if it was specified and does not exist already
@@ -184,7 +240,7 @@ def datasource(args, server=None):
             ds.connection.update(connection)
 
     # Save the datasource if an edit may have happened
-    if column_name or folder_name or delete or enforce_connection or empty_extract:
+    if column_name or folder_name or delete or enforce_connection or empty_extract or column_init:
         start = time()
         print(f'{color.fg_cyan}...Saving datasource changes...{color.reset}')
         ds.save()
