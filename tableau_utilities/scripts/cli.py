@@ -162,6 +162,7 @@ parser_datasource.add_argument('-ee', '--empty_extract', action='store_true',
 parser_datasource.add_argument('-fe', '--filter_extract',
                                help='Deletes data from the extract based on the condition string provided. '
                                     """E.g. "CREATED_AT" < '1/1/2024'""")
+parser_datasource.add_argument('-ci', '--column_init', action='store_true',  help="Adds Columns from all Metadata Records, if they don't already exist.")
 parser_datasource.set_defaults(func=datasource)
 
 # GENERATE CONFIG
