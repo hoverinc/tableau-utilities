@@ -15,7 +15,7 @@ def create_column(name: str, persona: dict):
     """ Creates the tfo column object with the minimum required fields to add a column
 
     Args:
-        name: The name for the column. This must be enclosed in square brackets and will become the local-name in code
+        name: The name for the Column, and local_name of the Metadata Record.
         persona: A dictionary showing the role, datatype, and role type
 
     Returns:
@@ -146,36 +146,27 @@ def datasource(args, server=None):
 
     # Column Init - Add columns for any column in Metadata records but not in columns
     if column_init:
+        columns_to_add = [
+            m for m in ds.connection.metadata_records
+            if m.local_name not in [c.name for c in ds.columns]
+        ]
+        print(f'{color.fg_yellow}Adding missing columns from Metadata Records:{color.reset} '
+              f'{[m.local_name for m in columns_to_add]}')
 
-        column_list_local_names = [c.name for c in ds.columns]
-        print(f'{color.fg_yellow}current-columns:{color.reset}{column_list_local_names}')
-        metadata_columns_local_names = [m.local_name for m in ds.connection.metadata_records]
-        print(f'{color.fg_yellow}metadata-records:{color.reset}{metadata_columns_local_names}')
-        columns_to_add = [m for m in metadata_columns_local_names if m not in column_list_local_names]
-        print(f'{color.fg_yellow}columns-to-add:{color.reset}{columns_to_add}')
+        for m in columns_to_add:
+            if debugging_logs:
+                print(f'{color.fg_magenta}Metadata Record -> {m.local_name}:{color.reset} {m}')
 
-        for m in ds.connection.metadata_records:
-            if m.local_name in columns_to_add:
-                if debugging_logs:
-                    print("-" * 50)
-                    print(f'{color.fg_magenta}metadata-record local-name:{color.reset}{m.local_name}')
-                    print(f'{color.fg_magenta}metadata-record remote-name:{color.reset}{m.remote_name}')
-                    print(f'{color.fg_magenta}metadata-record:{color.reset}{m}')
+            persona = get_persona_by_metadata_local_type(m.local_type)
+            persona_dict = personas.get(persona, {})
+            if debugging_logs:
+                print(f'  - {color.fg_blue}Persona -> {persona}:{color.reset} {persona_dict}')
 
-                persona = get_persona_by_metadata_local_type(m.local_type)
-                persona_dict = personas.get(persona, {})
+            column = create_column(m.local_name, persona_dict)
 
-                if debugging_logs:
-                    print(f'{color.fg_blue}persona:{color.reset}{persona}')
-                    print(f'{color.fg_blue}persona_dict:{color.reset}{persona_dict}')
-
-                column = create_column(m.local_name, persona_dict)
-
-                if debugging_logs:
-                    print(f'{color.fg_yellow}column:{color.reset}{column}')
-
-                print(f'{color.fg_cyan}Creating new column for {column.name}:{color.reset} {column.dict()}')
-                ds.enforce_column(column, remote_name=m.remote_name)
+            if debugging_logs:
+                print(f'  - {color.fg_cyan}Creating Column -> {column.name}:{color.reset} {column.dict()}')
+            ds.enforce_column(column, remote_name=m.remote_name)
 
 
     # Add / modify a specified column
