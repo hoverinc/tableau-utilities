@@ -3,8 +3,6 @@ import os
 import shutil
 from argparse import RawTextHelpFormatter
 import yaml
-import pkg_resources
-import pkgutil
 import importlib.metadata
 
 import tableau_utilities.tableau_server.tableau_server as ts
@@ -18,7 +16,7 @@ from tableau_utilities.scripts.server_operate import server_operate
 from tableau_utilities.scripts.datasource import datasource
 from tableau_utilities.scripts.csv_config import csv_config
 
-__version__ = pkg_resources.require("tableau_utilities")[0].version
+__version__ = importlib.metadata.version('tableau_utilities')
 
 parser = argparse.ArgumentParser(
     prog='tableau_utilities',
@@ -27,7 +25,7 @@ parser = argparse.ArgumentParser(
                 '-Manage configurations to edit datasource metadata',
     formatter_class=RawTextHelpFormatter
 )
-parser.add_argument('--version', action='version', version=f'%(prog)s {__version__}',
+parser.add_argument('-v', '--version', action='version', version=f'%(prog)s {__version__}',
                     help='Print the current version of the CLI')
 parser.add_argument('-d', '--debugging_logs', action='store_true',
                     help='Print detailed logging to the console to debug CLI')
@@ -164,6 +162,7 @@ parser_datasource.add_argument('-ee', '--empty_extract', action='store_true',
 parser_datasource.add_argument('-fe', '--filter_extract',
                                help='Deletes data from the extract based on the condition string provided. '
                                     """E.g. "CREATED_AT" < '1/1/2024'""")
+parser_datasource.add_argument('-ci', '--column_init', action='store_true',  help="Adds Columns from all Metadata Records, if they don't already exist.")
 parser_datasource.set_defaults(func=datasource)
 
 # GENERATE CONFIG
