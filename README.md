@@ -182,7 +182,7 @@ tableau_utilities --token_name my_token_name --token_secret 1q2w3e4r5t6y7u8i9o -
 
 Generate a config from a local file. Add a file prefix and print the debugging logs to the console
 ```commandline
-tableau_utilities --debugging_logs generate_config --location local --file_path '/code/tableau-utilities/tmp_tdsx_and_config/My Awesome Datasource.tdsx' --file_prefix
+tableau_utilities --debugging_logs  --location local --file_path '/code/tableau-utilities/tmp_tdsx_and_config/My Awesome Datasource.tdsx' generate_config --file_prefix
 ```
 
 #### csv_config
