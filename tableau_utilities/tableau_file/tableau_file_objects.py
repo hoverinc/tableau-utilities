@@ -1072,6 +1072,30 @@ class Extract(TableauFileObject):
 
 
 @dataclass
+class Layout(TableauFileObject):
+    """ The Layout Tableau file object """
+    dim_percentage: str = None
+    measure_percentage: str = None
+    dim_ordering: str = None # ordinal or alphabetic
+    measure_ordering: str = None # ordinal or alphabetic
+    show_structure: bool = None
+    tag: str = 'layout'
+
+    def dict(self):
+        dictionary = dict()
+        if self.dim_percentage is not None:
+            dictionary['@dim-percentage'] = self.dim_percentage
+        if self.measure_percentage is not None:
+            dictionary['@measure-percentage'] = self.measure_percentage
+        if self.dim_ordering is not None:
+            dictionary['@dim-ordering'] = self.dim_ordering
+        if self.measure_ordering is not None:
+            dictionary['@measure-ordering'] = self.measure_ordering
+        if self.show_structure is not None:
+            dictionary['@show-structure'] = str(self.show_structure).lower()
+        return dictionary
+
+@dataclass
 class Aliases(TableauFileObject):
     """ The Aliases Tableau file object """
     enabled: bool = True
