@@ -200,11 +200,7 @@ class Datasource(TableauFile):
         parent = self._root.find('.')
         # Gets elements within the parent element, with the appropriate section.tag
         section: list[dict] = list()
-        print('-'*50)
-        print(section)
         for element in parent:
-            print('-------------ELEMENT')
-            print(section)
             if element.tag.endswith(f'true...{obj.tag}') or element.tag == obj.tag:
                 item = xmltodict.parse(ET.tostring(element))[element.tag]
                 if not item:
