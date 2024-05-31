@@ -301,6 +301,14 @@ class Datasource(TableauFile):
             if not found:
                 self.extract.connection.cols.append(extract_col)
 
+
+    def update_metadata(self):
+        pass
+
+    def remove_empty_folders(self):
+        pass
+
+
     def save(self):
         """ Save all changes made to each section of the Datasource """
         parent = self._root.find('.')
