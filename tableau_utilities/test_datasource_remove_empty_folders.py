@@ -1,4 +1,3 @@
-# test_remove_empty_folders.py
 import pytest
 from unittest.mock import patch
 from tableau_utilities.tableau_file.tableau_file_objects import FoldersCommon, Folder, FolderItem
