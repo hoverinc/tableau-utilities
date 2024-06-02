@@ -301,10 +301,6 @@ class Datasource(TableauFile):
             if not found:
                 self.extract.connection.cols.append(extract_col)
 
-
-    def update_metadata(self):
-        pass
-
     def remove_empty_folders(self):
         """ Removes any folder without a column in it
 
