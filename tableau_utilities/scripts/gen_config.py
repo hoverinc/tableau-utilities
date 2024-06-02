@@ -257,12 +257,14 @@ def build_configs(datasource_path, datasource_name, debugging_logs=False, defini
     """
 
     Args:
-        datasource_path:
-        datasource_name:
-        debugging_logs:
-        definitions_csv_path:
+        datasource_path: The path to a datasource file
+        datasource_name: The name of the datasource
+        debugging_logs: True to print debugging logs to the console
+        definitions_csv_path: The path to a .csv with data definitions
 
     Returns:
+        column_configs: A dictionary with the column configs
+        calculated_column_configs = A dictionary with the calculated field configs
 
     """
 
@@ -338,37 +340,11 @@ def generate_config(args, server: TableauServer = None):
     print(f'{color.fg_yellow}BUILDING CONFIG {symbol.arrow_r} '
           f'{color.fg_grey}{datasource_name} {symbol.sep} {datasource_path}{color.reset}')
 
+    # Build the config dictionaries
     column_configs, calculated_column_configs = build_configs(datasource_path, debugging_logs, datasource_name,
                                                               definitions_csv_path)
 
-    # datasource = Datasource(datasource_path)
-    # # Get column information from the metadata records
-    # metadata_record_config = get_metadata_record_config(
-    #     datasource.connection.metadata_records,
-    #     datasource_name,
-    #     debugging_logs
-    # )
-    #
-    # # Get the mapping of definitions from the csv
-    # definitions_mapping = dict()
-    # if definitions_csv_path is not None:
-    #     definitions_mapping = load_csv_with_definitions(file=definitions_csv_path)
-    #
-    # # Extract the columns and folders. Build the new config
-    # folder_mapping = build_folder_mapping(datasource.folders_common)
-    # column_configs, calculated_column_configs = create_column_config(
-    #     columns=datasource.columns,
-    #     datasource_name=datasource_name,
-    #     folder_mapping=folder_mapping,
-    #     metadata_record_columns=metadata_record_config,
-    #     definitions_mapping=definitions_mapping,
-    #     debugging_logs=debugging_logs
-    # )
-    #
-    # # Sort configs
-    # column_configs = dict(sorted(column_configs.items()))
-    # calculated_column_configs = dict(sorted(calculated_column_configs.items()))
-
+    # Output the configs to files
     datasource_name_snake = convert_to_snake_case(datasource_name)
     output_file_column_config = 'column_config.json'
     output_file_calculated_column_config = 'tableau_calc_config.json'

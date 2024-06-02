@@ -1,4 +1,4 @@
-
+from gen_config import build_configs
 
 
 def compare_config_and_datasource(config, datasource_file, datasource_name:
@@ -34,8 +34,8 @@ def apply_config(column_config, calculated_field_config, datasource):
 
     """
 
-    # Generate the column_config from the datasource
-    # Generate the calculation config from the datasource
+    # Generate the column_configs from the datasource
+
 
     # Get the changes to make for the column config
     # Get the changes to make for the calculation config
