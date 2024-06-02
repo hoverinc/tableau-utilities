@@ -341,7 +341,7 @@ def generate_config(args, server: TableauServer = None):
           f'{color.fg_grey}{datasource_name} {symbol.sep} {datasource_path}{color.reset}')
 
     # Build the config dictionaries
-    column_configs, calculated_column_configs = build_configs(datasource_path, debugging_logs, datasource_name,
+    column_configs, calculated_column_configs = build_configs(datasource_path, datasource_name, debugging_logs,
                                                               definitions_csv_path)
 
     # Output the configs to files
