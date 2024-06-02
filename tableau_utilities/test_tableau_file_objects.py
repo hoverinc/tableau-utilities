@@ -42,11 +42,16 @@ def mock_datasource():
 
         return datasource
 
-def test_remove_empty_folders(mock_datasource):
-    # Run the function and verify the result
+def test_remove_empty_folders_removed_folders(mock_datasource):
     removed_folders = mock_datasource.remove_empty_folders()
     assert removed_folders == ['Folder - Empty']
+
+def test_remove_empty_folders_folder_count(mock_datasource):
+    mock_datasource.remove_empty_folders()
     assert len(mock_datasource.folders_common.folder) == 2
+
+def test_remove_empty_folders_folder_names(mock_datasource):
+    mock_datasource.remove_empty_folders()
     folder_names = [folder.name for folder in mock_datasource.folders_common.folder]
     assert 'Folder - Empty' not in folder_names
 
