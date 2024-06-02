@@ -306,7 +306,40 @@ class Datasource(TableauFile):
         pass
 
     def remove_empty_folders(self):
-        pass
+        """ Removes any folder without a column in it
+
+        Example:
+            The "Folder - 2 columns" will be unchanged and the xml line for "Folder - Empty" will be removed
+
+              <_.fcp.SchemaViewerObjectModel.true...folders-common>
+                <folder name='Folder - 2 columns'>
+                  <folder-item name='[GENDER]' type='field' />
+                  <folder-item name='[NUMBER_OF_BABIES]' type='field' />
+                </folder>
+                <folder name='Folder - Empty' />
+            </_.fcp.SchemaViewerObjectModel.true...folders-common>
+
+
+        Returns:
+            The list of folders that were removed
+
+        """
+
+        # Identify empty folders
+        empty_folder_list = []
+
+        for folder in self.folders_common.folder:
+            number_columns_in_folder = len(folder.folder_item)
+
+            if number_columns_in_folder == 0:
+                print(folder.name)
+                empty_folder_list.append(folder.name)
+
+        # Remove Empty Folders
+        for empty_folder in empty_folder_list:
+            self.folders_common.folder.delete(empty_folder)
+
+        return empty_folder_list
 
 
     def save(self):

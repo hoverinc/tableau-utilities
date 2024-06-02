@@ -4,6 +4,7 @@ sheets.googleapis.com-python.json
 .idea
 .DS_Store
 tmp_tdsx_and_config/
+development_test_files/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

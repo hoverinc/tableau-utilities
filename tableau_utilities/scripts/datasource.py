@@ -67,6 +67,7 @@ def datasource(args, server=None):
     remote_name = args.remote_name
     list_objects = args.list.title() if args.list else None
     column_init = args.column_init
+    clean_folders = args.clean_folders
 
     # Datasource Connection Args
     conn_type = args.conn_type
@@ -213,6 +214,11 @@ def datasource(args, server=None):
     if delete == 'folder':
         ds.folders_common.folder.delete(folder_name)
 
+    # Clean folders
+    if clean_folders:
+        cleaned = ds.remove_empty_folders()
+        print(f'Removed this list of folders: {color.fg_cyan}{cleaned}{color.reset}')
+
     # Enforce Connection
     if enforce_connection:
         if debugging_logs:
@@ -231,7 +237,7 @@ def datasource(args, server=None):
             ds.connection.update(connection)
 
     # Save the datasource if an edit may have happened
-    if column_name or folder_name or delete or enforce_connection or empty_extract or column_init:
+    if column_name or folder_name or delete or enforce_connection or empty_extract or column_init or clean_folders:
         start = time()
         print(f'{color.fg_cyan}...Saving datasource changes...{color.reset}')
         ds.save()
