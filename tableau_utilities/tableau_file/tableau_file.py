@@ -332,7 +332,6 @@ class Datasource(TableauFile):
             number_columns_in_folder = len(folder.folder_item)
 
             if number_columns_in_folder == 0:
-                print(folder.name)
                 empty_folder_list.append(folder.name)
 
         # Remove Empty Folders
