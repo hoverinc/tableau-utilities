@@ -38,28 +38,28 @@ def add_metadata_records_as_columns(ds, color=None, debugging_logs=False):
 
     When you create your Tableau extract the first time all columns will be present in Metadata records like this:
 
-   <metadata-record class='column'>
+      <metadata-record class='column'>
         <remote-name>MY_COLUMN</remote-name>
-        <remote-type>129</remote-type>
+        <remote-type>131</remote-type>
         <local-name>[MY_COLUMN]</local-name>
         <parent-name>[Custom SQL Query]</parent-name>
         <remote-alias>MY_COLUMN</remote-alias>
-        <ordinal>1</ordinal>
-        <local-type>string</local-type>
-        <aggregation>Count</aggregation>
-        <width>16777216</width>
+        <ordinal>5</ordinal>
+        <local-type>integer</local-type>
+        <aggregation>Sum</aggregation>
+        <precision>38</precision>
+        <scale>0</scale>
         <contains-null>true</contains-null>
-        <collation flag='0' name='binary' />
         <attributes>
-          <attribute datatype='string' name='DebugRemoteType'>&quot;SQL_VARCHAR&quot;</attribute>
-          <attribute datatype='string' name='DebugWireType'>&quot;SQL_C_CHAR&quot;</attribute>
-          <attribute datatype='string' name='TypeIsVarchar'>&quot;true&quot;</attribute>
+          <attribute datatype='string' name='DebugRemoteType'>&quot;SQL_DECIMAL&quot;</attribute>
+          <attribute datatype='string' name='DebugWireType'>&quot;SQL_C_NUMERIC&quot;</attribute>
         </attributes>
         <_.fcp.ObjectModelEncapsulateLegacy.true...object-id>[_62A667B34C534415B10B2075B0DC36DC]</_.fcp.ObjectModelEncapsulateLegacy.true...object-id>
-    </metadata-record>
+      </metadata-record>
 
     Separately some columns may have a column like this:
-    <column datatype='string' name='[MY_COLUMN]' role='dimension' type='nominal' />
+    <column datatype='integer' name='[MY_COLUMN]' role='dimension' type='ordinal' />
+
 
     Manipulating Tableau columns requires a <column /> record.
 
@@ -215,28 +215,6 @@ def datasource(args, server=None):
     # Column Init - Add columns for any column in Metadata records but not in columns
     if column_init:
         ds = add_metadata_records_as_columns(ds, color, debugging_logs)
-        # columns_to_add = [
-        #     m for m in ds.connection.metadata_records
-        #     if m.local_name not in [c.name for c in ds.columns]
-        # ]
-        # print(f'{color.fg_yellow}Adding missing columns from Metadata Records:{color.reset} '
-        #       f'{[m.local_name for m in columns_to_add]}')
-        #
-        # for m in columns_to_add:
-        #     if debugging_logs:
-        #         print(f'{color.fg_magenta}Metadata Record -> {m.local_name}:{color.reset} {m}')
-        #
-        #     persona = get_persona_by_metadata_local_type(m.local_type)
-        #     persona_dict = personas.get(persona, {})
-        #     if debugging_logs:
-        #         print(f'  - {color.fg_blue}Persona -> {persona}:{color.reset} {persona_dict}')
-        #
-        #     column = create_column(m.local_name, persona_dict)
-        #
-        #     if debugging_logs:
-        #         print(f'  - {color.fg_cyan}Creating Column -> {column.name}:{color.reset} {column.dict()}')
-        #     ds.enforce_column(column, remote_name=m.remote_name)
-
 
     # Add / modify a specified column
     if column_name and not delete:
