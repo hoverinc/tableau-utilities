@@ -1,5 +1,29 @@
+from copy import deepcopy
+
 from tableau_utilities.scripts.gen_config import build_configs
 
+def invert_config(config):
+    """ Helper function to invert the column config and calc config.
+        Output -> {datasource: {column: info}}
+
+    Args:
+        iterator (dict): The iterator to append invert data to.
+        config (dict): The config to invert.
+    """
+
+    temp_config = {}
+
+    for column, i in config.items():
+        for datasource in i['datasources']:
+            new_info = deepcopy(i)
+            del new_info['datasources']
+            new_info['local-name'] = datasource['local-name']
+            new_info['remote_name'] = datasource['sql_alias'] if 'sql_alias' in datasource else None
+            iterator.setdefault(datasource['name'], {column: new_info})
+            iterator[datasource['name']].setdefault(column, new_info)
+
+def combine_configs():
+    pass
 
 def compare_configs(config, datasource_cureent_config, datasource_name):
     """ Compares the config to a datasource. Generates a list of changes to make the datasource match the config

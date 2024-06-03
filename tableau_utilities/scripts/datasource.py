@@ -11,6 +11,10 @@ from tableau_utilities.tableau_file.tableau_file import Datasource
 from tableau_utilities.tableau_server.tableau_server import TableauServer
 
 
+# Define color and symbol as globals
+color = Color()
+symbol = Symbol()
+
 def create_column(name: str, persona: dict):
     """ Creates the tfo column object with the minimum required fields to add a column
 
@@ -145,9 +149,6 @@ def datasource(args, server=None):
     conn_schema = args.conn_schema
     conn_warehouse = args.conn_warehouse
 
-    # Print Styling
-    color = Color()
-    symbol = Symbol()
 
     # Downloads the datasource from Tableau Server if the datasource is not local
     if location == 'online':
