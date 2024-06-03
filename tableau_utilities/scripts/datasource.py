@@ -37,7 +37,7 @@ def create_column(name: str, persona: dict):
     return column
 
 
-def add_metadata_records_as_columns(ds, color=None, debugging_logs=False):
+def add_metadata_records_as_columns(ds, debugging_logs=False):
     """ Adds <column /> records when they are only present in the <metadata-record class='column'>
 
     When you create your Tableau extract the first time all columns will be present in Metadata records like this:
