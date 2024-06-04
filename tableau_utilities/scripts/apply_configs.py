@@ -5,25 +5,38 @@ from typing import Dict, Any
 from tableau_utilities.tableau_file.tableau_file import Datasource
 from tableau_utilities.scripts.gen_config import build_configs
 from tableau_utilities.scripts.datasource import add_metadata_records_as_columns
+#
+# class ApplyConfigs:
+#     """Applies a set of configs to a datasource. Configs prefixed with target_ will be applied to the datasource.
+#     Configs prefixed with datasource_ represent the current state of the datasource before changes.
+#     """
+#
+#     def __init__(self,
+#                  datasource_name: str,
+#                  datasource_path: str,
+#                  target_column_config: Dict[str, Any],
+#                  target_calculated_column_config: Dict[str, Any],
+#                  debugging_logs: bool) -> None:
+#         self.datasource_name: str = datasource_name
+#         self.datasource_path: str = datasource_path
+#         self.target_column_config: Dict[str, Any] = target_column_config
+#         self.target_calculated_column_config: Dict[str, Any] = target_calculated_column_config
+#         self.debugging_logs: bool = debugging_logs
 
 class ApplyConfigs:
     """Applies a set of configs to a datasource. Configs prefixed with target_ will be applied to the datasource.
     Configs prefixed with datasource_ represent the current state of the datasource before changes.
     """
 
-    def __init__(self,
-                 datasource_name: str,
-                 datasource_path: str,
-                 target_column_config: Dict[str, Any],
-                 target_calculated_column_config: Dict[str, Any],
-                 debugging_logs: bool) -> None:
-        self.datasource_name: str = datasource_name
-        self.datasource_path: str = datasource_path
-        self.target_column_config: Dict[str, Any] = target_column_config
-        self.target_calculated_column_config: Dict[str, Any] = target_calculated_column_config
-        self.debugging_logs: bool = debugging_logs
+    def __init__(self, datasource_name, datasource_path, target_column_config, target_calculated_column_config, debugging_logs):
+        self.datasource_name = datasource_name
+        self.datasource_path = datasource_path
+        self.target_column_config = target_column_config
+        self.target_calculated_column_config = target_calculated_column_config
+        self.debugging_logs = debugging_logs
 
-    def invert_config(self, config: Dict[str, Any]) -> Dict[str, Any]:
+    def invert_config(self, config):
+    # def invert_config(self, config: Dict[str, Any]) -> Dict[str, Any]:
         """Helper function to invert the column config and calc config.
         Output -> {datasource: {column: info}}
 
