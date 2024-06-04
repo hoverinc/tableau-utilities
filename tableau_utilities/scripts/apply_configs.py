@@ -1,32 +1,40 @@
 from copy import deepcopy
 import pprint
+from typing import Dict, Any
 
 from tableau_utilities.tableau_file.tableau_file import Datasource
 from tableau_utilities.scripts.gen_config import build_configs
 from tableau_utilities.scripts.datasource import add_metadata_records_as_columns
 
 class ApplyConfigs:
-    """ Applies a set of configs to a datasource.  Configs prefixed with target_ will be applied to the datasource.
+    """Applies a set of configs to a datasource. Configs prefixed with target_ will be applied to the datasource.
     Configs prefixed with datasource_ represent the current state of the datasource before changes.
-    
     """
-    def __init__(self, datasource_name, datasource_path, target_column_config, target_calculated_column_config, debugging_logs):
-        self.datasource_name = datasource_name
-        self.datasource_path = datasource_path
-        self.target_column_config = target_column_config
-        self.target_calculated_column_config = target_calculated_column_config
-        self.debugging_logs = debugging_logs
 
-    def invert_config(self, config):
-        """ Helper function to invert the column config and calc config.
-            Output -> {datasource: {column: info}}
+    def __init__(self,
+                 datasource_name: str,
+                 datasource_path: str,
+                 target_column_config: Dict[str, Any],
+                 target_calculated_column_config: Dict[str, Any],
+                 debugging_logs: bool) -> None:
+        self.datasource_name: str = datasource_name
+        self.datasource_path: str = datasource_path
+        self.target_column_config: Dict[str, Any] = target_column_config
+        self.target_calculated_column_config: Dict[str, Any] = target_calculated_column_config
+        self.debugging_logs: bool = debugging_logs
+
+    def invert_config(self, config: Dict[str, Any]) -> Dict[str, Any]:
+        """Helper function to invert the column config and calc config.
+        Output -> {datasource: {column: info}}
 
         Args:
-            iterator (dict): The iterator to append invert data to.
             config (dict): The config to invert.
+
+        Returns:
+            dict: The inverted config.
         """
 
-        temp_config = {}
+        inverted_config = {}
 
         for column, i in config.items():
             for datasource in i['datasources']:
@@ -34,17 +42,32 @@ class ApplyConfigs:
                 del new_info['datasources']
                 new_info['local-name'] = datasource['local-name']
                 new_info['remote_name'] = datasource['sql_alias'] if 'sql_alias' in datasource else None
-                temp_config.setdefault(datasource['name'], {column: new_info})
-                temp_config[datasource['name']].setdefault(column, new_info)
+                inverted_config.setdefault(datasource['name'], {column: new_info})
+                inverted_config[datasource['name']].setdefault(column, new_info)
 
         if self.debugging_logs:
             pp = pprint.PrettyPrinter(indent=4, width=80, depth=None, compact=False)
-            pp.pprint(temp_config)
+            pp.pprint(inverted_config)
 
-        return temp_config
+        return inverted_config
 
     def combine_configs(self):
         pass
+
+    def select_matching_datasource_config(self, config):
+        """ Limit
+
+        Args:
+            comfig:
+
+        Returns:
+            A config with any datasource that is not self.datasource_name removed
+
+        """
+
+        config = config[self.datasource_name]
+        return config
+
 
     def prepare_configs(self, config_A, config_B):
         """ Takes 2 configs to invert, combine, and remove irrelevant datasource information. Columns in a main config
@@ -58,6 +81,20 @@ class ApplyConfigs:
         Returns:
 
         """
+
+        # invert the configs
+        config_A = self.invert_config(config_A)
+        config_B = self.invert_config(config_B)
+
+        # Get only the configs to the current datasource
+        config_A = self.select_matching_datasource_config(config_A)
+        config_B = self.select_matching_datasource_config(config_B)
+
+        # Combine configs
+
+
+
+
         # datasource = self.invert_config(self.column_config)
         # self.invert_config(self.calculated_column_config)
         # combined_config = {**dict1, **dict2}
@@ -127,9 +164,7 @@ class ApplyConfigs:
         target_config = self.prepare_configs(self.target_column_config, self.target_calculated_column_config)
         datasource_config = self.prepare_configs(datasource_column_config, datasource_calculated_column_config)
 
-        # datasource = self.invert_config(self.column_config)
-        # self.invert_config(self.calculated_column_config)
-        # combined_config = {**dict1, **dict2}
+
 
         # Get the changes to make for the column config
         # Get the changes to make for the calculation config
