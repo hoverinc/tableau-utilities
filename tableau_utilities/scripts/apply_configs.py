@@ -52,10 +52,7 @@ class ApplyConfigs:
 
         return inverted_config
 
-    def combine_configs(self):
-        pass
-
-    def select_matching_datasource_config(self, config):
+    def select_matching_datasource_config(self, config: Dict[str, Any]) -> Dict[str, Any]:
         """ Limit
 
         Args:
@@ -68,6 +65,12 @@ class ApplyConfigs:
 
         config = config[self.datasource_name]
         return config
+
+
+    def combine_configs(self):
+        pass
+
+
 
 
     def prepare_configs(self, config_A, config_B):
