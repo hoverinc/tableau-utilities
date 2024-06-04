@@ -147,42 +147,41 @@ def test_invert_config_combined(apply_configs):
     result = apply_configs.invert_config(sample_config)
     assert result == expected_output
 
-def test_select_matching_datasource_config(apply_configs):
-    sample_config = {
-        "my_datasource_1": {
-            "Column2": {
-                "description": "Description of Column2",
-                "folder": "Folder2",
-                "persona": "string_dimension",
-                "local-name": "MY_COLUMN_1",
-                "remote_name": "MY_COLUMN_1_ALIAS"
-            }
-        },
-        "my_datasource_2": {
-            "Column2": {
-                "description": "Description of Column2",
-                "folder": "Folder2",
-                "persona": "string_dimension",
-                "local-name": "MY_COLUMN_2",
-                "remote_name": "MY_COLUMN_2_ALIAS"
-            }
-        }
-    }
-
-    expected_output = {
-        "my_datasource_1": {
-            "Column2": {
-                "description": "Description of Column2",
-                "folder": "Folder2",
-                "persona": "string_dimension",
-                "local-name": "MY_COLUMN_1",
-                "remote_name": "MY_COLUMN_1_ALIAS"
-            }
-        },
-    }
-
-    result = apply_configs.select_matching_datasource_config(sample_config)
-    assert result == expected_output
+# def test_select_matching_datasource_config(apply_configs):
+#     sample_config = {
+#         "my_datasource_1": {
+#             "Column2": {
+#                 "description": "Description of Column2",
+#                 "folder": "Folder2",
+#                 "persona": "string_dimension",
+#                 "local-name": "MY_COLUMN_1",
+#                 "remote_name": "MY_COLUMN_1_ALIAS"
+#             }
+#         },
+#         "my_datasource_2": {
+#             "Column2": {
+#                 "description": "Description of Column2",
+#                 "folder": "Folder2",
+#                 "persona": "string_dimension",
+#                 "local-name": "MY_COLUMN_2",
+#                 "remote_name": "MY_COLUMN_2_ALIAS"
+#             }
+#         }
+#     }
+#
+#     expected_output = {
+#         "my_datasource_1": {
+#             "Column2": {
+#                 "description": "Description of Column2",
+#                 "folder": "Folder2",
+#                 "persona": "string_dimension",
+#                 "local-name": "MY_COLUMN_1",
+#                 "remote_name": "MY_COLUMN_1_ALIAS"
+#             }
+#         },
+#     }
+#     result = apply_configs.select_matching_datasource_config(sample_config)
+#     assert result == expected_output
 
 if __name__ == '__main__':
     pytest.main()

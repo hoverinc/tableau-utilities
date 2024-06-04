@@ -24,6 +24,20 @@ class ApplyConfigs:
         self.debugging_logs: bool = debugging_logs
 
 
+    def select_matching_datasource_config(self, config: Dict[str, Any]) -> Dict[str, Any]:
+        """ Limit
+
+        Args:
+            comfig:
+
+        Returns:
+            A config with any datasource that is not self.datasource_name removed
+
+        """
+
+        config = config[self.datasource_name]
+        return config
+
     def invert_config(self, config: Dict[str, Any]) -> Dict[str, Any]:
         """Helper function to invert the column config and calc config.
         Output -> {datasource: {column: info}}
@@ -52,19 +66,6 @@ class ApplyConfigs:
 
         return inverted_config
 
-    def select_matching_datasource_config(self, config: Dict[str, Any]) -> Dict[str, Any]:
-        """ Limit
-
-        Args:
-            comfig:
-
-        Returns:
-            A config with any datasource that is not self.datasource_name removed
-
-        """
-
-        config = config[self.datasource_name]
-        return config
 
 
     def combine_configs(self):
