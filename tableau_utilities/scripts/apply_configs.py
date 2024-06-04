@@ -67,14 +67,7 @@ class ApplyConfigs:
         return inverted_config
 
 
-
-    def combine_configs(self):
-        pass
-
-
-
-
-    def prepare_configs(self, config_A, config_B):
+    def prepare_configs(self, config_A: Dict[str, Any], config_B: Dict[str, Any]) -> Dict[str, Any]:
         """ Takes 2 configs to invert, combine, and remove irrelevant datasource information. Columns in a main config
         can be in 1 or many Tableau datasources.  So when managing multiple datasources it's likely to have columns that
         need removal
@@ -96,14 +89,9 @@ class ApplyConfigs:
         config_B = self.select_matching_datasource_config(config_B)
 
         # Combine configs
+        combined_config = {**config_A, **config_B}
 
-
-
-
-        # datasource = self.invert_config(self.column_config)
-        # self.invert_config(self.calculated_column_config)
-        # combined_config = {**dict1, **dict2}
-        pass
+        return combined_config
 
     def compare_columns(self):
         """ Compares the config to a datasource. Generates a list of changes to make the datasource match the config
