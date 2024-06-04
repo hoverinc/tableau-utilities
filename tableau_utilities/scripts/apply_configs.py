@@ -6,14 +6,16 @@ from tableau_utilities.scripts.gen_config import build_configs
 from tableau_utilities.scripts.datasource import add_metadata_records_as_columns
 
 class ApplyConfigs:
-    def __init__(self, datasource_name, datasource_path, column_config, calculated_column_config, debugging_logs):
+    """ Applies a set of configs to a datasource.  Configs prefixed with target_ will be applied to the datasource.
+    Configs prefixed with datasource_ represent the current state of the datasource before changes.
+    
+    """
+    def __init__(self, datasource_name, datasource_path, target_column_config, target_calculated_column_config, debugging_logs):
         self.datasource_name = datasource_name
         self.datasource_path = datasource_path
-        self.column_config = column_config
-        self.calculated_column_config = calculated_column_config
+        self.target_column_config = target_column_config
+        self.target_calculated_column_config = target_calculated_column_config
         self.debugging_logs = debugging_logs
-
-
 
     def invert_config(self, config):
         """ Helper function to invert the column config and calc config.
@@ -97,7 +99,8 @@ class ApplyConfigs:
         pass
 
     def apply_config_to_datasource(self):
-        """ Applies changes to make
+        """ Applies a set of configs (column_config and calculated_column_config) to a datasource.
+        If a column is in a datasource but NOT in the config that column will be unchanged.
 
         Args:
             datasource_name:
@@ -119,17 +122,14 @@ class ApplyConfigs:
         datasource = add_metadata_records_as_columns(datasource, self.debugging_logs)
 
         # Build the config dictionaries from the datasource
-        datasource_current_column_config, datasource_current_calculated_column_config = build_configs(datasource,
-                                                                                                      self.datasource_name)
+        datasource_column_config, datasource_calculated_column_config = build_configs(datasource, self.datasource_name)
         # Prepare the configs by inverting, combining and removing configs for other datasources
-        config = self.prepare_configs()
-        current_datasource_config = self.prepare_configs()
+        target_config = self.prepare_configs(self.target_column_config, self.target_calculated_column_config)
+        datasource_config = self.prepare_configs(datasource_column_config, datasource_calculated_column_config)
 
         # datasource = self.invert_config(self.column_config)
         # self.invert_config(self.calculated_column_config)
         # combined_config = {**dict1, **dict2}
-
-
 
         # Get the changes to make for the column config
         # Get the changes to make for the calculation config
@@ -148,9 +148,9 @@ def apply_configs(args):
     debugging_logs = args.debugging_logs
     datasource_name = args.name
     datasource_path = args.file_path
-    column_config = args.column_config
-    calculated_column_config = args.calculated_column_config
+    target_column_config = args.column_config
+    target_calculated_column_config = args.calculated_column_config
 
-    AC = ApplyConfigs(datasource_name, datasource_path, column_config, calculated_column_config, debugging_logs)
+    AC = ApplyConfigs(datasource_name, datasource_path, target_column_config, target_calculated_column_config, debugging_logs)
 
     AC.apply_config_to_datasource()
