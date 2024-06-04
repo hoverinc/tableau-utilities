@@ -32,9 +32,9 @@ jobs:
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    - name: Run Pytest mock tests
+    - name: Run Pytest on the tests in tests/
       run:
-        pytest tests/test_datasource_remove_empty_folders.py -p no:warnings
+        pytest tests/ -p no:warnings
     - name: Run pytest on tableau-utilities
       run: |
         cd tableau_utilities && pytest -v

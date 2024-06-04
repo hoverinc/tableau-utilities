@@ -253,11 +253,11 @@ def build_folder_mapping(folders):
     return mappings
 
 
-def build_configs(datasource_path, datasource_name, debugging_logs=False, definitions_csv_path=None):
+def build_configs(datasource, datasource_name, debugging_logs=False, definitions_csv_path=None):
     """
 
     Args:
-        datasource_path: The path to a datasource file
+        datasource: A Tableau utilities datasource object
         datasource_name: The name of the datasource
         debugging_logs: True to print debugging logs to the console
         definitions_csv_path: The path to a .csv with data definitions
@@ -268,7 +268,6 @@ def build_configs(datasource_path, datasource_name, debugging_logs=False, defini
 
     """
 
-    datasource = Datasource(datasource_path)
     # Get column information from the metadata records
     metadata_record_config = get_metadata_record_config(
         datasource.connection.metadata_records,
@@ -340,8 +339,10 @@ def generate_config(args, server: TableauServer = None):
     print(f'{color.fg_yellow}BUILDING CONFIG {symbol.arrow_r} '
           f'{color.fg_grey}{datasource_name} {symbol.sep} {datasource_path}{color.reset}')
 
+    datasource = Datasource(datasource_path)
+
     # Build the config dictionaries
-    column_configs, calculated_column_configs = build_configs(datasource_path, datasource_name, debugging_logs,
+    column_configs, calculated_column_configs = build_configs(datasource, datasource_name, debugging_logs,
                                                               definitions_csv_path)
 
     # Output the configs to files
