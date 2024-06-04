@@ -24,8 +24,7 @@ class ApplyConfigs:
         self.debugging_logs: bool = debugging_logs
 
 
-    def invert_config(self, config):
-    # def invert_config(self, config: Dict[str, Any]) -> Dict[str, Any]:
+    def invert_config(self, config: Dict[str, Any]) -> Dict[str, Any]:
         """Helper function to invert the column config and calc config.
         Output -> {datasource: {column: info}}
 
