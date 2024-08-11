@@ -197,7 +197,7 @@ class ApplyConfigs:
         return changes_to_make
 
 
-    def execute_changes(self, column_config, calculated_field_config, datasource):
+    def execute_changes(self, columns_list, datasource):
         """ Applies changes to make
 
         Args:
@@ -207,7 +207,19 @@ class ApplyConfigs:
         Returns:
 
         """
-        pass
+
+
+        for column in columns_list:
+            column = datasource.columns.get(column['local-name'])
+
+            column.caption = caption or column.caption
+            column.role = persona.get('role') or column.role
+            column.type = persona.get('role_type') or column.type
+            column.datatype = persona.get('datatype') or column.datatype
+            column.desc = desc or column.desc
+            column.calculation = calculation or column.calculation
+
+
 
     def apply_config_to_datasource(self):
         """ Applies a set of configs (column_config and calculated_column_config) to a datasource.
@@ -250,6 +262,7 @@ class ApplyConfigs:
 
         # merged_config = self.merge_configs(target_config, datasource_config)
         changes_to_make = self.compare_columns(target_config, datasource_config)
+
 
 
 
