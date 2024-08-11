@@ -103,6 +103,7 @@ class ApplyConfigs:
 
         return combined_config
 
+
     def flatten_to_list_of_fields(self, nested_dict: Dict[str, Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
         Flattens a nested dictionary by removing one level of nesting and adding a "Caption" key.
@@ -118,7 +119,48 @@ class ApplyConfigs:
             flattened_entry = {"Caption": key}
             flattened_entry.update(value)
             flattened_list.append(flattened_entry)
+
+        if self.debugging_logs:
+            print(f'{color.fg_yellow}AFTER FLATTENING{color.reset}')
+            for field_config in flattened_list:
+                print(field_config)
+
         return flattened_list
+    #
+    # def merge_configs(self, target_config: List[Dict[str, Any]], datasource_config: List[Dict[str, Any]]) -> List[
+    #     Dict[str, Any]]:
+    #     """Merges two lists of dictionaries ensuring all 'local-name' from both lists are present.
+    #
+    #     If the 'local-name' is in both lists, the values from `target_config` are used.
+    #
+    #     Args:
+    #         target_config (List[Dict[str, Any]]): The target configuration list of dictionaries.
+    #         datasource_config (List[Dict[str, Any]]): The datasource configuration list of dictionaries.
+    #
+    #     Returns:
+    #         List[Dict[str, Any]]: A merged list of dictionaries.
+    #     """
+    #     merged_dict = {}
+    #
+    #     # Add all entries from datasource_config to merged_dict
+    #     for entry in datasource_config:
+    #         local_name = entry['local-name']
+    #         merged_dict[local_name] = entry
+    #
+    #     # Update or add entries from target_config to merged_dict
+    #     for entry in target_config:
+    #         local_name = entry['local-name']
+    #         merged_dict[local_name] = entry
+    #
+    #     # Convert merged_dict back to a list of dictionaries
+    #     merged_list = list(merged_dict.values())
+    #
+    #     # if self.debugging_logs:
+    #     print(f'{color.fg_yellow}AFTER MERGING{color.reset}')
+    #     for field_config in merged_list:
+    #         print(field_config)
+    #
+    #     return merged_list
 
     def compare_columns(self):
         """ Compares the config to a datasource. Generates a list of changes to make the datasource match the config
@@ -128,19 +170,31 @@ class ApplyConfigs:
 
         """
 
-        # compare the caption. If the caption matches compare the attributes
+
         pass
 
-    def compare_configs(self, config, datasource_cureent_config, datasource_name):
-        """ Compares the config to a datasource. Generates a list of changes to make the datasource match the config
+    def compare_columns(self, target_config: List[Dict[str, Any]], datasource_config: List[Dict[str, Any]]) -> List[
+        Dict[str, Any]]:
+        """Compares the target config to the datasource config and generates a list of changes to make the datasource match the target config.
+
+        Args:
+            target_config (List[Dict[str, Any]]): The target configuration list of dictionaries.
+            datasource_config (List[Dict[str, Any]]): The datasource configuration list of dictionaries.
 
         Returns:
-            dict: a dictionary with the columns that need updating
-
+            List[Dict[str, Any]]: A list of dictionaries with the columns that need updating.
         """
+        changes_to_make = []
 
-        # compare the caption. If the caption matches compare the attributes
-        pass
+        for target_entry in target_config:
+            if target_entry not in datasource_config:
+                changes_to_make.append(target_entry)
+
+        print(f'{color.fg_yellow}AFTER MERGING{color.reset}')
+        for field_config in changes_to_make:
+            print(field_config)
+
+        return changes_to_make
 
 
     def execute_changes(self, column_config, calculated_field_config, datasource):
@@ -191,7 +245,11 @@ class ApplyConfigs:
         target_config = self.prepare_configs(self.target_column_config, self.target_calculated_column_config)
         datasource_config = self.prepare_configs(datasource_column_config, datasource_calculated_column_config)
 
-        print
+        target_config = self.flatten_to_list_of_fields(target_config)
+        datasource_config = self.flatten_to_list_of_fields(datasource_config)
+
+        # merged_config = self.merge_configs(target_config, datasource_config)
+        changes_to_make = self.compare_columns(target_config, datasource_config)
 
 
 
