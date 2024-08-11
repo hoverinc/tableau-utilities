@@ -3,8 +3,10 @@ import pprint
 from typing import Dict, Any
 
 from tableau_utilities.tableau_file.tableau_file import Datasource
-from tableau_utilities.scripts.gen_config import build_configs
 from tableau_utilities.scripts.datasource import add_metadata_records_as_columns
+from tableau_utilities.scripts.gen_config import build_configs
+from tableau_utilities.scripts.merge_config import read_file
+
 
 class ApplyConfigs:
     """Applies a set of configs to a datasource. Configs prefixed with target_ will be applied to the datasource.
@@ -159,8 +161,9 @@ class ApplyConfigs:
 
         if self.debugging_logs:
             print('Target Column Config:', self.target_column_config)
+            print('Target Column Config:', type(self.target_column_config))
             print('Target Calculated Column Config:', self.target_calculated_column_config)
-            print('Datasource Column Config:', datasource_column_config)
+            # print('Datasource Column Config:', datasource_column_config)
 
         # # Prepare the configs by inverting, combining and removing configs for other datasources
         # target_config = self.prepare_configs(self.target_column_config, self.target_calculated_column_config)
@@ -185,8 +188,8 @@ def apply_configs(args):
     debugging_logs = args.debugging_logs
     datasource_name = args.name
     datasource_path = args.file_path
-    target_column_config = args.column_config
-    target_calculated_column_config = args.calculated_column_config
+    target_column_config = read_file(args.column_config)
+    target_calculated_column_config = read_file(args.calculated_column_config)
 
     AC = ApplyConfigs(datasource_name, datasource_path, target_column_config, target_calculated_column_config, debugging_logs)
 
