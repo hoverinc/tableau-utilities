@@ -51,6 +51,9 @@ class ApplyConfigs:
 
         inverted_config = {}
 
+        if self.debugging_logs:
+            print(config)
+
         for column, i in config.items():
             for datasource in i['datasources']:
                 new_info = deepcopy(i)
@@ -153,9 +156,15 @@ class ApplyConfigs:
 
         # Build the config dictionaries from the datasource
         datasource_column_config, datasource_calculated_column_config = build_configs(datasource, self.datasource_name)
-        # Prepare the configs by inverting, combining and removing configs for other datasources
-        target_config = self.prepare_configs(self.target_column_config, self.target_calculated_column_config)
-        datasource_config = self.prepare_configs(datasource_column_config, datasource_calculated_column_config)
+
+        if self.debugging_logs:
+            print('Target Column Config:', self.target_column_config)
+            print('Target Calculated Column Config:', self.target_calculated_column_config)
+            print('Datasource Column Config:', datasource_column_config)
+
+        # # Prepare the configs by inverting, combining and removing configs for other datasources
+        # target_config = self.prepare_configs(self.target_column_config, self.target_calculated_column_config)
+        # datasource_config = self.prepare_configs(datasource_column_config, datasource_calculated_column_config)
 
 
 
