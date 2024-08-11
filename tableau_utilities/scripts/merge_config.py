@@ -175,9 +175,17 @@ def merge_configs(args, server=None):
 
     # Merge a config with a definitions csv
     elif merge_with == 'csv':
+        # Log paths
+        if debugging_logs:
+            print(f'{color.fg_yellow}EXISTING CONFIG PATH {symbol.arrow_r} '
+                  f'{color.fg_grey}{existing_config}{color.reset}')
+            print(f'{color.fg_yellow}DEFINITIONS CSV PATH {symbol.arrow_r} '
+                  f'{color.fg_grey}{definitions_csv_path}{color.reset}')
+
         # Read files
         existing_config = read_file(existing_config)
-        definitions_mapping = load_csv_with_definitions(file=definitions_csv_path)
+        definitions_mapping = load_csv_with_definitions(file=definitions_csv_path, debugging_logs=debugging_logs)
+
         # Merge
         new_config = add_definitions_mapping(existing_config, definitions_mapping)
         # Sort and write the merged config
