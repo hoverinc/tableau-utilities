@@ -1,6 +1,6 @@
 from copy import deepcopy
 import pprint
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 from tableau_utilities.tableau_file.tableau_file import Datasource
 from tableau_utilities.general.cli_styling import Color, Symbol
@@ -102,6 +102,23 @@ class ApplyConfigs:
             pp.pprint(combined_config)
 
         return combined_config
+
+    def flatten_to_list_of_fields(self, nested_dict: Dict[str, Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """
+        Flattens a nested dictionary by removing one level of nesting and adding a "Caption" key.
+
+        Args:
+            nested_dict (Dict[str, Dict[str, Any]]): The nested dictionary to flatten.
+
+        Returns:
+            List[Dict[str, Any]]: A list of dictionaries with "Caption" as a key.
+        """
+        flattened_list = []
+        for key, value in nested_dict.items():
+            flattened_entry = {"Caption": key}
+            flattened_entry.update(value)
+            flattened_list.append(flattened_entry)
+        return flattened_list
 
     def compare_columns(self):
         """ Compares the config to a datasource. Generates a list of changes to make the datasource match the config
