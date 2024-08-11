@@ -3,10 +3,13 @@ import pprint
 from typing import Dict, Any
 
 from tableau_utilities.tableau_file.tableau_file import Datasource
+from tableau_utilities.general.cli_styling import Color, Symbol
 from tableau_utilities.scripts.datasource import add_metadata_records_as_columns
 from tableau_utilities.scripts.gen_config import build_configs
 from tableau_utilities.scripts.merge_config import read_file
 
+color = Color()
+symbol = Symbol()
 
 class ApplyConfigs:
     """Applies a set of configs to a datasource. Configs prefixed with target_ will be applied to the datasource.
@@ -53,9 +56,6 @@ class ApplyConfigs:
 
         inverted_config = {}
 
-        if self.debugging_logs:
-            print(config)
-
         for column, i in config.items():
             for datasource in i['datasources']:
                 new_info = deepcopy(i)
@@ -66,7 +66,7 @@ class ApplyConfigs:
                 inverted_config[datasource['name']].setdefault(column, new_info)
 
         if self.debugging_logs:
-            pp = pprint.PrettyPrinter(indent=4, width=80, depth=None, compact=False)
+            pp = pprint.PrettyPrinter(indent=4, width=200, depth=None, compact=False)
             pp.pprint(inverted_config)
 
         return inverted_config
@@ -95,6 +95,11 @@ class ApplyConfigs:
 
         # Combine configs
         combined_config = {**config_A, **config_B}
+
+        if self.debugging_logs:
+            print(f'{color.fg_yellow}AFTER COMBINING CONFIGS{color.reset}')
+            pp = pprint.PrettyPrinter(indent=4, width=200, depth=None, compact=False)
+            pp.pprint(combined_config)
 
         return combined_config
 
@@ -159,15 +164,17 @@ class ApplyConfigs:
         # Build the config dictionaries from the datasource
         datasource_column_config, datasource_calculated_column_config = build_configs(datasource, self.datasource_name)
 
-        if self.debugging_logs:
-            print('Target Column Config:', self.target_column_config)
-            print('Target Column Config:', type(self.target_column_config))
-            print('Target Calculated Column Config:', self.target_calculated_column_config)
-            # print('Datasource Column Config:', datasource_column_config)
+        # if self.debugging_logs:
+        #     print('Target Column Config:', self.target_column_config)
+        #     print('Target Column Config:', type(self.target_column_config))
+        #     print('Target Calculated Column Config:', self.target_calculated_column_config)
+        #     # print('Datasource Column Config:', datasource_column_config)
 
-        # # Prepare the configs by inverting, combining and removing configs for other datasources
-        # target_config = self.prepare_configs(self.target_column_config, self.target_calculated_column_config)
-        # datasource_config = self.prepare_configs(datasource_column_config, datasource_calculated_column_config)
+        # Prepare the configs by inverting, combining and removing configs for other datasources
+        target_config = self.prepare_configs(self.target_column_config, self.target_calculated_column_config)
+        datasource_config = self.prepare_configs(datasource_column_config, datasource_calculated_column_config)
+
+        print
 
 
 
