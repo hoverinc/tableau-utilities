@@ -1,9 +1,14 @@
 from copy import deepcopy
+import os
 import pprint
+import shutil
 from typing import Dict, Any, List
+from time import time
+
 
 from tableau_utilities.tableau_file.tableau_file import Datasource
 from tableau_utilities.general.cli_styling import Color, Symbol
+from tableau_utilities.general.config_column_persona import personas
 from tableau_utilities.scripts.datasource import add_metadata_records_as_columns
 from tableau_utilities.scripts.gen_config import build_configs
 from tableau_utilities.scripts.merge_config import read_file
@@ -162,16 +167,6 @@ class ApplyConfigs:
     #
     #     return merged_list
 
-    def compare_columns(self):
-        """ Compares the config to a datasource. Generates a list of changes to make the datasource match the config
-
-        Returns:
-            dict: a dictionary with the columns that need updating
-
-        """
-
-
-        pass
 
     def compare_columns(self, target_config: List[Dict[str, Any]], datasource_config: List[Dict[str, Any]]) -> List[
         Dict[str, Any]]:
@@ -196,29 +191,47 @@ class ApplyConfigs:
 
         return changes_to_make
 
-
-    def execute_changes(self, columns_list, datasource):
+    def execute_changes(self, columns_list: List[Dict[str, Any]], datasource):
         """ Applies changes to make
 
         Args:
-            config:
+            columns_list:
             datasource:
 
         Returns:
 
         """
 
-
         for column in columns_list:
             column = datasource.columns.get(column['local-name'])
 
-            column.caption = caption or column.caption
+            persona = personas.get(column['persona'].lower(), {})
+
+            column.caption = column['caption'] or column.caption
             column.role = persona.get('role') or column.role
             column.type = persona.get('role_type') or column.type
             column.datatype = persona.get('datatype') or column.datatype
-            column.desc = desc or column.desc
-            column.calculation = calculation or column.calculation
+            column.desc = column['description'] or column.desc
+            column.calculation = column['calculation'] or column.calculation
 
+            if self.debugging_logs:
+                print(f'{color.fg_yellow}column:{color.reset}{column}')
+
+            datasource.enforce_column(column, remote_name=column['remote_name'], folder_name=column['folder'])
+
+
+        start = time()
+        print(f'{color.fg_cyan}...Extracting {self.datasource_name}...{color.reset}')
+        save_folder = f'{self.datasource_name} - AFTER'
+        os.makedirs(save_folder, exist_ok=True)
+        if datasource.extension == 'tds':
+            xml_path = os.path.join(save_folder, self.datasource_name)
+            shutil.copy(self.datasource_path, xml_path)
+        else:
+            xml_path = datasource.unzip(extract_to=save_folder, unzip_all=True)
+        if self.debugging_logs:
+            print(f'{color.fg_green}{symbol.success} (Done in {round(time() - start)} sec) '
+                  f'AFTER - TDS SAVED TO: {color.fg_yellow}{xml_path}{color.reset}')
 
 
     def apply_config_to_datasource(self):
