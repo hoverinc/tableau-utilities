@@ -245,8 +245,6 @@ class ApplyConfigs:
             calculated_field_config:
             debugging_logs:
 
-
-
         Returns:
             None
 
@@ -276,19 +274,21 @@ class ApplyConfigs:
         # merged_config = self.merge_configs(target_config, datasource_config)
         changes_to_make = self.compare_columns(target_config, datasource_config)
 
+        self.execute_changes(changes_to_make, datasource)
 
-
-
-        # Get the changes to make for the column config
-        # Get the changes to make for the calculation config
-
-        # Apply the changes for the column config
-        # Apply the changes for the calc config
-
-        # Clean up the empty folders
-
-        # Save the file
-        pass
+        #
+        #
+        #
+        # # Get the changes to make for the column config
+        # # Get the changes to make for the calculation config
+        #
+        # # Apply the changes for the column config
+        # # Apply the changes for the calc config
+        #
+        # # Clean up the empty folders
+        #
+        # # Save the file
+        # pass
 
 
 def apply_configs(args):
