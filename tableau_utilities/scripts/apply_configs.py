@@ -231,19 +231,24 @@ class ApplyConfigs:
 
             datasource.enforce_column(column, remote_name=each_column['remote_name'], folder_name=each_column['folder'])
 
-
         start = time()
-        print(f'{color.fg_cyan}...Extracting {self.datasource_name}...{color.reset}')
-        save_folder = f'{self.datasource_name} - AFTER'
-        os.makedirs(save_folder, exist_ok=True)
-        if datasource.extension == 'tds':
-            xml_path = os.path.join(save_folder, self.datasource_name)
-            shutil.copy(self.datasource_path, xml_path)
-        else:
-            xml_path = datasource.unzip(extract_to=save_folder, unzip_all=True)
-        if self.debugging_logs:
-            print(f'{color.fg_green}{symbol.success} (Done in {round(time() - start)} sec) '
-                  f'AFTER - TDS SAVED TO: {color.fg_yellow}{xml_path}{color.reset}')
+        print(f'{color.fg_cyan}...Saving datasource changes...{color.reset}')
+        datasource.save()
+        print(f'{color.fg_green}{symbol.success} (Done in {round(time() - start)} sec) '
+              f'Saved datasource changes: {color.fg_yellow}{self.datasource_path}{color.reset}')
+
+        # start = time()
+        # print(f'{color.fg_cyan}...Extracting {self.datasource_name}...{color.reset}')
+        # save_folder = f'{self.datasource_name} - AFTER'
+        # os.makedirs(save_folder, exist_ok=True)
+        # if datasource.extension == 'tds':
+        #     xml_path = os.path.join(save_folder, self.datasource_name)
+        #     shutil.copy(self.datasource_path, xml_path)
+        # else:
+        #     xml_path = datasource.unzip(extract_to=save_folder, unzip_all=True)
+        # if self.debugging_logs:
+        #     print(f'{color.fg_green}{symbol.success} (Done in {round(time() - start)} sec) '
+        #           f'AFTER - TDS SAVED TO: {color.fg_yellow}{xml_path}{color.reset}')
 
 
     def apply_config_to_datasource(self):
@@ -263,6 +268,7 @@ class ApplyConfigs:
         """
 
         datasource = Datasource(self.datasource_path)
+
 
         # Run column init on the datasource to make sure columns aren't hiding in Metadata records
         datasource = add_metadata_records_as_columns(datasource, self.debugging_logs)
