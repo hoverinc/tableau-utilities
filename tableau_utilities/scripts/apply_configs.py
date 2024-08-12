@@ -237,19 +237,6 @@ class ApplyConfigs:
         print(f'{color.fg_green}{symbol.success} (Done in {round(time() - start)} sec) '
               f'Saved datasource changes: {color.fg_yellow}{self.datasource_path}{color.reset}')
 
-        # start = time()
-        # print(f'{color.fg_cyan}...Extracting {self.datasource_name}...{color.reset}')
-        # save_folder = f'{self.datasource_name} - AFTER'
-        # os.makedirs(save_folder, exist_ok=True)
-        # if datasource.extension == 'tds':
-        #     xml_path = os.path.join(save_folder, self.datasource_name)
-        #     shutil.copy(self.datasource_path, xml_path)
-        # else:
-        #     xml_path = datasource.unzip(extract_to=save_folder, unzip_all=True)
-        # if self.debugging_logs:
-        #     print(f'{color.fg_green}{symbol.success} (Done in {round(time() - start)} sec) '
-        #           f'AFTER - TDS SAVED TO: {color.fg_yellow}{xml_path}{color.reset}')
-
 
     def apply_config_to_datasource(self):
         """ Applies a set of configs (column_config and calculated_column_config) to a datasource.
