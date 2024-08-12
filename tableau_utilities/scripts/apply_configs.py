@@ -121,7 +121,7 @@ class ApplyConfigs:
         """
         flattened_list = []
         for key, value in nested_dict.items():
-            flattened_entry = {"Caption": key}
+            flattened_entry = {"caption": key}
             flattened_entry.update(value)
             flattened_list.append(flattened_entry)
 
@@ -202,22 +202,34 @@ class ApplyConfigs:
 
         """
 
-        for column in columns_list:
-            column = datasource.columns.get(column['local-name'])
+        print(f'{color.fg_cyan}...Applying Changes to {self.datasource_name}...{color.reset}')
 
-            persona = personas.get(column['persona'].lower(), {})
+        for each_column in columns_list:
+            if self.debugging_logs:
+                print(f'{color.fg_yellow}column:{color.reset}{each_column}')
 
-            column.caption = column['caption'] or column.caption
+            #
+
+            column = datasource.columns.get(each_column['local-name'])
+
+            persona = personas.get(each_column['persona'].lower(), {})
+
+            if self.debugging_logs:
+                print(f'{color.fg_yellow}persona:{color.reset}{persona}')
+
+            column.caption = each_column['caption'] or column.caption
             column.role = persona.get('role') or column.role
             column.type = persona.get('role_type') or column.type
             column.datatype = persona.get('datatype') or column.datatype
-            column.desc = column['description'] or column.desc
-            column.calculation = column['calculation'] or column.calculation
+            column.desc = each_column['description'] or column.desc
+
+            if 'calculation' in each_column:
+                column.calculation = each_column['calculation']
 
             if self.debugging_logs:
-                print(f'{color.fg_yellow}column:{color.reset}{column}')
+                print(f'{color.fg_yellow}column:{color.reset}{each_column}')
 
-            datasource.enforce_column(column, remote_name=column['remote_name'], folder_name=column['folder'])
+            datasource.enforce_column(column, remote_name=each_column['remote_name'], folder_name=each_column['folder'])
 
 
         start = time()
