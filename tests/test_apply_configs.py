@@ -87,6 +87,7 @@ def test_invert_config_multiple_datasources(apply_configs):
     assert result == expected_output
 
 def test_flatten_to_list_of_fields(apply_configs):
+
     sample_dict = {
         'My Caption 1': {
             'description': 'A perfect description',
@@ -189,6 +190,7 @@ def test_flatten_to_list_of_fields(apply_configs):
 #     assert result == expected_output
 
 def test_flatten_to_list_of_fields(apply_configs):
+
     sample_dict = {
         'My Caption 1': {
             'description': 'A perfect description',
@@ -228,9 +230,6 @@ def test_flatten_to_list_of_fields(apply_configs):
     assert result == expected_output
 
 def test_select_matching_datasource_config(apply_configs):
-
-    print('testing select_matching_datasource_config')
-    print(apply_configs.datasource_name)
 
     sample_config = {
         "my_datasource_1": {
