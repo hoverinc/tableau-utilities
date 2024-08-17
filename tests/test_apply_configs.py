@@ -208,14 +208,14 @@ def test_flatten_to_list_of_fields(apply_configs):
 
     expected_output = [
         {
-            'Caption': 'My Caption 1',
+            'caption': 'My Caption 1',
             'description': 'A perfect description',
             'folder': 'My Folder',
             'local-name': 'MY_FIELD_1',
             'persona': 'string_dimension',
             'remote_name': 'MY_FIELD_1'
         },
-            {'Caption': 'My Caption 2',
+            {'caption': 'My Caption 2',
             'description': 'Another perfect description',
             'folder': 'My Folder',
             'local-name': 'MY_FIELD_2',
