@@ -34,7 +34,7 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Run Pytest on the tests in tests/
       run:
-        pytest tests/ -p no:warnings
+        pytest tests/ -p no:warnings -vv
     - name: Run pytest on tableau-utilities
       run: |
         cd tableau_utilities && pytest -v
