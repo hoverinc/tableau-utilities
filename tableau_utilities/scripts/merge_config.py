@@ -112,7 +112,7 @@ def sort_config(config, debugging_logs):
 
         if debugging_logs:
             print('KEY', k)
-            print('CONGIG', v)
+            print('CONFIG', v)
             print('DATASOURCES', v['datasources'])
 
         sorted_datasources = sorted(v['datasources'], key=lambda d: d['name'])
@@ -177,13 +177,15 @@ def merge_configs(args, server=None):
     elif merge_with == 'csv':
         # Read files
         existing_config = read_file(existing_config)
-        definitions_mapping = load_csv_with_definitions(file=definitions_csv_path)
+        definitions_mapping = load_csv_with_definitions(file=definitions_csv_path, debugging_logs=debugging_logs)
         # Merge
         new_config = add_definitions_mapping(existing_config, definitions_mapping)
         # Sort and write the merged config
         new_config = sort_config(new_config, debugging_logs)
         write_file(file_name=file_name, config=new_config, debugging_logs=debugging_logs)
 
+        print(f'{color.fg_yellow}DEFINITIONS CSV {symbol.arrow_r} '
+              f'{color.fg_grey}{definitions_csv_path}{color.reset}')
         print(f'{color.fg_yellow}EXISTING CONFIG {symbol.arrow_r} '
               f'{color.fg_grey}{existing_config_path}{color.reset}')
         print(f'{color.fg_yellow}ADDITIONAL CONFIG {symbol.arrow_r} '

@@ -10,21 +10,27 @@ from tableau_utilities.tableau_file.tableau_file import Datasource
 from tableau_utilities.tableau_server.tableau_server import TableauServer
 
 
-def load_csv_with_definitions(file=None):
+def load_csv_with_definitions(file=None,  debugging_logs=False):
     """ Returns a dictionary with the definitions from a csv. The columns are expected to include column_name and description
 
     Args:
         file: The path to the .csv file with the definitions. The csv must include a column_name and description.
+        debugging_logs: Prints information to consolde if true
 
     Returns:
         dictionary mapping column name to definition
+
 
     """
 
     definitions_mapping = dict()
     df = pd.read_csv(file)
+
     df.columns = df.columns.str.lower()
     definitions = df.to_dict('records')
+
+    if debugging_logs:
+        print(definitions)
 
     # Check that the csv contains column_name and description headers
     column_names = list(df.columns)
@@ -36,7 +42,6 @@ def load_csv_with_definitions(file=None):
             definitions_mapping[column['column_name']] = column['description']
 
     return definitions_mapping
-
 
 def choose_persona(role, role_type, datatype, caption):
     """  The config relies on a persona which is a combination of role, role_type and datatype for each column.
