@@ -41,6 +41,9 @@ def load_csv_with_definitions(file=None,  debugging_logs=False):
         if str(column['description']) != 'nan':
             definitions_mapping[column['column_name']] = column['description']
 
+    if debugging_logs:
+        print(definitions_mapping)
+
     return definitions_mapping
 
 def choose_persona(role, role_type, datatype, caption):
