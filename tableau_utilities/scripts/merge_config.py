@@ -207,6 +207,7 @@ def merge_configs(args, server=None):
         new_config = add_definitions_mapping_any_local_name(existing_config, definitions_mapping)
         # Sort and write the merged config
         new_config = sort_config(new_config, debugging_logs)
+
         write_file(file_name=file_name, config=new_config, debugging_logs=debugging_logs)
 
         print(f'{color.fg_yellow}DEFINITIONS CSV {symbol.arrow_r} '
