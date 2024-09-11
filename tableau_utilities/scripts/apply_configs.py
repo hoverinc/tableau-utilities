@@ -45,8 +45,11 @@ class ApplyConfigs:
 
         """
 
-        config = config[self.datasource_name]
-        return config
+        # print('datasource name', self.datasource_name)
+        # print('config', config)
+        selected_config = config[self.datasource_name]
+        # print('selected_config', selected_config)
+        return selected_config
 
     def invert_config(self, config: Dict[str, Any]) -> Dict[str, Any]:
         """Helper function to invert the column config and calc config.
