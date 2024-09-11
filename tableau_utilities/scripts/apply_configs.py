@@ -97,9 +97,13 @@ class ApplyConfigs:
         config_A = self.invert_config(config_A)
         config_B = self.invert_config(config_B)
 
-        # Get only the configs to the current datasource
-        config_A = self.select_matching_datasource_config(config_A)
-        config_B = self.select_matching_datasource_config(config_B)
+        # Get only the configs to the current datasource.
+        # Calculated configs from a datasource can sometimes be empty. If it's empty skip this step
+        if len(config_A) > 0:
+            config_A = self.select_matching_datasource_config(config_A)
+
+        if len(config_B) > 0:
+            config_B = self.select_matching_datasource_config(config_B)
 
         # Combine configs
         combined_config = {**config_A, **config_B}
@@ -226,13 +230,18 @@ class ApplyConfigs:
 
         # Run column init on the datasource to make sure columns aren't hiding in Metadata records
         datasource = add_metadata_records_as_columns(datasource, self.debugging_logs)
+        print(f'{color.fg_cyan}Ran column init {self.datasource_name}...{color.reset}')
 
         # Build the config dictionaries from the datasource
         datasource_column_config, datasource_calculated_column_config = build_configs(datasource, self.datasource_name)
+        print(f'{color.fg_cyan}Built dictionaries from the datasource {self.datasource_name}...{color.reset}')
 
         # Prepare the configs by inverting, combining and removing configs for other datasources
         target_config = self.prepare_configs(self.target_column_config, self.target_calculated_column_config)
+        print(f'{color.fg_cyan}Prepared the target configs {self.datasource_name}...{color.reset}')
+
         datasource_config = self.prepare_configs(datasource_column_config, datasource_calculated_column_config)
+        print(f'{color.fg_cyan}Prepared the datasource configs {self.datasource_name}...{color.reset}')
 
         target_config = self.flatten_to_list_of_fields(target_config)
         datasource_config = self.flatten_to_list_of_fields(datasource_config)
@@ -247,6 +256,7 @@ def apply_configs(args):
     debugging_logs = args.debugging_logs
     datasource_name = args.name
     datasource_path = args.file_path
+
     target_column_config = read_file(args.column_config)
     target_calculated_column_config = read_file(args.calculated_column_config)
 

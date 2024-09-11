@@ -4,16 +4,27 @@ from tableau_utilities.scripts.gen_config import load_csv_with_definitions, gene
 
 
 def read_file(file_path):
-    """ Read a JSON file to a dictionary
+    """Read a JSON file to a dictionary.
 
     Args:
-        file_path (str): The path of the file to read
+        file_path (str): The path of the file to read.
 
+    Returns:
+        dict: The JSON content as a dictionary.
     """
-    with open(file_path, "r") as infile:
-        config: dict = json.load(infile)
+    try:
+        with open(file_path, "r") as infile:
+            config = json.load(infile)
+            print(f"Successfully read file: {file_path}")
+            return config
+    except FileNotFoundError:
+        print(f"File not found: {file_path}")
+    except json.JSONDecodeError:
+        print(f"Error decoding JSON from file: {file_path}")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
 
-    return config
+    return {}
 
 
 def write_file(file_name, config, debugging_logs=False):
