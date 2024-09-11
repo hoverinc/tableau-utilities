@@ -131,41 +131,6 @@ class ApplyConfigs:
                 print(field_config)
 
         return flattened_list
-    #
-    # def merge_configs(self, target_config: List[Dict[str, Any]], datasource_config: List[Dict[str, Any]]) -> List[
-    #     Dict[str, Any]]:
-    #     """Merges two lists of dictionaries ensuring all 'local-name' from both lists are present.
-    #
-    #     If the 'local-name' is in both lists, the values from `target_config` are used.
-    #
-    #     Args:
-    #         target_config (List[Dict[str, Any]]): The target configuration list of dictionaries.
-    #         datasource_config (List[Dict[str, Any]]): The datasource configuration list of dictionaries.
-    #
-    #     Returns:
-    #         List[Dict[str, Any]]: A merged list of dictionaries.
-    #     """
-    #     merged_dict = {}
-    #
-    #     # Add all entries from datasource_config to merged_dict
-    #     for entry in datasource_config:
-    #         local_name = entry['local-name']
-    #         merged_dict[local_name] = entry
-    #
-    #     # Update or add entries from target_config to merged_dict
-    #     for entry in target_config:
-    #         local_name = entry['local-name']
-    #         merged_dict[local_name] = entry
-    #
-    #     # Convert merged_dict back to a list of dictionaries
-    #     merged_list = list(merged_dict.values())
-    #
-    #     # if self.debugging_logs:
-    #     print(f'{color.fg_yellow}AFTER MERGING{color.reset}')
-    #     for field_config in merged_list:
-    #         print(field_config)
-    #
-    #     return merged_list
 
 
     def compare_columns(self, target_config: List[Dict[str, Any]], datasource_config: List[Dict[str, Any]]) -> List[
@@ -256,18 +221,11 @@ class ApplyConfigs:
 
         datasource = Datasource(self.datasource_path)
 
-
         # Run column init on the datasource to make sure columns aren't hiding in Metadata records
         datasource = add_metadata_records_as_columns(datasource, self.debugging_logs)
 
         # Build the config dictionaries from the datasource
         datasource_column_config, datasource_calculated_column_config = build_configs(datasource, self.datasource_name)
-
-        # if self.debugging_logs:
-        #     print('Target Column Config:', self.target_column_config)
-        #     print('Target Column Config:', type(self.target_column_config))
-        #     print('Target Calculated Column Config:', self.target_calculated_column_config)
-        #     # print('Datasource Column Config:', datasource_column_config)
 
         # Prepare the configs by inverting, combining and removing configs for other datasources
         target_config = self.prepare_configs(self.target_column_config, self.target_calculated_column_config)
@@ -280,21 +238,6 @@ class ApplyConfigs:
         changes_to_make = self.compare_columns(target_config, datasource_config)
 
         self.execute_changes(changes_to_make, datasource)
-
-        #
-        #
-        #
-        # # Get the changes to make for the column config
-        # # Get the changes to make for the calculation config
-        #
-        # # Apply the changes for the column config
-        # # Apply the changes for the calc config
-        #
-        # # Clean up the empty folders
-        #
-        # # Save the file
-        # pass
-
 
 def apply_configs(args):
     # Set variables from the args
