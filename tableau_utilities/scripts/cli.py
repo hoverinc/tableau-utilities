@@ -15,6 +15,7 @@ from tableau_utilities.scripts.server_info import server_info
 from tableau_utilities.scripts.server_operate import server_operate
 from tableau_utilities.scripts.datasource import datasource
 from tableau_utilities.scripts.csv_config import csv_config
+from tableau_utilities.scripts.apply_configs import apply_configs
 
 __version__ = importlib.metadata.version('tableau_utilities')
 
@@ -163,6 +164,9 @@ parser_datasource.add_argument('-fe', '--filter_extract',
                                help='Deletes data from the extract based on the condition string provided. '
                                     """E.g. "CREATED_AT" < '1/1/2024'""")
 parser_datasource.add_argument('-ci', '--column_init', action='store_true',  help="Adds Columns from all Metadata Records, if they don't already exist.")
+parser_datasource.add_argument('-cf', '--clean_folders', action='store_true',  help="Removes any empty folders without columns")
+# parser_datasource.add_argument('-cc', '--column_config', help='The path to the column configs file')
+# parser_datasource.add_argument('-cac', '--calculated_column_config', help='The path to the calculated field config file.')
 parser_datasource.set_defaults(func=datasource)
 
 # GENERATE CONFIG
@@ -199,6 +203,14 @@ parser_config_merge.add_argument('-td', '--target_directory', default='merged_co
                                  help='The path containing the existing configs. '
                                       'Use with --merge_with generate_merge_all')
 parser_config_merge.set_defaults(func=merge_configs)
+
+# APPLY CONFIGS
+parser_config_apply = subparsers.add_parser(
+    'apply_configs', help='Applies a config to a datasource. Writes over any datasource attributes to make it '
+                         'conform to the config.', formatter_class=RawTextHelpFormatter)
+parser_config_apply.add_argument('-cc', '--column_config', help='The path to the column configs file')
+parser_config_apply.add_argument('-cac', '--calculated_column_config', help='The path to the calculated field config file.')
+parser_config_apply.set_defaults(func=apply_configs)
 
 
 def validate_args_server_operate(args):
@@ -261,6 +273,11 @@ def validate_args_command_merge_config(args):
         parser.error(f'--merge_with {args.merge_with} requires --existing_config')
     if args.merge_with == 'generate_merge_all' and args.target_directory is None:
         parser.error(f'--merge_with {args.merge_with} requires --target_directory')
+
+
+def validate_args_command_apply_configs(args):
+    if args.file_path is None or args.name is None or args.column_config is None or args.calculated_column_config is None:
+        parser.error(f'{args.command} requires --name and --file_path for a datasource and --column_config and --calculated_column_config')
 
 
 def validate_subpackage_hyper():
@@ -455,6 +472,8 @@ def main():
         validate_args_command_datasource(args)
     if args.command == 'merge_config':
         validate_args_command_merge_config(args)
+    if args.command == 'apply_configs':
+        validate_args_command_apply_configs(args)
 
     # Set/Reset the directory
     tmp_folder = args.output_dir
