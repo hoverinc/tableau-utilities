@@ -140,7 +140,6 @@ class ApplyConfigs:
 
         return flattened_list
 
-
     def compare_columns(self, target_config: List[Dict[str, Any]], datasource_config: List[Dict[str, Any]]) -> List[
         Dict[str, Any]]:
         """Compares the target config to the datasource config and generates a list of changes to make the datasource match the target config.
@@ -153,15 +152,33 @@ class ApplyConfigs:
             List[Dict[str, Any]]: A list of dictionaries with the columns that need updating.
         """
         changes_to_make = []
+        pp = pprint.PrettyPrinter(indent=4, width=200, depth=None, compact=False)
+
+        # print(f'{color.fg_yellow}DATASOURCE CONFIG{color.reset}')
+        # print(datasource_config)
+        #
+        # print(f'{color.fg_yellow}DATASOURCE CONFIG{color.reset}')
+        # print(target_config)
+
+        # pp.pprint(datasource_config)
 
         for target_entry in target_config:
-            if target_entry not in datasource_config:
+            if target_entry['caption'] == 'Is Current Month':
+                print(target_entry)
+        for ds in datasource_config:
+            if ds['caption'] == 'Is Current Month':
+                print(ds)
+
+        for target_entry in target_config:
+            print(target_entry)
+            if not any(target_entry == datasource_entry for datasource_entry in datasource_config):
+                print(f'{color.fg_yellow}NEED TO MAKE CHANGE:{color.reset}{target_entry}')
                 changes_to_make.append(target_entry)
 
-        print(f'{color.fg_yellow}AFTER MERGING{color.reset}')
-        for field_config in changes_to_make:
-            print(field_config)
+        print(f'{color.fg_yellow}AFTER CREATING CHANGE LIST{color.reset}')
+        pp.pprint(changes_to_make)
 
+        print(len(changes_to_make))
         return changes_to_make
 
     def execute_changes(self, columns_list: List[Dict[str, Any]], datasource):
@@ -237,18 +254,19 @@ class ApplyConfigs:
         datasource_column_config, datasource_calculated_column_config = build_configs(datasource, self.datasource_name)
         print(f'{color.fg_cyan}Built dictionaries from the datasource {self.datasource_name}...{color.reset}')
 
-        # Prepare the configs by inverting, combining and removing configs for other datasources
-        target_config = self.prepare_configs(self.target_column_config, self.target_calculated_column_config)
-        print(f'{color.fg_cyan}Prepared the target configs {self.datasource_name}...{color.reset}')
-
-        datasource_config = self.prepare_configs(datasource_column_config, datasource_calculated_column_config)
-        print(f'{color.fg_cyan}Prepared the datasource configs {self.datasource_name}...{color.reset}')
+        # # Prepare the configs by inverting, combining and removing configs for other datasources
+        # target_config = self.prepare_configs(self.target_column_config, self.target_calculated_column_config)
+        # print(f'{color.fg_cyan}Prepared the target configs {self.datasource_name}...{color.reset}')
+        #
+        # datasource_config = self.prepare_configs(datasource_column_config, datasource_calculated_column_config)
+        # print(f'{color.fg_cyan}Prepared the datasource configs {self.datasource_name}...{color.reset}')
 
         target_config = self.flatten_to_list_of_fields(target_config)
         datasource_config = self.flatten_to_list_of_fields(datasource_config)
 
         # merged_config = self.merge_configs(target_config, datasource_config)
         changes_to_make = self.compare_columns(target_config, datasource_config)
+        # print(changes_to_make)
 
         self.execute_changes(changes_to_make, datasource)
 
