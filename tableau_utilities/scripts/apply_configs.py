@@ -45,11 +45,12 @@ class ApplyConfigs:
 
         """
 
-        # print('datasource name', self.datasource_name)
-        # print('config', config)
-        selected_config = config[self.datasource_name]
-        # print('selected_config', selected_config)
-        return selected_config
+        try:
+            selected_config = config[self.datasource_name]
+            return selected_config
+        except KeyError:
+            print(f'{color.fg_red}No matching datasource found in config for {self.datasource_name}{color.reset}')
+            return {}
 
     def invert_config(self, config: Dict[str, Any]) -> Dict[str, Any]:
         """Helper function to invert the column config and calc config.
