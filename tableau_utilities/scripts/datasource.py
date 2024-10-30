@@ -11,6 +11,10 @@ from tableau_utilities.tableau_file.tableau_file import Datasource
 from tableau_utilities.tableau_server.tableau_server import TableauServer
 
 
+# Define color and symbol as globals
+color = Color()
+symbol = Symbol()
+
 def create_column(name: str, persona: dict):
     """ Creates the tfo column object with the minimum required fields to add a column
 
@@ -31,6 +35,73 @@ def create_column(name: str, persona: dict):
     )
 
     return column
+
+
+def add_metadata_records_as_columns(ds, debugging_logs=False):
+    """ Adds <column /> records when they are only present in the <metadata-record class='column'>
+
+    When you create your Tableau extract the first time all columns will be present in Metadata records like this:
+
+      <metadata-record class='column'>
+        <remote-name>MY_COLUMN</remote-name>
+        <remote-type>131</remote-type>
+        <local-name>[MY_COLUMN]</local-name>
+        <parent-name>[Custom SQL Query]</parent-name>
+        <remote-alias>MY_COLUMN</remote-alias>
+        <ordinal>5</ordinal>
+        <local-type>integer</local-type>
+        <aggregation>Sum</aggregation>
+        <precision>38</precision>
+        <scale>0</scale>
+        <contains-null>true</contains-null>
+        <attributes>
+          <attribute datatype='string' name='DebugRemoteType'>&quot;SQL_DECIMAL&quot;</attribute>
+          <attribute datatype='string' name='DebugWireType'>&quot;SQL_C_NUMERIC&quot;</attribute>
+        </attributes>
+        <_.fcp.ObjectModelEncapsulateLegacy.true...object-id>[_62A667B34C534415B10B2075B0DC36DC]</_.fcp.ObjectModelEncapsulateLegacy.true...object-id>
+      </metadata-record>
+
+    Separately some columns may have a column like this:
+    <column datatype='integer' name='[MY_COLUMN]' role='dimension' type='ordinal' />
+
+
+    Manipulating Tableau columns requires a <column /> record.
+
+    Args:
+        ds: A Datasource object
+        color: The cli color styling class
+        debugging_logs: True to print debugging information to the console
+
+    Returns:
+        ds: An altered datasource. You'll still need to save this ds to apply the changes.
+
+    """
+
+    # Create the list of columns to add
+    columns_to_add = [
+        m for m in ds.connection.metadata_records
+        if m.local_name not in [c.name for c in ds.columns]
+    ]
+    print(f'{color.fg_yellow}Adding missing columns from Metadata Records:{color.reset} '
+          f'{[m.local_name for m in columns_to_add]}')
+
+    # Add the columns making the best guess of the proper persona
+    for m in columns_to_add:
+        if debugging_logs:
+            print(f'{color.fg_magenta}Metadata Record -> {m.local_name}:{color.reset} {m}')
+
+        persona = get_persona_by_metadata_local_type(m.local_type)
+        persona_dict = personas.get(persona, {})
+        if debugging_logs:
+            print(f'  - {color.fg_blue}Persona -> {persona}:{color.reset} {persona_dict}')
+
+        column = create_column(m.local_name, persona_dict)
+
+        if debugging_logs:
+            print(f'  - {color.fg_cyan}Creating Column -> {column.name}:{color.reset} {column.dict()}')
+        ds.enforce_column(column, remote_name=m.remote_name)
+
+    return ds
 
 def datasource(args, server=None):
     """ Updates a Tableau Datasource locally
@@ -67,6 +138,7 @@ def datasource(args, server=None):
     remote_name = args.remote_name
     list_objects = args.list.title() if args.list else None
     column_init = args.column_init
+    clean_folders = args.clean_folders
 
     # Datasource Connection Args
     conn_type = args.conn_type
@@ -77,9 +149,6 @@ def datasource(args, server=None):
     conn_schema = args.conn_schema
     conn_warehouse = args.conn_warehouse
 
-    # Print Styling
-    color = Color()
-    symbol = Symbol()
 
     # Downloads the datasource from Tableau Server if the datasource is not local
     if location == 'online':
@@ -146,28 +215,7 @@ def datasource(args, server=None):
 
     # Column Init - Add columns for any column in Metadata records but not in columns
     if column_init:
-        columns_to_add = [
-            m for m in ds.connection.metadata_records
-            if m.local_name not in [c.name for c in ds.columns]
-        ]
-        print(f'{color.fg_yellow}Adding missing columns from Metadata Records:{color.reset} '
-              f'{[m.local_name for m in columns_to_add]}')
-
-        for m in columns_to_add:
-            if debugging_logs:
-                print(f'{color.fg_magenta}Metadata Record -> {m.local_name}:{color.reset} {m}')
-
-            persona = get_persona_by_metadata_local_type(m.local_type)
-            persona_dict = personas.get(persona, {})
-            if debugging_logs:
-                print(f'  - {color.fg_blue}Persona -> {persona}:{color.reset} {persona_dict}')
-
-            column = create_column(m.local_name, persona_dict)
-
-            if debugging_logs:
-                print(f'  - {color.fg_cyan}Creating Column -> {column.name}:{color.reset} {column.dict()}')
-            ds.enforce_column(column, remote_name=m.remote_name)
-
+        ds = add_metadata_records_as_columns(ds, color, debugging_logs)
 
     # Add / modify a specified column
     if column_name and not delete:
@@ -213,6 +261,11 @@ def datasource(args, server=None):
     if delete == 'folder':
         ds.folders_common.folder.delete(folder_name)
 
+    # Clean folders
+    if clean_folders:
+        cleaned = ds.remove_empty_folders()
+        print(f'Removed this list of folders: {color.fg_cyan}{cleaned}{color.reset}')
+
     # Enforce Connection
     if enforce_connection:
         if debugging_logs:
@@ -231,7 +284,7 @@ def datasource(args, server=None):
             ds.connection.update(connection)
 
     # Save the datasource if an edit may have happened
-    if column_name or folder_name or delete or enforce_connection or empty_extract or column_init:
+    if column_name or folder_name or delete or enforce_connection or empty_extract or column_init or clean_folders:
         start = time()
         print(f'{color.fg_cyan}...Saving datasource changes...{color.reset}')
         ds.save()

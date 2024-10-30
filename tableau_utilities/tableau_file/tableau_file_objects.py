@@ -708,6 +708,7 @@ class Connection(TableauFileObject):
     extract_engine: bool = None
     port: int = None
     max_varchar_size: str = None
+    oauth_config_id: str = None
 
     def dict(self):
         output = dict()
@@ -759,6 +760,8 @@ class Connection(TableauFileObject):
             output['@port'] = str(self.port)
         if self.max_varchar_size is not None:
             output['@max-varchar-size'] = str(self.max_varchar_size)
+        if self.max_varchar_size is not None:
+            output['@oauth-config-id'] = str(self.oauth_config_id)
         return output
 
 
