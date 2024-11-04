@@ -10,7 +10,7 @@ from tableau_utilities.tableau_file.tableau_file import Datasource
 from tableau_utilities.tableau_server.tableau_server import TableauServer
 
 
-def load_csv_with_definitions(file=None):
+def load_csv_with_definitions(file=None, debugging_logs=False):
     """ Returns a dictionary with the definitions from a csv. The columns are expected to include column_name and description
 
     Args:
@@ -34,6 +34,12 @@ def load_csv_with_definitions(file=None):
     for column in definitions:
         if str(column['description']) != 'nan':
             definitions_mapping[column['column_name']] = column['description']
+
+        if debugging_logs:
+            print(column['column_name'], column['description'])
+
+    if debugging_logs:
+        print(definitions_mapping)
 
     return definitions_mapping
 
