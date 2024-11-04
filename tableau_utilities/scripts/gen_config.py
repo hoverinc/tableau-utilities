@@ -7,6 +7,7 @@ from tableau_utilities.general.cli_styling import Color, Symbol
 from tableau_utilities.general.config_column_persona import get_persona_by_attribs, get_persona_by_metadata_local_type
 from tableau_utilities.general.funcs import convert_to_snake_case
 from tableau_utilities.tableau_file.tableau_file import Datasource
+from tableau_utilities.scripts.datasource import add_metadata_records_as_columns
 from tableau_utilities.tableau_server.tableau_server import TableauServer
 
 
@@ -140,6 +141,9 @@ def create_column_config(columns, datasource_name, folder_mapping, metadata_reco
 
     for column in columns:
         column_name = column.name[1:-1]
+
+        if column_name in ['CHURN_ARR_CHURNED_USD', 'CHURN_ARR_CHURNED_TRANSACTION_CURRENCY']:
+            print(column)
 
         # Skip internal object columns
         if column_name.startswith('__tableau_internal_object_id__'):
@@ -348,6 +352,10 @@ def generate_config(args, server: TableauServer = None):
           f'{color.fg_grey}{datasource_name} {symbol.sep} {datasource_path}{color.reset}')
 
     datasource = Datasource(datasource_path)
+
+    # Run column init on the datasource to make sure columns aren't hiding in Metadata records
+    datasource = add_metadata_records_as_columns(datasource, debugging_logs)
+    print(f'{color.fg_cyan}Ran column init {datasource_name}...{color.reset}')
 
     # Build the config dictionaries
     column_configs, calculated_column_configs = build_configs(datasource, datasource_name, debugging_logs,
