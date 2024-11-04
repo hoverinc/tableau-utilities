@@ -142,9 +142,6 @@ def create_column_config(columns, datasource_name, folder_mapping, metadata_reco
     for column in columns:
         column_name = column.name[1:-1]
 
-        if column_name in ['CHURN_ARR_CHURNED_USD', 'CHURN_ARR_CHURNED_TRANSACTION_CURRENCY']:
-            print(column)
-
         # Skip internal object columns
         if column_name.startswith('__tableau_internal_object_id__'):
             if debugging_logs:
