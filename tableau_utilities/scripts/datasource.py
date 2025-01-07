@@ -215,7 +215,7 @@ def datasource(args, server=None):
 
     # Column Init - Add columns for any column in Metadata records but not in columns
     if column_init:
-        ds = add_metadata_records_as_columns(ds, color, debugging_logs)
+        ds = add_metadata_records_as_columns(ds, debugging_logs)
 
     # Add / modify a specified column
     if column_name and not delete:
