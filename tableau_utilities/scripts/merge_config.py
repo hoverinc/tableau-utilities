@@ -2,6 +2,9 @@ import json
 from tableau_utilities.general.cli_styling import Color, Symbol
 from tableau_utilities.scripts.gen_config import load_csv_with_definitions, generate_config
 
+# Print Styling
+color = Color()
+symbol = Symbol()
 
 def read_file(file_path):
     """Read a JSON file to a dictionary.
@@ -42,7 +45,7 @@ def write_file(file_name, config, debugging_logs=False):
         print('CONFIG PATH:', file_name)
 
 
-def add_definitions_mapping(config, definitions_mapping):
+def add_definitions_mapping(config, definitions_mapping, debugging_logs=False):
     """ Adds definitions from a mapping to the config. Chooses the definition from the mapping if needed
 
     Args:
@@ -51,8 +54,15 @@ def add_definitions_mapping(config, definitions_mapping):
 
     """
     for column, definition in definitions_mapping.items():
-        if len(definition) > 0 and column in config:
+        has_definition = len(definition) > 0
+        in_config = column in config
+
+        if debugging_logs:
+            print(column, has_definition, in_config)
+
+        if has_definition and in_config:
             config[column]['description'] = definition
+
     return config
 
 
@@ -201,9 +211,6 @@ def merge_configs(args, server=None):
     debugging_logs = args.debugging_logs
     existing_config = args.existing_config
 
-    # Print Styling
-    color = Color()
-    symbol = Symbol()
 
     # Merge 2 configs
     if merge_with == 'config':
@@ -211,11 +218,23 @@ def merge_configs(args, server=None):
 
     # Merge a config with a definitions csv. This
     elif merge_with == 'csv':
+        # Log paths
+        if debugging_logs:
+            print(f'{color.fg_yellow}EXISTING CONFIG PATH {symbol.arrow_r} '
+                  f'{color.fg_grey}{existing_config}{color.reset}')
+            print(f'{color.fg_yellow}DEFINITIONS CSV PATH {symbol.arrow_r} '
+                  f'{color.fg_grey}{definitions_csv_path}{color.reset}')
+
         # Read files
         existing_config = read_file(existing_config)
         definitions_mapping = load_csv_with_definitions(file=definitions_csv_path, debugging_logs=debugging_logs)
+
         # Merge
-        new_config = add_definitions_mapping_any_local_name(existing_config, definitions_mapping)
+        # new_config = add_definitions_mapping_any_local_name(existing_config, definitions_mapping)
+
+        # Merge
+        new_config = add_definitions_mapping(existing_config, definitions_mapping, debugging_logs)
+        
         # Sort and write the merged config
         new_config = sort_config(new_config, debugging_logs)
 
