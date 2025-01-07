@@ -255,11 +255,11 @@ class ApplyConfigs:
         print(f'{color.fg_cyan}Built dictionaries from the datasource {self.datasource_name}...{color.reset}')
 
         # # Prepare the configs by inverting, combining and removing configs for other datasources
-        # target_config = self.prepare_configs(self.target_column_config, self.target_calculated_column_config)
-        # print(f'{color.fg_cyan}Prepared the target configs {self.datasource_name}...{color.reset}')
-        #
-        # datasource_config = self.prepare_configs(datasource_column_config, datasource_calculated_column_config)
-        # print(f'{color.fg_cyan}Prepared the datasource configs {self.datasource_name}...{color.reset}')
+        target_config = self.prepare_configs(self.target_column_config, self.target_calculated_column_config)
+        print(f'{color.fg_cyan}Prepared the target configs {self.datasource_name}...{color.reset}')
+
+        datasource_config = self.prepare_configs(datasource_column_config, datasource_calculated_column_config)
+        print(f'{color.fg_cyan}Prepared the datasource configs {self.datasource_name}...{color.reset}')
 
         target_config = self.flatten_to_list_of_fields(target_config)
         datasource_config = self.flatten_to_list_of_fields(datasource_config)
