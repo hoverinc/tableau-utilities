@@ -314,54 +314,54 @@ class TableauDatasourceTasks(models.BaseOperator):
     def execute(self, context):
         """ Update Tableau datasource according to config. """
 
-        github_conn = BaseHook.get_connection(self.github_conn_id)
-        config = cfg.Config(
-            githup_token=github_conn.password,
-            repo_name=github_conn.extra_dejson.get('repo_name'),
-            repo_branch=github_conn.extra_dejson.get('repo_branch'),
-            subfolder=github_conn.extra_dejson.get('subfolder')
-        )
-
-        ts = get_tableau_server(self.tableau_conn_id)
-        expected_conn_attrs = self.__set_connection_attributes()
-
-        # Get the ID for each datasource in the config
-        for ds in ts.get.datasources():
-            if ds not in config.datasources:
-                continue
-            config.datasources[ds].id = ds.id
-
-        for datasource in config.datasources:
-            if not datasource.id:
-                logging.error('!! Datasource not found in Tableau Online: %s / %s',
-                              datasource.project_name, datasource.name)
-                continue
-            dsid = datasource.id
+        # github_conn = BaseHook.get_connection(self.github_conn_id)
+        # config = cfg.Config(
+        #     githup_token=github_conn.password,
+        #     repo_name=github_conn.extra_dejson.get('repo_name'),
+        #     repo_branch=github_conn.extra_dejson.get('repo_branch'),
+        #     subfolder=github_conn.extra_dejson.get('subfolder')
+        # )
+        #
+        # ts = get_tableau_server(self.tableau_conn_id)
+        # expected_conn_attrs = self.__set_connection_attributes()
+        #
+        # # Get the ID for each datasource in the config
+        # for ds in ts.get.datasources():
+        #     if ds not in config.datasources:
+        #         continue
+        #     config.datasources[ds].id = ds.id
+        #
+        # # for datasource in config.datasources:
+        #     if not datasource.id:
+        #         logging.error('!! Datasource not found in Tableau Online: %s / %s',
+        #                       datasource.project_name, datasource.name)
+        #         continue
+        #     dsid = datasource.id
             # Set default dict attributes for tasks, for each datasource
             self.tasks[dsid] = {a: [] for a in UPDATE_ACTIONS}
             self.tasks[dsid]['project'] = datasource.project_name
             self.tasks[dsid]['datasource_name'] = datasource.name
-            if not config.in_maintenance_window and AIRFLOW_ENV not in ['STAGING', 'DEV']:
-                self.tasks[dsid]['skip'] = 'Outside maintenance window'
-                logging.info('(SKIP) Outside maintenance window: %s', datasource.name)
-                continue
-            elif datasource.name in EXCLUDED_DATASOURCES:
-                self.tasks[dsid]['skip'] = 'Marked to exclude'
-                logging.info('(SKIP) Marked to exclude: %s', datasource.name)
-                continue
-            logging.info('Checking Datasource: %s', datasource.name)
-            # Download the Datasource for comparison
-            dl_path = f"downloads/{dsid}/"
-            os.makedirs(dl_path, exist_ok=True)
-            ds_path = ts.download.datasource(dsid, file_dir=dl_path, include_extract=False)
-            tds = Datasource(ds_path)
-            # Cleanup downloaded file after assigning the Datasource
-            shutil.rmtree(dl_path, ignore_errors=True)
-            # Add connection task, if there is a difference
-            self.__compare_connection(dsid, datasource.name, tds.connection, expected_conn_attrs)
-            # Add folder tasks, if folders need to be added/deleted
-            self.__compare_folders(dsid, tds.folders_common, datasource.folders)
-            # Add Column tasks, if there are missing columns, or columns need to be updated
+            # if not config.in_maintenance_window and AIRFLOW_ENV not in ['STAGING', 'DEV']:
+            #     self.tasks[dsid]['skip'] = 'Outside maintenance window'
+            #     logging.info('(SKIP) Outside maintenance window: %s', datasource.name)
+            #     continue
+            # elif datasource.name in EXCLUDED_DATASOURCES:
+            #     self.tasks[dsid]['skip'] = 'Marked to exclude'
+            #     logging.info('(SKIP) Marked to exclude: %s', datasource.name)
+            #     continue
+            # logging.info('Checking Datasource: %s', datasource.name)
+            # # Download the Datasource for comparison
+            # dl_path = f"downloads/{dsid}/"
+            # os.makedirs(dl_path, exist_ok=True)
+            # ds_path = ts.download.datasource(dsid, file_dir=dl_path, include_extract=False)
+            # tds = Datasource(ds_path)
+            # # Cleanup downloaded file after assigning the Datasource
+            # shutil.rmtree(dl_path, ignore_errors=True)
+            # # Add connection task, if there is a difference
+            # self.__compare_connection(dsid, datasource.name, tds.connection, expected_conn_attrs)
+            # # Add folder tasks, if folders need to be added/deleted
+            # self.__compare_folders(dsid, tds.folders_common, datasource.folders)
+            # # Add Column tasks, if there are missing columns, or columns need to be updated
             for column in datasource.columns:
                 # Check if the column metadata needs to be updated
                 self.__compare_column_metadata(dsid, tds, column)

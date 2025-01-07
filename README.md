@@ -20,6 +20,7 @@ This extra package depends on the tableauhyperapi which is incompatible with App
 #### Locally using pip
 - `cd tableau-utilities`
 - `pip install ./`
+- `pip install --upgrade ./` to overwrite the existing installation without having to uninstall first
 
 #### Confirm installation
 - `which tableau_utilities`
