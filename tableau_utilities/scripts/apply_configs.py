@@ -1,7 +1,5 @@
 from copy import deepcopy
-import os
 import pprint
-import shutil
 from typing import Dict, Any, List
 from time import time
 
@@ -12,6 +10,7 @@ from tableau_utilities.general.config_column_persona import personas
 from tableau_utilities.scripts.datasource import add_metadata_records_as_columns
 from tableau_utilities.scripts.gen_config import build_configs
 from tableau_utilities.scripts.merge_config import read_file
+from tableau_utilities.tableau_file.tableau_file_objects import Column
 
 color = Color()
 symbol = Symbol()
@@ -197,10 +196,19 @@ class ApplyConfigs:
         for each_column in columns_list:
             if self.debugging_logs:
                 print(f'{color.fg_yellow}column:{color.reset}{each_column}')
-
-            #
+                print(each_column)
+                print(each_column['caption'])
+                print(type(each_column))
 
             column = datasource.columns.get(each_column['local-name'])
+
+            # if the column is none then create the column object
+            # This will happen when adding new calculation fields
+            if column is None:
+                column = datasource.columns.add(Column)
+
+            if self.debugging_logs:
+                print(f'{color.fg_yellow}column 2025:{color.reset}{column}')
 
             persona = personas.get(each_column['persona'].lower(), {})
 

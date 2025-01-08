@@ -13,7 +13,7 @@ models:
           - local_name: Calculation_1
             alias: My Custom Calc
             # Format the calculation the same as you would in Tableau; i.e. Column references should use the alias
-            calculation: 'COUNT([Unique ID])'
+            calculation: "COUNT([Unique ID])"
             description: A count of unique IDs
             persona: continuous_number_measure
             folder: My Custom Calcs Folder
