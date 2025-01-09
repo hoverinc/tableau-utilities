@@ -10,7 +10,6 @@ from tableau_utilities.general.config_column_persona import personas
 from tableau_utilities.scripts.datasource import add_metadata_records_as_columns, create_column
 from tableau_utilities.scripts.gen_config import build_configs
 from tableau_utilities.scripts.merge_config import read_file
-from tableau_utilities.tableau_file.tableau_file_objects import Column
 
 color = Color()
 symbol = Symbol()
