@@ -7,7 +7,7 @@ from time import time
 from tableau_utilities.tableau_file.tableau_file import Datasource
 from tableau_utilities.general.cli_styling import Color, Symbol
 from tableau_utilities.general.config_column_persona import personas
-from tableau_utilities.scripts.datasource import add_metadata_records_as_columns
+from tableau_utilities.scripts.datasource import add_metadata_records_as_columns, create_column
 from tableau_utilities.scripts.gen_config import build_configs
 from tableau_utilities.scripts.merge_config import read_file
 from tableau_utilities.tableau_file.tableau_file_objects import Column
@@ -201,16 +201,15 @@ class ApplyConfigs:
                 print(type(each_column))
 
             column = datasource.columns.get(each_column['local-name'])
+            persona = personas.get(each_column['persona'].lower(), {})
 
             # if the column is none then create the column object
             # This will happen when adding new calculation fields
-            if column is None:
-                column = datasource.columns.add(Column)
+            if not column:
+                column = create_column(each_column['local-name'], persona)
 
             if self.debugging_logs:
                 print(f'{color.fg_yellow}column 2025:{color.reset}{column}')
-
-            persona = personas.get(each_column['persona'].lower(), {})
 
             if self.debugging_logs:
                 print(f'{color.fg_yellow}persona:{color.reset}{persona}')
@@ -220,9 +219,10 @@ class ApplyConfigs:
             column.type = persona.get('role_type') or column.type
             column.datatype = persona.get('datatype') or column.datatype
             column.desc = each_column['description'] or column.desc
+            column.calculation = each_column['calculation'] or column.calculation
 
-            if 'calculation' in each_column:
-                column.calculation = each_column['calculation']
+            # if 'calculation' in each_column:
+            #     column.calculation = each_column['calculation']
 
             if self.debugging_logs:
                 print(f'{color.fg_yellow}column:{color.reset}{each_column}')
