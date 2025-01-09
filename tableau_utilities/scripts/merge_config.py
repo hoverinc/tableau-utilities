@@ -45,27 +45,6 @@ def write_file(file_name, config, debugging_logs=False):
         print('CONFIG PATH:', file_name)
 
 
-def add_definitions_mapping(config, definitions_mapping, debugging_logs=False):
-    """ Adds definitions from a mapping to the config. Chooses the definition from the mapping if needed
-
-    Args:
-        config: A datasource config
-        definitions_mapping: A mapping of columns to definitions
-
-    """
-    for column, definition in definitions_mapping.items():
-        has_definition = len(definition) > 0
-        in_config = column in config
-
-        if debugging_logs:
-            print(column, has_definition, in_config)
-
-        if has_definition and in_config:
-            config[column]['description'] = definition
-
-    return config
-
-
 def add_definitions_mapping_any_local_name(config, definitions_mapping):
     """Adds definitions from a mapping to the config. Chooses the definition from the mapping if needed.
 
@@ -230,10 +209,7 @@ def merge_configs(args, server=None):
         definitions_mapping = load_csv_with_definitions(file=definitions_csv_path, debugging_logs=debugging_logs)
 
         # Merge
-        # new_config = add_definitions_mapping_any_local_name(existing_config, definitions_mapping)
-
-        # Merge
-        new_config = add_definitions_mapping(existing_config, definitions_mapping, debugging_logs)
+        new_config = add_definitions_mapping_any_local_name(existing_config, definitions_mapping)
         
         # Sort and write the merged config
         new_config = sort_config(new_config, debugging_logs)
