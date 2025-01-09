@@ -165,8 +165,6 @@ parser_datasource.add_argument('-fe', '--filter_extract',
                                     """E.g. "CREATED_AT" < '1/1/2024'""")
 parser_datasource.add_argument('-ci', '--column_init', action='store_true',  help="Adds Columns from all Metadata Records, if they don't already exist.")
 parser_datasource.add_argument('-cf', '--clean_folders', action='store_true',  help="Removes any empty folders without columns")
-# parser_datasource.add_argument('-cc', '--column_config', help='The path to the column configs file')
-# parser_datasource.add_argument('-cac', '--calculated_column_config', help='The path to the calculated field config file.')
 parser_datasource.set_defaults(func=datasource)
 
 # GENERATE CONFIG
