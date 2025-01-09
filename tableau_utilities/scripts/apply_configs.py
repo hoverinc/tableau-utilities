@@ -18,6 +18,16 @@ symbol = Symbol()
 class ApplyConfigs:
     """Applies a set of configs to a datasource. Configs prefixed with target_ will be applied to the datasource.
     Configs prefixed with datasource_ represent the current state of the datasource before changes.
+
+    Args:
+        datasource_name: The name of the datasource.
+        datasource_path: The path to the datasource file.
+        column_config: The column config to apply to the datasource.
+        calculated_field_config: The calculated field config to apply to the datasource.
+        debugging_logs: True to print debugging logs to the console
+
+    Returns:
+        None
     """
 
     def __init__(self,
@@ -34,10 +44,10 @@ class ApplyConfigs:
 
 
     def select_matching_datasource_config(self, config: Dict[str, Any]) -> Dict[str, Any]:
-        """ Limit
+        """ Remove all configs except for the columns that match the self.datasource_name
 
         Args:
-            comfig:
+            comfig: A tableau column config. Takes both a column config and a calculated column config
 
         Returns:
             A config with any datasource that is not self.datasource_name removed
@@ -52,7 +62,7 @@ class ApplyConfigs:
             return {}
 
     def invert_config(self, config: Dict[str, Any]) -> Dict[str, Any]:
-        """Helper function to invert the column config and calc config.
+        """Invert the column config and calc config.
         Output -> {datasource: {column: info}}
 
         Args:
@@ -86,11 +96,11 @@ class ApplyConfigs:
         need removal
 
         Args:
-            config_A:
-            config_B:
+            config_A: The first config to prepare.
+            config_B: The second config to prepare.
 
         Returns:
-
+            A single configuration with columns from both configs.
         """
 
         # invert the configs
@@ -153,14 +163,6 @@ class ApplyConfigs:
         changes_to_make = []
         pp = pprint.PrettyPrinter(indent=4, width=200, depth=None, compact=False)
 
-        # print(f'{color.fg_yellow}DATASOURCE CONFIG{color.reset}')
-        # print(datasource_config)
-        #
-        # print(f'{color.fg_yellow}DATASOURCE CONFIG{color.reset}')
-        # print(target_config)
-
-        # pp.pprint(datasource_config)
-
         for target_entry in target_config:
             if target_entry['caption'] == 'Is Current Month':
                 print(target_entry)
@@ -181,13 +183,14 @@ class ApplyConfigs:
         return changes_to_make
 
     def execute_changes(self, columns_list: List[Dict[str, Any]], datasource):
-        """ Applies changes to make
+        """ Applies the config to the datasource and saves the datasource.
 
         Args:
-            columns_list:
-            datasource:
+            columns_list: The list of columns with changes to apply
+            datasource: The datasource object to apply the changes to
 
         Returns:
+            None
 
         """
 
@@ -236,17 +239,7 @@ class ApplyConfigs:
     def apply_config_to_datasource(self):
         """ Applies a set of configs (column_config and calculated_column_config) to a datasource.
         If a column is in a datasource but NOT in the config that column will be unchanged.
-
-        Args:
-            datasource_name:
-            datasource_path:
-            column_config:
-            calculated_field_config:
-            debugging_logs:
-
-        Returns:
-            None
-
+        Columns are not removed via this function such as calculated fields that you may want to remove.
         """
 
         datasource = Datasource(self.datasource_path)
@@ -269,9 +262,7 @@ class ApplyConfigs:
         target_config = self.flatten_to_list_of_fields(target_config)
         datasource_config = self.flatten_to_list_of_fields(datasource_config)
 
-        # merged_config = self.merge_configs(target_config, datasource_config)
         changes_to_make = self.compare_columns(target_config, datasource_config)
-        # print(changes_to_make)
 
         self.execute_changes(changes_to_make, datasource)
 
