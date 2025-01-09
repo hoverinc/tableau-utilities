@@ -221,9 +221,6 @@ class ApplyConfigs:
             column.desc = each_column['description'] or column.desc
             column.calculation = each_column['calculation'] or column.calculation
 
-            # if 'calculation' in each_column:
-            #     column.calculation = each_column['calculation']
-
             if self.debugging_logs:
                 print(f'{color.fg_yellow}column:{color.reset}{each_column}')
 
