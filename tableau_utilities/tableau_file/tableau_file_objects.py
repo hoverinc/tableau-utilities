@@ -69,6 +69,7 @@ class TableauFileObject:
         self.__to_bool('hidden')
         self.__to_bool('incremental_updates')
         self.__to_bool('user_specific')
+        self.__to_bool('show_structure')
         # Convert to Integer
         self.__to_int('approx_count')
         self.__to_int('collation_flag')
@@ -1074,8 +1075,8 @@ class Extract(TableauFileObject):
 @dataclass
 class Layout(TableauFileObject):
     """ The Layout Tableau file object """
-    dim_percentage: str = None
-    measure_percentage: str = None
+    # dim_percentage: str = None
+    # measure_percentage: str = None
     dim_ordering: str = None # ordinal or alphabetic
     measure_ordering: str = None # ordinal or alphabetic
     show_structure: bool = None
@@ -1094,6 +1095,13 @@ class Layout(TableauFileObject):
         if self.show_structure is not None:
             dictionary['@show-structure'] = str(self.show_structure).lower()
         return dictionary
+
+    def xml(self):
+        """ Returns the FileObject as an XML Element """
+        this_xml =  ET.fromstring(xmltodict.unparse({self.tag: self.dict()}, pretty=True))
+        print(this_xml) # make this have all that ... stuff
+
+        return this_xml
 
 @dataclass
 class Aliases(TableauFileObject):

@@ -185,7 +185,7 @@ class Datasource(TableauFile):
         Returns: A list of (index, Element) for the elements removed from the parent Element
         """
         # A section can be multiple elements within the parent element
-        elements = [(i, e) for i, e in enumerate(parent) if e.tag.endswith(f'true...{tag}') or e.tag == tag]
+        elements = [(i, e) for i, e in enumerate(parent) if e.tag.endswith(f'true...{tag}') or e.tag == tag or (e.tag.startswith(f'layout _.fcp.SchemaViewerObjectModel.false...') and tag == 'layout')]
         for _, e in elements:
             parent.remove(e)
         return elements
@@ -201,7 +201,7 @@ class Datasource(TableauFile):
         # Gets elements within the parent element, with the appropriate section.tag
         section: list[dict] = list()
         for element in parent:
-            if element.tag.endswith(f'true...{obj.tag}') or element.tag == obj.tag:
+            if element.tag.endswith(f'true...{obj.tag}') or element.tag == obj.tag or (element.tag.startswith(f'layout _.fcp.SchemaViewerObjectModel.false...') and obj.tag == 'layout'):
                 item = xmltodict.parse(ET.tostring(element))[element.tag]
                 if not item:
                     continue
@@ -259,8 +259,7 @@ class Datasource(TableauFile):
                 self.folders_common.folder.add(tfo.Folder(name=folder_name, folder_item=[folder_item]))
 
             # Set display to show folders
-            self.layout.update(show_structure='true')
-
+            self.layout.show_structure=False
 
 
         # If a remote_name was provided, and the column is not a Tableau Calculation - enforce metadata
