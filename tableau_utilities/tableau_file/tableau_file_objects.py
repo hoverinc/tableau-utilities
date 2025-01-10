@@ -760,7 +760,7 @@ class Connection(TableauFileObject):
             output['@port'] = str(self.port)
         if self.max_varchar_size is not None:
             output['@max-varchar-size'] = str(self.max_varchar_size)
-        if self.max_varchar_size is not None:
+        if self.oauth_config_id is not None:
             output['@oauth-config-id'] = str(self.oauth_config_id)
         return output
 
