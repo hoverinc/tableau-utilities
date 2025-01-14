@@ -1099,10 +1099,6 @@ class Layout(TableauFileObject):
     def xml(self):
         """ Returns the FileObject as an XML Element """
         this_xml =  ET.fromstring(xmltodict.unparse({self.tag: self.dict()}, pretty=True))
-        print("i am in the layout xml")
-        print(this_xml) # make this have all that ... stuff
-        print(ET.tostring(this_xml, encoding='unicode'))  # Print the raw XML
-
         return this_xml
 
 @dataclass
