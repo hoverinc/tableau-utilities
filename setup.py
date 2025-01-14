@@ -24,13 +24,14 @@ setup(
     ],
     package_data={'tableau_utilities': ['tableau_file/*.yml']},
     include_package_data=True,
-    install_requires=['xmltodict>=0.12.0,<1.0.0',
-                      'pyyaml>=6.0,<7.0.0',
-                      'requests>=2.27.1,<3.0.0',
-                      'pandas>=1.4.1,<2.0.0',
-                      'tabulate>=0.8.9,<1.0.0',
-                      ],
-    extras_require={"hyper": ['tableauhyperapi==0.0.18825']},
+    install_requires=[
+        'xmltodict>=0.12.0,<1.0.0',
+        'pyyaml>=6.0,<7.0.0',
+        'requests>=2.27.1,<3.0.0',
+        'pandas>=2.0.0,<3.0.0',
+        'tabulate>=0.8.9,<1.0.0',
+    ],
+    extras_require={"hyper": ['tableauhyperapi<1.0.0']},
     entry_points={
         'console_scripts': [
             'tableau_utilities = tableau_utilities.scripts.cli:main',
