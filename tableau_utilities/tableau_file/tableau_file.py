@@ -261,7 +261,6 @@ class Datasource(TableauFile):
             # Set display to show folders
             self.layout.show_structure=False
 
-
         # If a remote_name was provided, and the column is not a Tableau Calculation - enforce metadata
         if not remote_name or column.calculation:
             return None

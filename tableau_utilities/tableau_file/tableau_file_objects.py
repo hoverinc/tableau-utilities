@@ -1075,8 +1075,8 @@ class Extract(TableauFileObject):
 @dataclass
 class Layout(TableauFileObject):
     """ The Layout Tableau file object """
-    # dim_percentage: str = None
-    # measure_percentage: str = None
+    dim_percentage: str = None
+    measure_percentage: str = None
     dim_ordering: str = None # ordinal or alphabetic
     measure_ordering: str = None # ordinal or alphabetic
     show_structure: bool = None
@@ -1085,9 +1085,9 @@ class Layout(TableauFileObject):
     def dict(self):
         dictionary = dict()
         if self.dim_percentage is not None:
-            dictionary['@dim-percentage'] = self.dim_percentage
+            dictionary['@_.fcp.SchemaViewerObjectModel.false...dim-percentage'] = self.dim_percentage
         if self.measure_percentage is not None:
-            dictionary['@measure-percentage'] = self.measure_percentage
+            dictionary['@_.fcp.SchemaViewerObjectModel.false...measure-percentage'] = self.measure_percentage
         if self.dim_ordering is not None:
             dictionary['@dim-ordering'] = self.dim_ordering
         if self.measure_ordering is not None:
@@ -1099,7 +1099,9 @@ class Layout(TableauFileObject):
     def xml(self):
         """ Returns the FileObject as an XML Element """
         this_xml =  ET.fromstring(xmltodict.unparse({self.tag: self.dict()}, pretty=True))
+        print("i am in the layout xml")
         print(this_xml) # make this have all that ... stuff
+        print(ET.tostring(this_xml, encoding='unicode'))  # Print the raw XML
 
         return this_xml
 
