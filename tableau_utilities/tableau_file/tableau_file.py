@@ -151,6 +151,7 @@ class Datasource(TableauFile):
         self.folders_common: tfo.FoldersCommon = self.__get_section(tfo.FoldersCommon)
         self.date_options: tfo.DateOptions = self.__get_section(tfo.DateOptions)
         self.extract: tfo.Extract = self.__get_section(tfo.Extract)
+        self.layout: tfo.Layout = self.__get_section(tfo.Layout)
 
     def __delattr__(self, attr):
         section = getattr(self, attr)
@@ -172,6 +173,7 @@ class Datasource(TableauFile):
         yield self.folders_common
         yield self.date_options
         yield self.extract
+        yield self.layout
 
     @staticmethod
     def __remove_section_from_parent(parent, tag) -> list[tuple[int, ET.Element]]:
@@ -183,7 +185,7 @@ class Datasource(TableauFile):
         Returns: A list of (index, Element) for the elements removed from the parent Element
         """
         # A section can be multiple elements within the parent element
-        elements = [(i, e) for i, e in enumerate(parent) if e.tag.endswith(f'true...{tag}') or e.tag == tag]
+        elements = [(i, e) for i, e in enumerate(parent) if e.tag.endswith(f'true...{tag}') or e.tag == tag or (e.tag.startswith(f'layout _.fcp.SchemaViewerObjectModel.false...') and tag == 'layout')]
         for _, e in elements:
             parent.remove(e)
         return elements
@@ -199,7 +201,7 @@ class Datasource(TableauFile):
         # Gets elements within the parent element, with the appropriate section.tag
         section: list[dict] = list()
         for element in parent:
-            if element.tag.endswith(f'true...{obj.tag}') or element.tag == obj.tag:
+            if element.tag.endswith(f'true...{obj.tag}') or element.tag == obj.tag or (element.tag.startswith(f'layout _.fcp.SchemaViewerObjectModel.false...') and obj.tag == 'layout'):
                 item = xmltodict.parse(ET.tostring(element))[element.tag]
                 if not item:
                     continue
@@ -224,6 +226,7 @@ class Datasource(TableauFile):
                     - Create the folder if it doesn't exist
                 - Updating the metadata local-name to map to the column name
                 - Adding the column mapping to the mapping cols, if it doesn't exist
+                - Displaying the folders and sorting columns alphabetically
 
         Args:
             column (tfo.Column): The TableFile Column object
@@ -254,6 +257,9 @@ class Datasource(TableauFile):
                 self.folders_common.folder.update(folder)
             elif not folder:
                 self.folders_common.folder.add(tfo.Folder(name=folder_name, folder_item=[folder_item]))
+
+            # Set display to show folders
+            self.layout.show_structure=False
 
         # If a remote_name was provided, and the column is not a Tableau Calculation - enforce metadata
         if not remote_name or column.calculation:

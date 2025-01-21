@@ -69,6 +69,7 @@ class TableauFileObject:
         self.__to_bool('hidden')
         self.__to_bool('incremental_updates')
         self.__to_bool('user_specific')
+        self.__to_bool('show_structure')
         # Convert to Integer
         self.__to_int('approx_count')
         self.__to_int('collation_flag')
@@ -1073,6 +1074,35 @@ class Extract(TableauFileObject):
             dictionary['connection'] = self.connection.dict()
         return dictionary
 
+
+@dataclass
+class Layout(TableauFileObject):
+    """ The Layout Tableau file object """
+    dim_percentage: str = None
+    measure_percentage: str = None
+    dim_ordering: str = None # ordinal or alphabetic
+    measure_ordering: str = None # ordinal or alphabetic
+    show_structure: bool = None
+    tag: str = 'layout'
+
+    def dict(self):
+        dictionary = dict()
+        if self.dim_percentage is not None:
+            dictionary['@_.fcp.SchemaViewerObjectModel.false...dim-percentage'] = self.dim_percentage
+        if self.measure_percentage is not None:
+            dictionary['@_.fcp.SchemaViewerObjectModel.false...measure-percentage'] = self.measure_percentage
+        if self.dim_ordering is not None:
+            dictionary['@dim-ordering'] = self.dim_ordering
+        if self.measure_ordering is not None:
+            dictionary['@measure-ordering'] = self.measure_ordering
+        if self.show_structure is not None:
+            dictionary['@show-structure'] = str(self.show_structure).lower()
+        return dictionary
+
+    def xml(self):
+        """ Returns the FileObject as an XML Element """
+        this_xml =  ET.fromstring(xmltodict.unparse({self.tag: self.dict()}, pretty=True))
+        return this_xml
 
 @dataclass
 class Aliases(TableauFileObject):
