@@ -3,8 +3,8 @@ from tableau_utilities.general.cli_styling import Color, Symbol
 from tableau_utilities.scripts.gen_config import load_csv_with_definitions, generate_config
 
 # Print Styling
-color = Color()
-symbol = Symbol()
+COLOR = Color()
+SYMBOL = Symbol()
 
 def read_file(file_path):
     """Read a JSON file to a dictionary.
