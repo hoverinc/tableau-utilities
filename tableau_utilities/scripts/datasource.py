@@ -12,8 +12,8 @@ from tableau_utilities.tableau_server.tableau_server import TableauServer
 
 
 # Define color and symbol as globals
-color = Color()
-symbol = Symbol()
+COLOR = Color()
+SYMBOL = Symbol()
 
 def create_column(name: str, persona: dict):
     """ Creates the tfo column object with the minimum required fields to add a column
