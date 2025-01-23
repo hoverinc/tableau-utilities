@@ -207,7 +207,7 @@ parser_config_apply = subparsers.add_parser(
     'apply_configs', help='Applies a config to a datasource. Writes over any datasource attributes to make it '
                          'conform to the config.', formatter_class=RawTextHelpFormatter)
 parser_config_apply.add_argument('-cc', '--column_config', help='The path to the column configs file')
-parser_config_apply.add_argument('-cac', '--calculated_column_config', help='The path to the calculated field config file.')
+parser_config_apply.add_argument('-ccc', '--calculated_column_config', help='The path to the calculated field config file.')
 parser_config_apply.set_defaults(func=apply_configs)
 
 
