@@ -54,8 +54,7 @@ class ApplyConfigs:
         """
 
         try:
-            selected_config = config[self.datasource_name]
-            return selected_config
+            return config[self.datasource_name]
         except KeyError:
             print(f'{color.fg_red}No matching datasource found in config for {self.datasource_name}{color.reset}')
             return {}
