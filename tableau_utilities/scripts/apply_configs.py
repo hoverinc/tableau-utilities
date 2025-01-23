@@ -11,8 +11,8 @@ from tableau_utilities.scripts.datasource import add_metadata_records_as_columns
 from tableau_utilities.scripts.gen_config import build_configs
 from tableau_utilities.scripts.merge_config import read_file
 
-color = Color()
-symbol = Symbol()
+COLOR = Color()
+SYMBOL = Symbol()
 
 class ApplyConfigs:
     """Applies a set of configs to a datasource. Configs prefixed with target_ will be applied to the datasource.
