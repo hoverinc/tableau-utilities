@@ -153,9 +153,6 @@ def sort_config(config, debugging_logs):
 
 
 def read_merge_write(existing_config_path, additional_config_path, output_config_path, debugging_logs):
-    # Print Styling
-    color = Color()
-    symbol = Symbol()
 
     # Read files
     existing_config = read_file(existing_config_path)
@@ -168,10 +165,10 @@ def read_merge_write(existing_config_path, additional_config_path, output_config
     new_config = sort_config(new_config, debugging_logs)
     write_file(file_name=output_config_path, config=new_config, debugging_logs=debugging_logs)
 
-    print(f'{color.fg_yellow}EXISTING CONFIG {symbol.arrow_r} {color.fg_grey}{existing_config_path}{color.reset}')
-    print(f'{color.fg_yellow}ADDITIONAL CONFIG {symbol.arrow_r} {color.fg_grey}{additional_config_path}{color.reset}')
-    print(f'{color.fg_green}{symbol.success}  MERGED CONFIG {symbol.arrow_r} '
-          f'{color.fg_grey}{output_config_path}{color.reset}')
+    print(f'{COLOR.fg_yellow}EXISTING CONFIG {SYMBOL.arrow_r} {COLOR.fg_grey}{existing_config_path}{COLOR.reset}')
+    print(f'{COLOR.fg_yellow}ADDITIONAL CONFIG {SYMBOL.arrow_r} {COLOR.fg_grey}{additional_config_path}{COLOR.reset}')
+    print(f'{COLOR.fg_green}{SYMBOL.success}  MERGED CONFIG {SYMBOL.arrow_r} '
+          f'{COLOR.fg_grey}{output_config_path}{COLOR.reset}')
 
 
 def merge_configs(args, server=None):
@@ -199,10 +196,10 @@ def merge_configs(args, server=None):
     elif merge_with == 'csv':
         # Log paths
         if debugging_logs:
-            print(f'{color.fg_yellow}EXISTING CONFIG PATH {symbol.arrow_r} '
-                  f'{color.fg_grey}{existing_config}{color.reset}')
-            print(f'{color.fg_yellow}DEFINITIONS CSV PATH {symbol.arrow_r} '
-                  f'{color.fg_grey}{definitions_csv_path}{color.reset}')
+            print(f'{COLOR.fg_yellow}EXISTING CONFIG PATH {SYMBOL.arrow_r} '
+                  f'{COLOR.fg_grey}{existing_config}{COLOR.reset}')
+            print(f'{COLOR.fg_yellow}DEFINITIONS CSV PATH {SYMBOL.arrow_r} '
+                  f'{COLOR.fg_grey}{definitions_csv_path}{COLOR.reset}')
 
         # Read files
         existing_config = read_file(existing_config)
@@ -216,21 +213,21 @@ def merge_configs(args, server=None):
 
         write_file(file_name=file_name, config=new_config, debugging_logs=debugging_logs)
 
-        print(f'{color.fg_yellow}DEFINITIONS CSV {symbol.arrow_r} '
-              f'{color.fg_grey}{definitions_csv_path}{color.reset}')
-        print(f'{color.fg_yellow}EXISTING CONFIG {symbol.arrow_r} '
-              f'{color.fg_grey}{existing_config_path}{color.reset}')
-        print(f'{color.fg_yellow}ADDITIONAL CONFIG {symbol.arrow_r} '
-              f'{color.fg_grey}{additional_config_path}{color.reset}')
-        print(f'{color.fg_green}{symbol.success}  MERGED CONFIG {symbol.arrow_r} '
-              f'{color.fg_grey}{file_name}{color.reset}')
+        print(f'{COLOR.fg_yellow}DEFINITIONS CSV {SYMBOL.arrow_r} '
+              f'{COLOR.fg_grey}{definitions_csv_path}{COLOR.reset}')
+        print(f'{COLOR.fg_yellow}EXISTING CONFIG {SYMBOL.arrow_r} '
+              f'{COLOR.fg_grey}{existing_config_path}{COLOR.reset}')
+        print(f'{COLOR.fg_yellow}ADDITIONAL CONFIG {SYMBOL.arrow_r} '
+              f'{COLOR.fg_grey}{additional_config_path}{COLOR.reset}')
+        print(f'{COLOR.fg_green}{SYMBOL.success}  MERGED CONFIG {SYMBOL.arrow_r} '
+              f'{COLOR.fg_grey}{file_name}{COLOR.reset}')
 
     elif merge_with == 'generate_merge_all':
         # Generate the configs and return the paths of where they are
         new_column_config_path, new_calculated_column_config_path = generate_config(args, server)
-        print(f'{color.fg_green}{symbol.success}  GENERATED CONFIGS {symbol.arrow_r} '
-              f'{color.fg_grey}{new_column_config_path} {symbol.sep} {new_calculated_column_config_path}{color.reset}')
-        print(f'{color.fg_yellow}TARGET DIRECTORY {symbol.arrow_r} {color.fg_grey}{target_directory}{color.reset}')
+        print(f'{COLOR.fg_green}{SYMBOL.success}  GENERATED CONFIGS {SYMBOL.arrow_r} '
+              f'{COLOR.fg_grey}{new_column_config_path} {SYMBOL.sep} {new_calculated_column_config_path}{COLOR.reset}')
+        print(f'{COLOR.fg_yellow}TARGET DIRECTORY {SYMBOL.arrow_r} {COLOR.fg_grey}{target_directory}{COLOR.reset}')
 
         existing_column_config_path = f'{target_directory}column_config.json'
         existing_calc_config_path = f'{target_directory}tableau_calc_config.json'

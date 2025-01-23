@@ -56,7 +56,7 @@ class ApplyConfigs:
         try:
             return config[self.datasource_name]
         except KeyError:
-            print(f'{color.fg_red}No matching datasource found in config for {self.datasource_name}{color.reset}')
+            print(f'{COLOR.fg_red}No matching datasource found in config for {self.datasource_name}{COLOR.reset}')
             return {}
 
     def invert_config(self, config: Dict[str, Any]) -> Dict[str, Any]:
@@ -117,7 +117,7 @@ class ApplyConfigs:
         combined_config = {**config_A, **config_B}
 
         if self.debugging_logs:
-            print(f'{color.fg_yellow}AFTER COMBINING CONFIGS{color.reset}')
+            print(f'{COLOR.fg_yellow}AFTER COMBINING CONFIGS{COLOR.reset}')
             pp = pprint.PrettyPrinter(indent=4, width=200, depth=None, compact=False)
             pp.pprint(combined_config)
 
@@ -141,7 +141,7 @@ class ApplyConfigs:
             flattened_list.append(flattened_entry)
 
         if self.debugging_logs:
-            print(f'{color.fg_yellow}AFTER FLATTENING{color.reset}')
+            print(f'{COLOR.fg_yellow}AFTER FLATTENING{COLOR.reset}')
             for field_config in flattened_list:
                 print(field_config)
 
@@ -171,10 +171,10 @@ class ApplyConfigs:
         for target_entry in target_config:
             print(target_entry)
             if not any(target_entry == datasource_entry for datasource_entry in datasource_config):
-                print(f'{color.fg_yellow}NEED TO MAKE CHANGE:{color.reset}{target_entry}')
+                print(f'{COLOR.fg_yellow}NEED TO MAKE CHANGE:{COLOR.reset}{target_entry}')
                 changes_to_make.append(target_entry)
 
-        print(f'{color.fg_yellow}AFTER CREATING CHANGE LIST{color.reset}')
+        print(f'{COLOR.fg_yellow}AFTER CREATING CHANGE LIST{COLOR.reset}')
         pp.pprint(changes_to_make)
 
         print(len(changes_to_make))
@@ -192,11 +192,11 @@ class ApplyConfigs:
 
         """
 
-        print(f'{color.fg_cyan}...Applying Changes to {self.datasource_name}...{color.reset}')
+        print(f'{COLOR.fg_cyan}...Applying Changes to {self.datasource_name}...{COLOR.reset}')
 
         for each_column in columns_list:
             if self.debugging_logs:
-                print(f'{color.fg_yellow}column:{color.reset}{each_column}')
+                print(f'{COLOR.fg_yellow}column:{COLOR.reset}{each_column}')
                 print(each_column)
                 print(each_column['caption'])
                 print(type(each_column))
@@ -210,10 +210,10 @@ class ApplyConfigs:
                 column = create_column(each_column['local-name'], persona)
 
             if self.debugging_logs:
-                print(f'{color.fg_yellow}column 2025:{color.reset}{column}')
+                print(f'{COLOR.fg_yellow}column 2025:{COLOR.reset}{column}')
 
             if self.debugging_logs:
-                print(f'{color.fg_yellow}persona:{color.reset}{persona}')
+                print(f'{COLOR.fg_yellow}persona:{COLOR.reset}{persona}')
 
             column.caption = each_column['caption'] or column.caption
             column.role = persona.get('role') or column.role
@@ -225,15 +225,15 @@ class ApplyConfigs:
                 column.calculation = each_column['calculation'] or column.calculation
 
             if self.debugging_logs:
-                print(f'{color.fg_yellow}column:{color.reset}{each_column}')
+                print(f'{COLOR.fg_yellow}column:{COLOR.reset}{each_column}')
 
             datasource.enforce_column(column, remote_name=each_column['remote_name'], folder_name=each_column['folder'])
 
         start = time()
-        print(f'{color.fg_cyan}...Saving datasource changes...{color.reset}')
+        print(f'{COLOR.fg_cyan}...Saving datasource changes...{COLOR.reset}')
         datasource.save()
-        print(f'{color.fg_green}{symbol.success} (Done in {round(time() - start)} sec) '
-              f'Saved datasource changes: {color.fg_yellow}{self.datasource_path}{color.reset}')
+        print(f'{COLOR.fg_green}{SYMBOL.success} (Done in {round(time() - start)} sec) '
+              f'Saved datasource changes: {COLOR.fg_yellow}{self.datasource_path}{COLOR.reset}')
 
 
     def apply_config_to_datasource(self):
@@ -246,18 +246,18 @@ class ApplyConfigs:
 
         # Run column init on the datasource to make sure columns aren't hiding in Metadata records
         datasource = add_metadata_records_as_columns(datasource, self.debugging_logs)
-        print(f'{color.fg_cyan}Ran column init {self.datasource_name}...{color.reset}')
+        print(f'{COLOR.fg_cyan}Ran column init {self.datasource_name}...{COLOR.reset}')
 
         # Build the config dictionaries from the datasource
         datasource_column_config, datasource_calculated_column_config = build_configs(datasource, self.datasource_name)
-        print(f'{color.fg_cyan}Built dictionaries from the datasource {self.datasource_name}...{color.reset}')
+        print(f'{COLOR.fg_cyan}Built dictionaries from the datasource {self.datasource_name}...{COLOR.reset}')
 
         # # Prepare the configs by inverting, combining and removing configs for other datasources
         target_config = self.prepare_configs(self.target_column_config, self.target_calculated_column_config)
-        print(f'{color.fg_cyan}Prepared the target configs {self.datasource_name}...{color.reset}')
+        print(f'{COLOR.fg_cyan}Prepared the target configs {self.datasource_name}...{COLOR.reset}')
 
         datasource_config = self.prepare_configs(datasource_column_config, datasource_calculated_column_config)
-        print(f'{color.fg_cyan}Prepared the datasource configs {self.datasource_name}...{color.reset}')
+        print(f'{COLOR.fg_cyan}Prepared the datasource configs {self.datasource_name}...{COLOR.reset}')
 
         target_config = self.flatten_to_list_of_fields(target_config)
         datasource_config = self.flatten_to_list_of_fields(datasource_config)
