@@ -39,12 +39,12 @@ class Publish(Base):
             return self.get.datasource(datasource_id)
         elif datasource_name and project_name:
             project = None
-            for p in self.get.projects():
+            for p in self.get.projects(False, False):
                 if p.name == project_name:
                     project = p
                     break
             if not project:
-                raise TableauConnectionError(f'Project does not exist: {project}')
+                raise TableauConnectionError(f'Project does not exist: {project_name}')
             return tso.Datasource(
                 name=datasource_name,
                 project_id=project.id,
@@ -58,12 +58,12 @@ class Publish(Base):
             return self.get.workbook(workbook_id)
         elif workbook_name and project_name:
             project = None
-            for p in self.get.projects():
+            for p in self.get.projects(False, False):
                 if p.name == project_name:
                     project = p
                     break
             if not project:
-                raise TableauConnectionError(f'Project does not exist: {project}')
+                raise TableauConnectionError(f'Project does not exist: {project_name}')
             return tso.Workbook(
                 name=workbook_name,
                 project_id=project.id,
