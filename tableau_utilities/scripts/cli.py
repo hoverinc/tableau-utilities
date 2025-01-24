@@ -114,6 +114,8 @@ parser_server_info.add_argument('-lf', '--list_format', default='names',
                                          'full_dictionary',
                                          'full_dictionary_pretty'],
                                 help='Set the fields and format for the information.')
+parser_server_info.add_argument('-ix', '--info_export', nargs='?', default='tableau_info',
+                                help='Export the full info from list object to a csv. Optionally specify a filename.')
 parser_server_info.add_argument('-lsf', '--list_sort_field', default='name',
                                 help='Choose the field for sorting the information.')
 parser_server_info.set_defaults(func=server_info)
