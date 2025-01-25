@@ -158,24 +158,27 @@ class Get(Base):
         v = v['view']
         return tso.View(**v)
 
-    def projects(self, top_level_only=True):
+    def projects(self, top_level_only=True, include_extra_fields=True):
         """ Queries for all projects in the site
             URI GET /api/api-version/sites/site-id/projects
         Args:
             top_level_only (bool): True to only get top level projects
+            include_extra_fields (bool): True to include extra fields not provided in the default query
         Returns: All top level projects in the site
         """
-        url = f"{self.url}/projects?fields=_default_" \
+        if include_extra_fields:
+            url = f"{self.url}/projects?fields=_default_" \
               f",topLevelProject" \
               f",writeable" \
               f",contentsCounts.projectCount" \
               f",contentsCounts.viewCount" \
               f",contentsCounts.datasourceCount" \
               f",contentsCounts.workbookCount"
+        else:
+            url = f"{self.url}/projects"
         for p in self.__get_objects_pager(url, 'project'):
             project = tso.Project(**p)
-            # Only get Top Level projects
-            if top_level_only and not project.top_level_project:
+            if top_level_only and project.parent_project_id:
                 continue
             yield project
 
