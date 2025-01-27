@@ -7,24 +7,31 @@ from tableau_utilities.general.cli_styling import Color, Symbol
 from tableau_utilities.general.config_column_persona import get_persona_by_attribs, get_persona_by_metadata_local_type
 from tableau_utilities.general.funcs import convert_to_snake_case
 from tableau_utilities.tableau_file.tableau_file import Datasource
+from tableau_utilities.scripts.datasource import add_metadata_records_as_columns
 from tableau_utilities.tableau_server.tableau_server import TableauServer
 
 
-def load_csv_with_definitions(file=None):
+def load_csv_with_definitions(file=None, debugging_logs=False):
     """ Returns a dictionary with the definitions from a csv. The columns are expected to include column_name and description
 
     Args:
         file: The path to the .csv file with the definitions. The csv must include a column_name and description.
+        debugging_logs: Prints information to consolde if true
 
     Returns:
         dictionary mapping column name to definition
+
 
     """
 
     definitions_mapping = dict()
     df = pd.read_csv(file)
+
     df.columns = df.columns.str.lower()
     definitions = df.to_dict('records')
+
+    if debugging_logs:
+        print(definitions)
 
     # Check that the csv contains column_name and description headers
     column_names = list(df.columns)
@@ -35,8 +42,10 @@ def load_csv_with_definitions(file=None):
         if str(column['description']) != 'nan':
             definitions_mapping[column['column_name']] = column['description']
 
-    return definitions_mapping
+            if debugging_logs:
+                print(definitions_mapping)
 
+    return definitions_mapping
 
 def choose_persona(role, role_type, datatype, caption):
     """  The config relies on a persona which is a combination of role, role_type and datatype for each column.
@@ -253,6 +262,51 @@ def build_folder_mapping(folders):
     return mappings
 
 
+def build_configs(datasource, datasource_name, debugging_logs=False, definitions_csv_path=None):
+    """
+
+    Args:
+        datasource: A Tableau utilities datasource object
+        datasource_name: The name of the datasource
+        debugging_logs: True to print debugging logs to the console
+        definitions_csv_path: The path to a .csv with data definitions
+
+    Returns:
+        column_configs: A dictionary with the column configs
+        calculated_column_configs = A dictionary with the calculated field configs
+
+    """
+
+    # Get column information from the metadata records
+    metadata_record_config = get_metadata_record_config(
+        datasource.connection.metadata_records,
+        datasource_name,
+        debugging_logs
+    )
+
+    # Get the mapping of definitions from the csv
+    definitions_mapping = dict()
+    if definitions_csv_path is not None:
+        definitions_mapping = load_csv_with_definitions(file=definitions_csv_path)
+
+    # Extract the columns and folders. Build the new config
+    folder_mapping = build_folder_mapping(datasource.folders_common)
+    column_configs, calculated_column_configs = create_column_config(
+        columns=datasource.columns,
+        datasource_name=datasource_name,
+        folder_mapping=folder_mapping,
+        metadata_record_columns=metadata_record_config,
+        definitions_mapping=definitions_mapping,
+        debugging_logs=debugging_logs
+    )
+
+    # Sort configs
+    column_configs = dict(sorted(column_configs.items()))
+    calculated_column_configs = dict(sorted(calculated_column_configs.items()))
+
+    return column_configs, calculated_column_configs
+
+
 def generate_config(args, server: TableauServer = None):
     """ Downloads a datasource and saves configs for that datasource
 
@@ -293,34 +347,18 @@ def generate_config(args, server: TableauServer = None):
 
     print(f'{color.fg_yellow}BUILDING CONFIG {symbol.arrow_r} '
           f'{color.fg_grey}{datasource_name} {symbol.sep} {datasource_path}{color.reset}')
+
     datasource = Datasource(datasource_path)
-    # Get column information from the metadata records
-    metadata_record_config = get_metadata_record_config(
-        datasource.connection.metadata_records,
-        datasource_name,
-        debugging_logs
-    )
 
-    # Get the mapping of definitions from the csv
-    definitions_mapping = dict()
-    if definitions_csv_path is not None:
-        definitions_mapping = load_csv_with_definitions(file=definitions_csv_path)
+    # Run column init on the datasource to make sure columns aren't hiding in Metadata records
+    datasource = add_metadata_records_as_columns(datasource, debugging_logs)
+    print(f'{color.fg_cyan}Ran column init {datasource_name}...{color.reset}')
 
-    # Extract the columns and folders. Build the new config
-    folder_mapping = build_folder_mapping(datasource.folders_common)
-    column_configs, calculated_column_configs = create_column_config(
-        columns=datasource.columns,
-        datasource_name=datasource_name,
-        folder_mapping=folder_mapping,
-        metadata_record_columns=metadata_record_config,
-        definitions_mapping=definitions_mapping,
-        debugging_logs=debugging_logs
-    )
+    # Build the config dictionaries
+    column_configs, calculated_column_configs = build_configs(datasource, datasource_name, debugging_logs,
+                                                              definitions_csv_path)
 
-    # Sort configs
-    column_configs = dict(sorted(column_configs.items()))
-    calculated_column_configs = dict(sorted(calculated_column_configs.items()))
-
+    # Output the configs to files
     datasource_name_snake = convert_to_snake_case(datasource_name)
     output_file_column_config = 'column_config.json'
     output_file_calculated_column_config = 'tableau_calc_config.json'
