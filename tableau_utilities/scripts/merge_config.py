@@ -190,7 +190,10 @@ def merge_configs(args, server=None):
 
     # Merge 2 configs
     if merge_with == 'config':
-        read_merge_write(existing_config_path, additional_config_path, debugging_logs)
+        read_merge_write(existing_config_path=existing_config_path,
+                         additional_config_path=additional_config_path,
+                         output_config_path=existing_config_path,
+                         debugging_logs=debugging_logs)
 
     # Merge a config with a definitions csv.
     elif merge_with == 'csv':
