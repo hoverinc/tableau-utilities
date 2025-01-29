@@ -196,9 +196,6 @@ parser_config_merge.add_argument(
 parser_config_merge.add_argument('-e', '--existing_config', help='The path to the base configuration file.')
 parser_config_merge.add_argument('-a', '--additional_config',
                                  help='The path to the configuration to add to --existing_config.')
-parser_config_merge.add_argument('-m', '--merged_config', default='merged_config',
-                                 help='Name of the file to write the merged configuration file to. '
-                                      'i.e. "my_config" will output to "my_config.json".')
 parser_config_merge.add_argument('-td', '--target_directory', default='merged_config',
                                  help='The path containing the existing configs. '
                                       'Use with --merge_with generate_merge_all')
@@ -454,9 +451,34 @@ def set_datasource_connection_args(args):
 def main():
     args = parser.parse_args()
 
+    # Set absolute paths before the working directory change
+
     # Set absolute path of the settings_path, if it exists and is not already absolute
     if not os.path.isabs(args.settings_path) and os.path.exists(args.settings_path):
         args.settings_path = os.path.abspath(args.settings_path)
+
+    if args.definitions_csv and not os.path.isabs(args.definitions_csv):
+        args.definitions_csv = os.path.abspath(args.definitions_csv)
+
+    # Set absolute path of the target_directory, if it exists and is not already absolute
+    if args.command == 'merge_config'  and args.target_directory and not os.path.isabs(args.target_directory):
+        args.target_directory = os.path.abspath(args.target_directory)
+
+    # Set absolute path of the existing config, if it exists and is not already absolute
+    if args.command == 'merge_config'  and args.existing_config and not os.path.isabs(args.existing_config):
+        args.existing_config = os.path.abspath(args.existing_config)
+
+    # Set absolute path of the additional config, if it exists and is not already absolute
+    if args.command == 'merge_config'  and args.additional_config and not os.path.isabs(args.additional_config):
+        args.additional_config = os.path.abspath(args.additional_config)
+
+    # Set absolute path of the column config to apply, if it exists and is not already absolute
+    if args.command == 'apply_configs'  and args.column_config and not os.path.isabs(args.column_config):
+        args.column_config = os.path.abspath(args.column_config)
+
+    # Set absolute path of the column config to apply, if it exists and is not already absolute
+    if args.command == 'apply_configs'  and args.calculated_column_config and not os.path.isabs(args.calculated_column_config):
+        args.calculated_column_config = os.path.abspath(args.calculated_column_config)
 
     # Set args from connection group, from settings YAML / Environment Variables, when not provided in the command
     set_datasource_connection_args(args)
