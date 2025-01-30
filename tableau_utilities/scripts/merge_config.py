@@ -195,7 +195,6 @@ def merge_configs(args, server=None):
 
     # Merge 2 configs
     if merge_with == 'config':
-        print('path', merged_config_path)
         read_merge_write(existing_config_path=existing_config_path,
                          additional_config_path=additional_config_path,
                          output_config_path=merged_config_path,

@@ -478,7 +478,6 @@ def main():
     # Set absolute path of the additional config, if it exists and is not already absolute
     if args.command == 'merge_config'  and args.merged_config and not os.path.isabs(args.merged_config):
         args.merged_config = os.path.abspath(args.merged_config)
-        print(args.merged_config)
 
     # Set absolute path of the column config to apply, if it exists and is not already absolute
     if args.command == 'apply_configs'  and args.column_config and not os.path.isabs(args.column_config):
