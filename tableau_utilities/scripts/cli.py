@@ -196,6 +196,9 @@ parser_config_merge.add_argument(
 parser_config_merge.add_argument('-e', '--existing_config', help='The path to the base configuration file.')
 parser_config_merge.add_argument('-a', '--additional_config',
                                  help='The path to the configuration to add to --existing_config.')
+parser_config_merge.add_argument('-m', '--merged_config', default='merged_config',
+                                 help='Name of the file to write the merged configuration file to. '
+                                      'i.e. "my_config" will output to "my_config.json".')
 parser_config_merge.add_argument('-td', '--target_directory', default='merged_config',
                                  help='The path containing the existing configs. '
                                       'Use with --merge_with generate_merge_all')
@@ -471,6 +474,11 @@ def main():
     # Set absolute path of the additional config, if it exists and is not already absolute
     if args.command == 'merge_config'  and args.additional_config and not os.path.isabs(args.additional_config):
         args.additional_config = os.path.abspath(args.additional_config)
+
+    # Set absolute path of the additional config, if it exists and is not already absolute
+    if args.command == 'merge_config'  and args.merged_config and not os.path.isabs(args.merged_config):
+        args.merged_config = os.path.abspath(args.merged_config)
+        print(args.merged_config)
 
     # Set absolute path of the column config to apply, if it exists and is not already absolute
     if args.command == 'apply_configs'  and args.column_config and not os.path.isabs(args.column_config):

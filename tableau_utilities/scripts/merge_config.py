@@ -40,6 +40,10 @@ def write_file(file_name, config, debugging_logs=False):
         config: The dictionary to write to the file
 
     """
+
+    # Ensure the file_name is an absolute path
+    file_name = os.path.abspath(file_name)
+
     with open(file_name, "w") as outfile:
         json.dump(config, outfile)
 
@@ -186,13 +190,15 @@ def merge_configs(args, server=None):
     target_directory = args.target_directory
     debugging_logs = args.debugging_logs
     existing_config = args.existing_config
+    merged_config_path = args.merged_config
 
 
     # Merge 2 configs
     if merge_with == 'config':
+        print('path', merged_config_path)
         read_merge_write(existing_config_path=existing_config_path,
                          additional_config_path=additional_config_path,
-                         output_config_path=existing_config_path,
+                         output_config_path=merged_config_path,
                          debugging_logs=debugging_logs)
 
     # Merge a config with a definitions csv.
