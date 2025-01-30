@@ -1,4 +1,5 @@
 import json
+import os
 from tableau_utilities.general.cli_styling import Color, Symbol
 from tableau_utilities.scripts.gen_config import load_csv_with_definitions, generate_config
 
@@ -15,6 +16,7 @@ def read_file(file_path):
     Returns:
         dict: The JSON content as a dictionary.
     """
+
     try:
         with open(file_path, "r") as infile:
             config = json.load(infile)
@@ -38,6 +40,10 @@ def write_file(file_name, config, debugging_logs=False):
         config: The dictionary to write to the file
 
     """
+
+    # Ensure the file_name is an absolute path
+    file_name = os.path.abspath(file_name)
+
     with open(file_name, "w") as outfile:
         json.dump(config, outfile)
 
@@ -180,19 +186,21 @@ def merge_configs(args, server=None):
     existing_config_path = args.existing_config
     additional_config_path = args.additional_config
     definitions_csv_path = args.definitions_csv
-    # definitions_csv_local_name_path = args.definitions_csv_local_name
     merge_with = args.merge_with
-    file_name = f'{args.merged_config}.json'
     target_directory = args.target_directory
     debugging_logs = args.debugging_logs
     existing_config = args.existing_config
+    merged_config_path = args.merged_config
 
 
     # Merge 2 configs
     if merge_with == 'config':
-        read_merge_write(existing_config_path, additional_config_path, file_name, debugging_logs)
+        read_merge_write(existing_config_path=existing_config_path,
+                         additional_config_path=additional_config_path,
+                         output_config_path=merged_config_path,
+                         debugging_logs=debugging_logs)
 
-    # Merge a config with a definitions csv. This
+    # Merge a config with a definitions csv.
     elif merge_with == 'csv':
         # Log paths
         if debugging_logs:
@@ -202,16 +210,16 @@ def merge_configs(args, server=None):
                   f'{COLOR.fg_grey}{definitions_csv_path}{COLOR.reset}')
 
         # Read files
-        existing_config = read_file(existing_config)
+        existing_config_content = read_file(existing_config)
         definitions_mapping = load_csv_with_definitions(file=definitions_csv_path, debugging_logs=debugging_logs)
 
         # Merge
-        new_config = add_definitions_mapping_any_local_name(existing_config, definitions_mapping)
+        new_config = add_definitions_mapping_any_local_name(existing_config_content, definitions_mapping)
         
         # Sort and write the merged config
         new_config = sort_config(new_config, debugging_logs)
 
-        write_file(file_name=file_name, config=new_config, debugging_logs=debugging_logs)
+        write_file(file_name=existing_config, config=new_config, debugging_logs=debugging_logs)
 
         print(f'{COLOR.fg_yellow}DEFINITIONS CSV {SYMBOL.arrow_r} '
               f'{COLOR.fg_grey}{definitions_csv_path}{COLOR.reset}')
@@ -220,7 +228,7 @@ def merge_configs(args, server=None):
         print(f'{COLOR.fg_yellow}ADDITIONAL CONFIG {SYMBOL.arrow_r} '
               f'{COLOR.fg_grey}{additional_config_path}{COLOR.reset}')
         print(f'{COLOR.fg_green}{SYMBOL.success}  MERGED CONFIG {SYMBOL.arrow_r} '
-              f'{COLOR.fg_grey}{file_name}{COLOR.reset}')
+              f'{COLOR.fg_grey}{existing_config}{COLOR.reset}')
 
     elif merge_with == 'generate_merge_all':
         # Generate the configs and return the paths of where they are
@@ -229,8 +237,10 @@ def merge_configs(args, server=None):
               f'{COLOR.fg_grey}{new_column_config_path} {SYMBOL.sep} {new_calculated_column_config_path}{COLOR.reset}')
         print(f'{COLOR.fg_yellow}TARGET DIRECTORY {SYMBOL.arrow_r} {COLOR.fg_grey}{target_directory}{COLOR.reset}')
 
-        existing_column_config_path = f'{target_directory}column_config.json'
-        existing_calc_config_path = f'{target_directory}tableau_calc_config.json'
+        # Set the full path for the target directory for files to merge with and output to
+        # This overrides the working directory setting where temporary files are stored
+        existing_column_config_path = os.path.join(target_directory, 'column_config.json')
+        existing_calc_config_path = os.path.join(target_directory, 'tableau_calc_config.json')
 
         read_merge_write(existing_config_path=existing_column_config_path,
                          additional_config_path=new_column_config_path,
