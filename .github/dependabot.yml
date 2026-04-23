@@ -1,0 +1,13 @@
+version: 2
+updates:
+- package-ecosystem: "github-actions"
+  directory: "/"
+  commit-message:
+    prefix: "[bot] "
+  cooldown:
+    default-days: 7
+  schedule:
+    interval: "weekly"
+    day: "wednesday"
+    time: "11:00"
+    timezone: "America/Los_Angeles"
