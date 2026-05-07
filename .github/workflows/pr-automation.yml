@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: pr-automation
+on: pull_request
+
+jobs:
+  pr-automation:
+    uses: hoverinc/action-pr-automation/.github/workflows/pr-automation.yml@763fe363e0306d8495557e59c0a3b2a2e492aca8 # v1.1.0
+    secrets: inherit
