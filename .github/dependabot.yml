@@ -6,6 +6,8 @@ updates:
     prefix: "[bot] "
   cooldown:
     default-days: 7
+    exclude:
+      - "hoverinc/*"
   schedule:
     interval: "weekly"
     day: "wednesday"
