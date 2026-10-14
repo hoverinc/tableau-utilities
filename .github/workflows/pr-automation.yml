@@ -4,5 +4,5 @@ on: pull_request
 
 jobs:
   pr-automation:
-    uses: hoverinc/action-pr-automation/.github/workflows/pr-automation.yml@763fe363e0306d8495557e59c0a3b2a2e492aca8 # v1.1.0
+    uses: hoverinc/action-pr-automation/.github/workflows/pr-automation.yml@7dce37e7b35c0e6eb83a27b501da63136ad3ad70 # v1.6.0
     secrets: inherit
